@@ -36,8 +36,8 @@ out of browser JavaScript.
 ## Environment
 
 ```bash
-API_BASE_URL=https://your-apprunner-api-url
-API_TOKEN=replace-with-api-token
+API_BASE_URL=http://127.0.0.1:8000
+API_TOKEN=
 ```
 
 ## Production Build

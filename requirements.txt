@@ -7,9 +7,11 @@ fastapi
 pydantic>=2,<3
 httpx
 uvicorn
+python-dotenv
 openai
 langchain
 chromadb
+neo4j
 shap
 pytest
 pytest-cov

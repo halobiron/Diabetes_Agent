@@ -4,6 +4,8 @@
 
 Giữ các agent hiện có và Orchestrator điều phối. Bổ sung deep learning, KB Neo4j, RAG, luật và RL theo kiến trúc trong ảnh. Sơ đồ dưới đây là kiến trúc mục tiêu.
 
+Phát triển, huấn luyện và demo trên máy cá nhân: dữ liệu trong `data/`, pipeline trong `models/`, kết quả trong `artifacts/`.
+
 ```mermaid
 flowchart LR
     DB[(Dữ liệu có sẵn)] --> DL[Deep Learning]
@@ -41,8 +43,9 @@ flowchart LR
 
 - [x] Thiết lập dependencies backend/frontend theo phiên bản dự án.
 - [x] Sửa lỗi `float(None)` khi nhập BMI; kiểm tra phải có BMI hoặc đủ chiều cao/cân nặng; trả lỗi 422 và kiểm thử các trường hợp này.
+- [x] Chuyển đường dẫn và luồng huấn luyện sang local; bỏ script và cấu hình chạy Kaggle.
 
-Kiểm tra: 14 tests đạt, coverage 71,4%; Python lint/format và frontend lint/typecheck/build đều đạt.
+Kiểm tra: 14 tests đạt, coverage 62,2%; Python lint/format và frontend lint/typecheck/build đều đạt. GPU MLP, RL thử nghiệm, Neo4j và luồng web → API/RAG đã chạy local.
 
 ### Bước 3 — Sửa dữ liệu và đánh giá mô hình
 

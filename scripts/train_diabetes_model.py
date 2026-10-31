@@ -3,24 +3,23 @@ import sys
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-KAGGLE_DIR = PROJECT_ROOT / "kaggle"
-if str(KAGGLE_DIR) not in sys.path:
-    sys.path.insert(0, str(KAGGLE_DIR))
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
-from training_pipeline import load_dataset_from_path, train_production_model
+from models.training_pipeline import load_dataset_from_path, train_production_model
 
-DEFAULT_KAGGLE_DATA = Path(
-    "/kaggle/input/diabetes-health-indicators-dataset/"
-    "diabetes_binary_health_indicators_BRFSS2015.csv"
-)
+DEFAULT_DATA = PROJECT_ROOT / "data" / "diabetes_binary_health_indicators_BRFSS2015.csv"
+DEFAULT_OUTPUT = PROJECT_ROOT / "artifacts"
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Train the production diabetes risk model.")
     parser.add_argument(
-        "--data", default=str(DEFAULT_KAGGLE_DATA), help="CSV file or dataset directory."
+        "--data", default=str(DEFAULT_DATA), help="Local CSV file or dataset directory."
     )
-    parser.add_argument("--output-dir", default="artifacts", help="Directory for model outputs.")
+    parser.add_argument(
+        "--output-dir", default=str(DEFAULT_OUTPUT), help="Local directory for model outputs."
+    )
     parser.add_argument("--explanation-sample-size", type=int, default=2500)
     return parser.parse_args()
 

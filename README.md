@@ -1,32 +1,28 @@
 # Healthcare AI Risk Console
 
-End-to-end healthcare AI prototype: **Kaggle-trained ML**, **multi-agent orchestration**, **FastAPI inference**, and a **production Next.js dashboard**.
+Local healthcare AI prototype: **model training**, **multi-agent orchestration**, **FastAPI inference**, and a **Next.js dashboard**.
 
 > **Educational prototype only — not medical advice.** Not a medical device. Not clinically validated.
 
 **Repository:** [github.com/adit24dhaya/healthcare-agent-system](https://github.com/adit24dhaya/healthcare-agent-system)
 
-## Live demo
+## Local services
 
 | | URL |
 |---|-----|
-| **Web app (Next.js)** | [healthcare-agent-system-teal.vercel.app](https://healthcare-agent-system-teal.vercel.app) |
-| **API (FastAPI)** | [healthcare-achv-api-adit24-cbf3793610ff.herokuapp.com/docs](https://healthcare-achv-api-adit24-cbf3793610ff.herokuapp.com/docs) |
-| **API health** | […/health](https://healthcare-achv-api-adit24-cbf3793610ff.herokuapp.com/health) |
-
-The Heroku root URL returns `{"detail":"Not Found"}` — that is expected; use `/docs` or the Vercel app.
-
-Deploy notes: [`docs/deployment.md`](docs/deployment.md). Optional AWS path: [`docs/aws_deployment.md`](docs/aws_deployment.md).
+| **Web app (Next.js)** | http://localhost:3000 |
+| **API docs (FastAPI)** | http://localhost:8000/docs |
+| **API health** | http://localhost:8000/health |
 
 ## What this demonstrates
 
 | Layer | What you built |
 |-------|----------------|
-| **Data & ML** | CDC BRFSS diabetes dataset (253k rows), Kaggle training, CV + tuning + calibration |
+| **Data & ML** | CDC BRFSS diabetes dataset (253k rows), local training, CV + tuning + calibration |
 | **Inference** | FastAPI service with persisted `joblib` artifact and BRFSS feature mapping |
 | **AI agents** | Risk scoring, SHAP/sensitivity explainability, RAG retrieval, memory, safety guardrails; optional LLM text |
 | **UI** | Next.js clinical risk console (portfolio UI) + Streamlit for rapid iteration |
-| **Cloud** | Vercel (web) + Heroku (API); optional AWS App Runner via Terraform |
+| **Runtime** | Local Python and Node.js; Docker Compose for local services |
 
 ## Product demo
 
@@ -53,9 +49,10 @@ Short clips:
 - [Risk history and memory records](docs/media/videos/03-history-flow.webm)
 - [Missing glucose safety behavior](docs/media/videos/04-missing-glucose-flow.webm)
 
-## Model performance (v5, holdout test)
+## Reference baseline metrics
 
-Trained on Kaggle: [healthcare-ai-diabetes-risk-training](https://www.kaggle.com/code/aditya2402/healthcare-ai-diabetes-risk-training)
+These checked-in metrics describe the previous baseline run. The evaluation protocol
+will be corrected in Step 3 before generating new results.
 
 | Metric | Value |
 |--------|-------|
@@ -65,7 +62,8 @@ Trained on Kaggle: [healthcare-ai-diabetes-risk-training](https://www.kaggle.com
 | **F1 (tuned threshold)** | 0.469 |
 | **Dataset** | `alexteboul/diabetes-health-indicators-dataset` |
 
-Metrics live in [`artifacts/metrics.json`](artifacts/metrics.json). The binary artifact (`risk_model.joblib`) is gitignored — download via `./scripts/kaggle_run.sh` after clone.
+Metrics live in [`artifacts/metrics.json`](artifacts/metrics.json). Local training writes
+`artifacts/risk_model.joblib`, `metrics.json`, and `model_card.md`.
 
 ## Architecture
 
@@ -73,7 +71,7 @@ Metrics live in [`artifacts/metrics.json`](artifacts/metrics.json). The binary a
 Patient input (Next.js / Streamlit / API)
         │
         ▼
-FastAPI  ──►  BRFSS risk model (Kaggle artifact)
+FastAPI  ──►  BRFSS risk model (local artifact)
         │
         ▼
 Orchestrator
@@ -88,59 +86,62 @@ Orchestrator
 Structured response → UI tabs (Assessment / Evidence / History)
 ```
 
-The **live demo runs without any paid API keys**. Risk scoring, feature drivers, RAG, memory, and safety layers work out of the box; explanation and recommendation use built-in fallbacks when `OPENAI_API_KEY` is unset.
+The **local demo runs without paid API keys**. Risk scoring, feature drivers, RAG, memory, and safety layers work out of the box; explanation and recommendation use built-in fallbacks when `OPENAI_API_KEY` is unset.
 
 Details: [`docs/architecture.md`](docs/architecture.md)
 
 ## Tech stack
 
-- **ML:** scikit-learn, LightGBM, pandas, joblib — training on Kaggle
+- **ML:** scikit-learn, LightGBM, pandas, joblib — local training
+- **GPU environment:** PyTorch CUDA, verified on the local RTX 5060 Ti; MLP integration is planned in Step 4
 - **Agents:** ChromaDB, local medical knowledge base; optional OpenAI for richer text (not required)
 - **Backend:** FastAPI, Uvicorn, Docker
 - **Frontend:** Next.js 15, TypeScript, Tailwind, TanStack Query, Recharts; Streamlit
 - **Deploy:** Vercel, Heroku, Docker; optional AWS App Runner + Terraform
 
-## Quick start (recommended)
+## Local setup (PowerShell)
 
-### 1. Clone and set up Python
+### 1. Install dependencies
 
-```bash
-git clone https://github.com/adit24dhaya/healthcare-agent-system.git
-cd healthcare-agent-system
-python3 -m venv .venv
-source .venv/bin/activate
-pip install -r requirements.txt
+Use Python 3.11 in `.venv` and Node.js 22 or later. The existing environment from Step 2 can be reused.
+
+```powershell
+.\.venv\Scripts\python.exe -m pip install -r requirements.txt
+.\.venv\Scripts\python.exe -m pip install -r requirements-cuda.txt
 ```
 
-### 2. Get the trained model
+### 2. Prepare local data and train
 
-```bash
-chmod +x scripts/kaggle_run.sh
-./scripts/kaggle_run.sh
+```powershell
+.\.venv\Scripts\python.exe scripts/download_training_data.py
+.\.venv\Scripts\python.exe scripts/train_diabetes_model.py
 ```
 
-Or copy an existing `artifacts/risk_model.joblib` into `artifacts/`.
+The dataset is downloaded from the [UCI BRFSS mirror](https://archive.ics.uci.edu/dataset/891/cdc+diabetes+health+indicators)
+to `data/diabetes_binary_health_indicators_BRFSS2015.csv`. Model outputs go to `artifacts/`.
+Both default paths are based on the project directory.
 
 ### 3. Configure environment
 
-```bash
-cp .env.example .env
-# OPENAI_API_KEY is optional — omit it to use rule-based explanation/recommendation
-export MODEL_ARTIFACT_PATH=./artifacts/risk_model.joblib
+```powershell
+Copy-Item .env.example .env
+Copy-Item web/.env.example web/.env.local
 ```
 
 ### 4. Run API + Next.js UI
 
 **Terminal 1 — API:**
 
-```bash
-uvicorn api.app:app --reload
+```powershell
+.\.venv\Scripts\python.exe -m uvicorn api.app:app --reload --env-file .env
 ```
 
 **Terminal 2 — Web UI:**
 
-```bash
-cd web && npm install && npm run dev
+```powershell
+cd web
+npm ci
+npm run dev
 ```
 
 Open **http://localhost:3000** (production portfolio UI) or **http://localhost:8501** with `streamlit run ui/app.py`.
@@ -157,16 +158,6 @@ docker compose up --build
 | Streamlit | http://localhost:8501 |
 | FastAPI | http://localhost:8000 |
 | API docs | http://localhost:8000/docs |
-
-## Train on Kaggle
-
-Training runs on Kaggle — your machine only pushes the script and downloads artifacts.
-
-```bash
-./scripts/kaggle_run.sh
-```
-
-See [`docs/kaggle_training.md`](docs/kaggle_training.md).
 
 ## API
 
@@ -185,16 +176,15 @@ curl -s http://127.0.0.1:8000/health
 
 Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 
-## Deploy (production)
+## Local paths
 
-**Current stack:** Next.js on **Vercel** (`web/`) + FastAPI on **Heroku** (Python buildpack). No OpenAI or Hugging Face keys are required for the hosted demo.
-
-| Platform | Role | Env vars |
-|----------|------|----------|
-| **Vercel** | Next.js UI (`web/`) | `API_BASE_URL`, `API_TOKEN` |
-| **Heroku** | FastAPI + model | `API_TOKEN`, `REQUIRE_API_TOKEN=true`, `MODEL_ARTIFACT_PATH`, `LOG_DIR` |
-
-See [`docs/deployment.md`](docs/deployment.md). Optional AWS path: [`docs/aws_deployment.md`](docs/aws_deployment.md).
+| Path | Contents |
+|------|----------|
+| `data/diabetes_binary_health_indicators_BRFSS2015.csv` | Full training dataset |
+| `models/training_pipeline.py` | Training pipeline |
+| `artifacts/` | Model, metrics and model card |
+| `data/chroma/` | Knowledge index and case memory |
+| `logs/` | Decision logs and runtime checks |
 
 ## Project structure
 
@@ -202,13 +192,13 @@ See [`docs/deployment.md`](docs/deployment.md). Optional AWS path: [`docs/aws_de
 healthcare-agent-system/
 ├── agents/           # Orchestrator, explainer, recommender, retriever
 ├── api/              # FastAPI app
-├── artifacts/        # metrics.json, model_card.md (joblib via Kaggle)
-├── kaggle/           # Kaggle training pipeline
-├── models/           # RiskModel + BRFSS feature mapping
+├── artifacts/        # Local model, metrics.json, model_card.md
+├── data/             # Local training CSV, knowledge base, memory
+├── models/           # RiskModel + local training pipeline
 ├── web/              # Next.js production UI
 ├── ui/               # Streamlit dashboard
 ├── infra/aws/        # Terraform (App Runner + ECR)
-├── scripts/          # kaggle_run.sh, train, evaluate
+├── scripts/          # Download data, train, evaluate locally
 └── tests/
 ```
 

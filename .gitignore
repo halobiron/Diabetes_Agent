@@ -5,6 +5,10 @@ __pycache__/
 logs/
 .coverage
 data/chroma/
+data/diabetes_binary_health_indicators_BRFSS2015.csv
+data/*.part
+.env
+web/.env.local
 artifacts/*.joblib
 artifacts/*.log
 web/.next/

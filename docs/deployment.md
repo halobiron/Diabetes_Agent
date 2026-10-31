@@ -41,7 +41,7 @@ The production model artifact is bundled in the Heroku slug (not in GitHub). To 
 
 ```bash
 git checkout -b heroku-deploy
-git add -f artifacts/risk_model.joblib   # after ./scripts/kaggle_run.sh
+git add -f artifacts/risk_model.joblib   # after local training
 git commit -m "Update model artifact for Heroku"
 git push heroku heroku-deploy:main
 git checkout main && git branch -D heroku-deploy
