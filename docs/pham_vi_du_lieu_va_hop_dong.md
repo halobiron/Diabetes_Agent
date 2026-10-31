@@ -11,6 +11,8 @@ Giữ bộ dữ liệu BRFSS với nhãn `Diabetes_binary`:
 - `0`: nhóm không tiểu đường theo dữ liệu.
 - `1`: nhóm tiền tiểu đường hoặc tiểu đường được gộp chung.
 
+`Diabetes_012` phân biệt không tiểu đường, tiền tiểu đường và tiểu đường, không phân biệt type 1/type 2. Có thể hỗ trợ riêng khi mở rộng bài toán ba lớp.
+
 Nguồn định nghĩa: [Kaggle](https://www.kaggle.com/datasets/alexteboul/diabetes-health-indicators-dataset), [UCI](https://archive.ics.uci.edu/dataset/891/cdc+diabetes+health+indicators).
 
 `probability` là xác suất ước tính cho nhóm `1`. Low/Medium/High là các khoảng điểm hiển thị, không phải ba giai đoạn bệnh. Nhãn hiện tại không xác định thời điểm phát bệnh tương lai.
@@ -31,7 +33,7 @@ Orchestrator gọi mô hình, điều phối các agent, áp dụng SafetyGuard 
 
 ## Các vấn đề đã xác định
 
-- Loader có thể chọn file nhãn không tương thích; mô hình/ngưỡng đang được chọn trên test; ánh xạ `bp → HighBP` cần đối chiếu dữ liệu nguồn.
+- Mô hình/ngưỡng đang được chọn trên test; ánh xạ `bp → HighBP` cần đối chiếu dữ liệu nguồn.
 - Bản đã kiểm tra thiếu artifact nên tự dùng mô hình mẫu 12 dòng.
 - Chưa có mô hình dự đoán deep learning, KB Neo4j và policy RL; RAG và bộ luật cần hoàn thiện.
 - Giải thích, điểm chất lượng dữ liệu và cách tìm ca tương tự cần chỉnh cho đúng ý nghĩa.

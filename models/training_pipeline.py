@@ -63,7 +63,6 @@ FEATURE_NAMES = [
 DATASET_SLUG = "alexteboul/diabetes-health-indicators-dataset"
 PREFERRED_CSV_NAMES = [
     "diabetes_binary_health_indicators_BRFSS2015.csv",
-    "diabetes_012_health_indicators_BRFSS2015.csv",
     "diabetes_binary_5050split_health_indicators_BRFSS2015.csv",
 ]
 TARGET_COLUMN = "Diabetes_binary"
@@ -79,15 +78,14 @@ def resolve_data_path(path):
         return data_path
 
     candidates = [data_path / name for name in PREFERRED_CSV_NAMES]
+    candidates.extend(sorted(data_path.glob("*.csv")))
     for candidate in candidates:
-        if candidate.exists():
+        if candidate.is_file() and TARGET_COLUMN in pd.read_csv(candidate, nrows=0).columns:
             return candidate
 
-    csv_files = sorted(data_path.glob("*.csv"))
-    if csv_files:
-        return csv_files[0]
-
-    raise FileNotFoundError(f"No CSV dataset found at {data_path}")
+    raise FileNotFoundError(
+        f"No CSV with '{TARGET_COLUMN}' for binary training found at {data_path}"
+    )
 
 
 def load_dataset_from_path(path):
@@ -96,6 +94,8 @@ def load_dataset_from_path(path):
     missing = [column for column in [TARGET_COLUMN, *FEATURE_NAMES] if column not in df]
     if missing:
         raise ValueError(f"Dataset is missing required columns: {', '.join(missing)}")
+    if not df[TARGET_COLUMN].isin([0, 1]).all():
+        raise ValueError(f"'{TARGET_COLUMN}' must contain only 0/1 for binary training.")
     return data_path, df[FEATURE_NAMES].copy(), df[TARGET_COLUMN].astype(int)
 
 
