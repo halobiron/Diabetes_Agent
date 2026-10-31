@@ -32,6 +32,20 @@ def test_assess_with_missing_glucose_uses_default():
     assert patient["glucose"] == model.default_glucose
 
 
+def test_assess_with_bmi_and_null_height_weight():
+    model = RiskModel()
+    model.train(_training_df())
+
+    prob, patient = model.assess(
+        {"age": 52, "bp": 140, "bmi": 30, "height_cm": None, "weight_kg": None}
+    )
+
+    assert 0 <= prob <= 1
+    assert patient["bmi"] == 30
+    assert patient["height_cm"] is None
+    assert patient["weight_kg"] is None
+
+
 def test_load_brfss_artifact_derives_features(tmp_path):
     rows = [
         {feature: 0 for feature in RiskModel.BRFSS_FEATURE_NAMES},

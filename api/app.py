@@ -4,7 +4,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -23,7 +23,7 @@ class PatientRequest(BaseModel):
     age: int = Field(..., ge=0, le=120)
     height_cm: Optional[float] = Field(None, ge=50, le=250)
     weight_kg: Optional[float] = Field(None, ge=2, le=300)
-    bmi: Optional[float] = Field(None, ge=0, le=80)
+    bmi: Optional[float] = Field(None, gt=0, le=80)
     bp: int = Field(..., ge=0, le=260)
     glucose: Optional[float] = Field(None, ge=0, le=500)
     high_chol: Optional[bool] = None
@@ -44,6 +44,12 @@ class PatientRequest(BaseModel):
     sex: Optional[str] = Field(None, pattern="^(female|male|0|1|F|M|f|m)$")
     education: Optional[int] = Field(None, ge=1, le=6)
     income: Optional[int] = Field(None, ge=1, le=8)
+
+    @model_validator(mode="after")
+    def require_body_measurements(self):
+        if self.bmi is None and (self.height_cm is None or self.weight_kg is None):
+            raise ValueError("Provide bmi or both height_cm and weight_kg.")
+        return self
 
 
 class ChatRequest(BaseModel):

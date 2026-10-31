@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 from agents.explainer import ExplanationAgent
@@ -14,7 +15,7 @@ from tools.safety import SafetyGuard
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "patients.csv"
 KNOWLEDGE_PATH = BASE_DIR / "data" / "medical_knowledge.jsonl"
-CHROMA_PATH = BASE_DIR / "data" / "chroma"
+CHROMA_PATH = Path(os.getenv("CHROMA_PATH", str(BASE_DIR / "data" / "chroma")))
 
 
 def build_agent():

@@ -155,8 +155,12 @@ class RiskModel:
 
         prepared = {
             "age": int(age),
-            "height_cm": float(patient["height_cm"]) if "height_cm" in patient else None,
-            "weight_kg": float(patient["weight_kg"]) if "weight_kg" in patient else None,
+            "height_cm": (
+                float(patient["height_cm"]) if patient.get("height_cm") is not None else None
+            ),
+            "weight_kg": (
+                float(patient["weight_kg"]) if patient.get("weight_kg") is not None else None
+            ),
             "bmi": round(bmi, 1),
             "bp": int(bp) if bp is not None else int(self._default_for("bp", 0)),
             "glucose": glucose,

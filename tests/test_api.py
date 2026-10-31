@@ -1,17 +1,29 @@
+import pytest
 from fastapi.testclient import TestClient
 
-from api.app import app
 
-client = TestClient(app)
+@pytest.fixture(scope="module")
+def client(tmp_path_factory):
+    test_dir = tmp_path_factory.mktemp("api")
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setenv("OPENAI_API_KEY", "")
+        patch.setenv("REQUIRE_API_TOKEN", "false")
+        patch.setenv("CHROMA_PATH", str(test_dir / "chroma"))
+        patch.setenv("LOG_DIR", str(test_dir / "logs"))
+        patch.setenv("MODEL_ARTIFACT_PATH", str(test_dir / "missing-model.joblib"))
+        from api.app import app
+
+        with TestClient(app) as test_client:
+            yield test_client
 
 
-def test_health_endpoint():
+def test_health_endpoint(client):
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json()["status"] == "ok"
 
 
-def test_v1_health_endpoint():
+def test_v1_health_endpoint(client):
     response = client.get("/v1/health")
     assert response.status_code == 200
     body = response.json()
@@ -19,7 +31,7 @@ def test_v1_health_endpoint():
     assert body["version"] == "v1"
 
 
-def test_predict_summary_contains_safety():
+def test_predict_summary_contains_safety(client):
     payload = {
         "age": 58,
         "height_cm": 168,
@@ -40,7 +52,7 @@ def test_predict_summary_contains_safety():
     }
 
 
-def test_predict_summary_v1_contains_request_id():
+def test_predict_summary_v1_contains_request_id(client):
     payload = {
         "age": 42,
         "height_cm": 172,
@@ -53,3 +65,35 @@ def test_predict_summary_v1_contains_request_id():
     body = response.json()
     assert isinstance(body["request_id"], str)
     assert len(body["request_id"]) > 8
+
+
+@pytest.mark.parametrize(
+    "endpoint, measurements, expected_bmi",
+    [
+        ("/predict", {"bmi": 30, "height_cm": None, "weight_kg": None}, 30),
+        ("/v1/predict", {"height_cm": 170, "weight_kg": 80}, 27.7),
+    ],
+)
+def test_predict_accepts_body_measurements(client, endpoint, measurements, expected_bmi):
+    response = client.post(endpoint, json={"age": 52, "bp": 140, **measurements})
+
+    assert response.status_code == 200
+    assert response.json()["patient"]["bmi"] == expected_bmi
+
+
+@pytest.mark.parametrize("measurements", [{}, {"height_cm": 170}, {"weight_kg": 80}])
+def test_predict_requires_bmi_or_height_and_weight(client, measurements):
+    response = client.post("/v1/predict", json={"age": 52, "bp": 140, **measurements})
+
+    assert response.status_code == 422
+    assert any(
+        "Provide bmi or both height_cm and weight_kg." in error["msg"]
+        for error in response.json()["detail"]
+    )
+
+
+def test_predict_rejects_zero_bmi(client):
+    response = client.post("/v1/predict", json={"age": 52, "bp": 140, "bmi": 0})
+
+    assert response.status_code == 422
+    assert response.json()["detail"][0]["loc"][-1] == "bmi"

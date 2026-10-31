@@ -4,6 +4,8 @@ joblib
 lightgbm
 streamlit
 fastapi
+pydantic>=2,<3
+httpx
 uvicorn
 openai
 langchain
