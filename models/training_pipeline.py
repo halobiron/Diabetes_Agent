@@ -67,6 +67,8 @@ PREFERRED_CSV_NAMES = [
 ]
 TARGET_COLUMN = "Diabetes_binary"
 RANDOM_STATE = 42
+TEST_SIZE = 0.2
+VALIDATION_SIZE = 0.25  # of the non-test rows -> 60/20/20 train/validation/test
 CV_FOLDS = 5
 TUNE_ITERATIONS = 12
 TOP_K_TO_TUNE = 2
@@ -197,8 +199,8 @@ def cross_val_roc_auc(name, model, X, y, sample_weight):
         y_prob = estimator.predict_proba(X.iloc[val_idx])[:, 1]
         scores.append(roc_auc_score(y.iloc[val_idx], y_prob))
     return {
-        "cv_roc_auc_mean": round(float(np.mean(scores)), 5),
-        "cv_roc_auc_std": round(float(np.std(scores)), 5),
+        "roc_auc_mean": round(float(np.mean(scores)), 5),
+        "roc_auc_std": round(float(np.std(scores)), 5),
     }
 
 
@@ -223,7 +225,7 @@ def tune_model(name, model, X_train, y_train, sample_weight):
         search.fit(X_train, y_train)
     return search.best_estimator_, {
         "best_params": search.best_params_,
-        "cv_roc_auc_tune": round(float(search.best_score_), 5),
+        "cv_roc_auc": round(float(search.best_score_), 5),
     }
 
 
@@ -250,10 +252,12 @@ def best_f1_threshold(y_true, y_prob):
     return thresholds[int(np.argmax(f1_scores))]
 
 
-def evaluate_model(model, X_test, y_test):
+def evaluate_model(model, X_test, y_test, threshold=None):
+    """Score a model; pick the F1 threshold from this data only when none is given."""
     y_prob = model.predict_proba(X_test)[:, 1]
     default_pred = (y_prob >= 0.5).astype(int)
-    threshold = best_f1_threshold(y_test, y_prob)
+    if threshold is None:
+        threshold = best_f1_threshold(y_test, y_prob)
     tuned_pred = (y_prob >= threshold).astype(int)
     tn, fp, fn, tp = confusion_matrix(y_test, tuned_pred).ravel()
     return {
@@ -281,18 +285,25 @@ def evaluate_model(model, X_test, y_test):
 def rank_models(cv_results):
     return sorted(
         cv_results.items(),
-        key=lambda item: (item[1]["cv_roc_auc_mean"], -item[1]["cv_roc_auc_std"]),
+        key=lambda item: (item[1]["roc_auc_mean"], -item[1]["roc_auc_std"]),
         reverse=True,
     )
 
 
 def train_production_model(X, y, data_path, output_dir, explanation_sample_size=2500):
-    X_train, X_test, y_train, y_test = train_test_split(
+    X_dev, X_test, y_dev, y_test = train_test_split(
         X,
         y,
-        test_size=0.2,
+        test_size=TEST_SIZE,
         random_state=RANDOM_STATE,
         stratify=y,
+    )
+    X_train, X_val, y_train, y_val = train_test_split(
+        X_dev,
+        y_dev,
+        test_size=VALIDATION_SIZE,
+        random_state=RANDOM_STATE,
+        stratify=y_dev,
     )
     sample_weight = class_sample_weight(y_train)
     base_models = candidate_models()
@@ -307,7 +318,7 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
 
     final_models = {}
     tuning_metadata = {}
-    test_metrics = {}
+    validation_metrics = {}
 
     for name, model in base_models.items():
         estimator = clone(model)
@@ -318,18 +329,25 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
         else:
             fit_estimator(name, estimator, X_train, y_train, sample_weight)
 
-        calibrated = calibrate_model(estimator, X_train, y_train)
-        final_models[name] = calibrated
-        test_metrics[name] = {
-            **cv_results[name],
-            **(tuning_metadata.get(name) or {}),
-            **evaluate_model(calibrated, X_test, y_test),
-        }
+        final_models[name] = calibrate_model(estimator, X_train, y_train)
+        validation_metrics[name] = evaluate_model(final_models[name], X_val, y_val)
 
+    # Model and threshold are fixed on validation; test is scored once, afterwards.
     selected_name = max(
-        test_metrics.items(),
+        validation_metrics.items(),
         key=lambda item: (item[1]["roc_auc"], item[1]["f1"]),
     )[0]
+    selected_threshold = validation_metrics[selected_name]["selected_threshold"]
+
+    model_metrics = {}
+    for name, model in final_models.items():
+        threshold = validation_metrics[name]["selected_threshold"]
+        model_metrics[name] = {
+            "cv": cv_results[name],
+            **({"tuning": tuning_metadata[name]} if tuning_metadata.get(name) else {}),
+            "validation": validation_metrics[name],
+            "test": evaluate_model(model, X_test, y_test, threshold=threshold),
+        }
 
     metadata = {
         "schema_version": 2,
@@ -339,14 +357,16 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
         "target": TARGET_COLUMN,
         "rows_total": int(len(X)),
         "rows_train": int(len(X_train)),
+        "rows_validation": int(len(X_val)),
         "rows_test": int(len(X_test)),
+        "selected_threshold": selected_threshold,
         "feature_names": FEATURE_NAMES,
         "selected_model": selected_name,
-        "selection_method": f"{CV_FOLDS}-fold_cv_then_holdout_test",
+        "selection_method": f"{CV_FOLDS}-fold_cv_tuning_then_validation_selection_then_holdout_test",
         "calibration": "isotonic_cv3",
         "tuned_models": sorted(tune_targets),
         "lightgbm_available": HAS_LIGHTGBM,
-        "metrics": test_metrics,
+        "metrics": model_metrics,
         "sklearn_version": sklearn.__version__,
     }
 
@@ -371,13 +391,14 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
     write_model_card(output_dir / "model_card.md", metadata)
 
     print(f"Selected model: {selected_name}")
-    print(json.dumps(test_metrics[selected_name], indent=2))
+    print(json.dumps(model_metrics[selected_name], indent=2))
     print(f"Saved outputs under {output_dir}")
     return metadata
 
 
 def write_model_card(path, metadata):
     metrics = metadata["metrics"][metadata["selected_model"]]
+    test = metrics["test"]
     path.write_text(
         f"""# Healthcare Diabetes Risk Model Card
 
@@ -403,12 +424,14 @@ healthcare AI prototype. It is not a diagnostic medical device.
 ## Selected Model
 
 - Model: `{metadata["selected_model"]}`
-- CV ROC AUC: {metrics["cv_roc_auc_mean"]} (+/- {metrics["cv_roc_auc_std"]})
-- Holdout ROC AUC: {metrics["roc_auc"]}
-- Average precision: {metrics["average_precision"]}
-- Brier score: {metrics["brier_score"]}
-- Tuned F1: {metrics["f1"]}
-- Tuned threshold: {metrics["selected_threshold"]}
+- CV ROC AUC: {metrics["cv"]["roc_auc_mean"]} (+/- {metrics["cv"]["roc_auc_std"]})
+- Validation ROC AUC (selection): {metrics["validation"]["roc_auc"]}
+- Holdout test ROC AUC: {test["roc_auc"]}
+- Average precision: {test["average_precision"]}
+- Brier score: {test["brier_score"]}
+- Threshold (chosen on validation): {test["selected_threshold"]}
+- Test F1 at that threshold: {test["f1"]}
+- Test precision / recall: {test["precision"]} / {test["recall"]}
 """,
         encoding="utf-8",
     )
