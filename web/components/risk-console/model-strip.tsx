@@ -6,7 +6,7 @@ import { ModelItem } from "./shared-ui";
 export function ModelStrip({ result }: { result: PredictionResult }) {
   const model = result.model;
   const selectedModel = model?.selected_model;
-  const metrics = selectedModel ? model?.metrics?.[selectedModel] : undefined;
+  const metrics = selectedModel ? model?.metrics?.[selectedModel]?.test : undefined;
 
   return (
     <section className="console-panel grid gap-3 rounded-lg p-4 md:grid-cols-5">

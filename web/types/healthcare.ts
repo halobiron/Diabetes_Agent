@@ -88,13 +88,20 @@ export type HistoryResponse = {
   records: MemoryRecord[];
 };
 
-export type ModelMetrics = {
+export type EvalMetrics = {
   roc_auc?: number;
   average_precision?: number;
   brier_score?: number;
   f1?: number;
   selected_threshold?: number;
   [key: string]: unknown;
+};
+
+export type ModelMetrics = {
+  cv?: { roc_auc_mean?: number; roc_auc_std?: number };
+  tuning?: { best_params?: Record<string, unknown>; cv_roc_auc?: number };
+  validation?: EvalMetrics;
+  test?: EvalMetrics;
 };
 
 export type ModelMetadata = {

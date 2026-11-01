@@ -262,7 +262,7 @@ model_meta = result.get("model") or {}
 if model_meta:
     selected_name = model_meta.get("selected_model", "—")
     metrics_block = (model_meta.get("metrics") or {}).get(selected_name, {})
-    roc_auc = metrics_block.get("roc_auc")
+    roc_auc = (metrics_block.get("test") or {}).get("roc_auc")
     rows_total = model_meta.get("rows_total")
     calibration = model_meta.get("calibration") or "—"
     dataset_slug = model_meta.get("dataset_slug") or "—"
