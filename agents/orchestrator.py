@@ -22,7 +22,17 @@ class Orchestrator:
 
     def run(self, patient_data):
         prob, patient = self.model.assess(patient_data)
-        risk = classify_risk(prob, self.model.artifact_metadata.get("risk_bands"))
+        risk = classify_risk(prob, self.model.risk_bands)
+        threshold = self.model.decision_threshold
+        prediction = {
+            "probability": prob,
+            # 1 = flagged by the binary threshold chosen on validation; None when unknown.
+            "label": int(prob >= threshold) if threshold is not None else None,
+            "threshold": threshold,
+            "risk_level": risk,
+            "model": self.model.artifact_metadata.get("selected_model"),
+            "model_version": self.model.model_version,
+        }
         feature_explanation = (
             self.feature_explainer.explain(patient)
             if self.feature_explainer is not None
@@ -65,6 +75,7 @@ class Orchestrator:
         return {
             "probability": prob,
             "risk": risk,
+            "prediction": prediction,
             "patient": patient,
             "feature_explanation": feature_explanation,
             "retrieved_context": retrieved_context,

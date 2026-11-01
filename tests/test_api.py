@@ -97,3 +97,16 @@ def test_predict_rejects_zero_bmi(client):
 
     assert response.status_code == 422
     assert response.json()["detail"][0]["loc"][-1] == "bmi"
+
+
+def test_predict_returns_probability_label_and_model_version(client):
+    response = client.post(
+        "/v1/predict",
+        json={"age": 52, "bp": 140, "height_cm": 170, "weight_kg": 80},
+    )
+    assert response.status_code == 200
+    prediction = response.json()["prediction"]
+    assert 0 <= prediction["probability"] <= 1
+    assert prediction["label"] in {0, 1, None}  # None: legacy model without a threshold
+    assert prediction["risk_level"] in {"Low", "Medium", "High"}
+    assert prediction["model_version"]

@@ -4,7 +4,6 @@ import joblib
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
-
 # BRFSS HighBP is a self-reported diagnosis, not a reading. A systolic value
 # >= 130 mmHg (ACC/AHA stage 1) is used as a proxy when only bp is given.
 HIGH_BP_SYSTOLIC_CUTOFF = 130
@@ -104,6 +103,18 @@ class RiskModel:
 
         prob = self.model.predict_proba(row)[0][1]
         return float(prob), patient
+
+    @property
+    def risk_bands(self):
+        return self.artifact_metadata.get("risk_bands")
+
+    @property
+    def decision_threshold(self):
+        return self.artifact_metadata.get("selected_threshold")
+
+    @property
+    def model_version(self):
+        return self.artifact_metadata.get("model_version", "legacy-unversioned")
 
     def predict(self, patient_data):
         prob, _patient = self.assess(patient_data)
