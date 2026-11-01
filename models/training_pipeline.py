@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import importlib.util
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -30,12 +31,16 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 
+from models.mlp import TorchMLPClassifier
+
 try:
     from lightgbm import LGBMClassifier
 
     HAS_LIGHTGBM = True
 except Exception:
     HAS_LIGHTGBM = False
+
+HAS_TORCH = importlib.util.find_spec("torch") is not None
 
 FEATURE_NAMES = [
     "HighBP",
@@ -153,6 +158,13 @@ def candidate_models():
             random_state=RANDOM_STATE,
             verbose=-1,
         )
+    if HAS_TORCH:
+        models["mlp"] = Pipeline(
+            [
+                ("scaler", StandardScaler()),
+                ("classifier", TorchMLPClassifier(random_state=RANDOM_STATE)),
+            ]
+        )
     return models
 
 
@@ -172,6 +184,12 @@ def tuning_grids():
             "min_child_samples": [20, 40, 80],
             "subsample": [0.8, 1.0],
             "colsample_bytree": [0.8, 1.0],
+        },
+        "mlp": {
+            "classifier__hidden_layers": [(64, 32), (128, 64), (256, 128)],
+            "classifier__dropout": [0.1, 0.2, 0.3],
+            "classifier__learning_rate": [3e-4, 1e-3, 3e-3],
+            "classifier__weight_decay": [1e-5, 1e-4, 1e-3],
         },
     }
 
@@ -217,7 +235,7 @@ def tune_model(name, model, X_train, y_train, sample_weight):
         scoring="roc_auc",
         cv=3,
         random_state=RANDOM_STATE,
-        n_jobs=-1,
+        n_jobs=1 if name == "mlp" else -1,  # one process owns the GPU
         verbose=0,
     )
     if uses_sample_weight(name):
@@ -371,9 +389,11 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
             "test": evaluate_model(model, X_test, y_test, threshold=threshold),
         }
 
+    trained_at = datetime.now(timezone.utc)
     metadata = {
         "schema_version": 2,
-        "trained_at": datetime.now(timezone.utc).isoformat(),
+        "trained_at": trained_at.isoformat(),
+        "model_version": f"{selected_name}-{trained_at:%Y%m%d%H%M%S}",
         "dataset_slug": DATASET_SLUG,
         "dataset_path": str(data_path),
         "target": TARGET_COLUMN,

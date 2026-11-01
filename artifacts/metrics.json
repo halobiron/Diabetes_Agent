@@ -1,6 +1,7 @@
 {
   "schema_version": 2,
-  "trained_at": "2026-11-01T13:29:36.773376+00:00",
+  "trained_at": "2026-11-01T13:56:25.018205+00:00",
+  "model_version": "mlp-20261101135625",
   "dataset_slug": "alexteboul/diabetes-health-indicators-dataset",
   "dataset_path": "C:\\Users\\tranh\\OneDrive\\Documents\\K\u00ec 1 - N\u0103m 4\\HTTM\\Agent\\healthcare-agent-system\\data\\diabetes_binary_health_indicators_BRFSS2015.csv",
   "target": "Diabetes_binary",
@@ -8,10 +9,10 @@
   "rows_train": 152208,
   "rows_validation": 50736,
   "rows_test": 50736,
-  "selected_threshold": 0.26146,
+  "selected_threshold": 0.23906,
   "risk_bands": {
-    "low_max": 0.26146,
-    "high_min": 0.39731,
+    "low_max": 0.23906,
+    "high_min": 0.40992,
     "high_min_rule": "lowest validation probability with precision >= 0.5"
   },
   "feature_names": [
@@ -37,12 +38,12 @@
     "Education",
     "Income"
   ],
-  "selected_model": "lightgbm",
+  "selected_model": "mlp",
   "selection_method": "5-fold_cv_tuning_then_validation_selection_then_holdout_test",
   "calibration": "isotonic_cv3",
   "tuned_models": [
     "hist_gradient_boosting",
-    "lightgbm"
+    "mlp"
   ],
   "lightgbm_available": true,
   "metrics": {
@@ -199,55 +200,102 @@
         "roc_auc_mean": 0.82839,
         "roc_auc_std": 0.00244
       },
-      "tuning": {
-        "best_params": {
-          "subsample": 0.8,
-          "num_leaves": 31,
-          "n_estimators": 200,
-          "min_child_samples": 40,
-          "learning_rate": 0.03,
-          "colsample_bytree": 1.0
-        },
-        "cv_roc_auc": 0.83032
-      },
       "validation": {
-        "roc_auc": 0.8279,
-        "average_precision": 0.43204,
-        "brier_score": 0.09686,
-        "accuracy_at_0_5": 0.8667,
-        "precision_at_0_5": 0.59206,
-        "recall_at_0_5": 0.1392,
-        "f1_at_0_5": 0.2254,
-        "selected_threshold": 0.26146,
-        "accuracy": 0.82034,
-        "precision": 0.39943,
-        "recall": 0.57476,
-        "f1": 0.47132,
+        "roc_auc": 0.82762,
+        "average_precision": 0.43356,
+        "brier_score": 0.09682,
+        "accuracy_at_0_5": 0.86666,
+        "precision_at_0_5": 0.58696,
+        "recall_at_0_5": 0.14514,
+        "f1_at_0_5": 0.23273,
+        "selected_threshold": 0.23617,
+        "accuracy": 0.80791,
+        "precision": 0.38212,
+        "recall": 0.61381,
+        "f1": 0.47102,
         "confusion_matrix": {
-          "true_negative": 37558,
-          "false_positive": 6109,
-          "false_negative": 3006,
-          "true_positive": 4063
+          "true_negative": 36651,
+          "false_positive": 7016,
+          "false_negative": 2730,
+          "true_positive": 4339
         }
       },
       "test": {
-        "roc_auc": 0.82666,
-        "average_precision": 0.42163,
+        "roc_auc": 0.82641,
+        "average_precision": 0.42234,
         "brier_score": 0.09746,
-        "accuracy_at_0_5": 0.86554,
-        "precision_at_0_5": 0.57312,
-        "recall_at_0_5": 0.13694,
-        "f1_at_0_5": 0.22106,
-        "selected_threshold": 0.26146,
-        "accuracy": 0.81885,
-        "precision": 0.39553,
-        "recall": 0.56826,
-        "f1": 0.46642,
+        "accuracy_at_0_5": 0.86516,
+        "precision_at_0_5": 0.56319,
+        "recall_at_0_5": 0.14373,
+        "f1_at_0_5": 0.22901,
+        "selected_threshold": 0.23617,
+        "accuracy": 0.80674,
+        "precision": 0.3804,
+        "recall": 0.6155,
+        "f1": 0.4702,
         "confusion_matrix": {
-          "true_negative": 37528,
-          "false_positive": 6139,
-          "false_negative": 3052,
-          "true_positive": 4017
+          "true_negative": 36580,
+          "false_positive": 7087,
+          "false_negative": 2718,
+          "true_positive": 4351
+        }
+      }
+    },
+    "mlp": {
+      "cv": {
+        "roc_auc_mean": 0.83049,
+        "roc_auc_std": 0.00239
+      },
+      "tuning": {
+        "best_params": {
+          "classifier__weight_decay": 1e-05,
+          "classifier__learning_rate": 0.001,
+          "classifier__hidden_layers": [
+            64,
+            32
+          ],
+          "classifier__dropout": 0.2
+        },
+        "cv_roc_auc": 0.83044
+      },
+      "validation": {
+        "roc_auc": 0.82828,
+        "average_precision": 0.42705,
+        "brier_score": 0.09701,
+        "accuracy_at_0_5": 0.86611,
+        "precision_at_0_5": 0.57218,
+        "recall_at_0_5": 0.15476,
+        "f1_at_0_5": 0.24363,
+        "selected_threshold": 0.23906,
+        "accuracy": 0.80911,
+        "precision": 0.384,
+        "recall": 0.61253,
+        "f1": 0.47206,
+        "confusion_matrix": {
+          "true_negative": 36721,
+          "false_positive": 6946,
+          "false_negative": 2739,
+          "true_positive": 4330
+        }
+      },
+      "test": {
+        "roc_auc": 0.82581,
+        "average_precision": 0.41441,
+        "brier_score": 0.09783,
+        "accuracy_at_0_5": 0.86479,
+        "precision_at_0_5": 0.55389,
+        "recall_at_0_5": 0.15193,
+        "f1_at_0_5": 0.23845,
+        "selected_threshold": 0.23906,
+        "accuracy": 0.80708,
+        "precision": 0.37906,
+        "recall": 0.60277,
+        "f1": 0.46543,
+        "confusion_matrix": {
+          "true_negative": 36687,
+          "false_positive": 6980,
+          "false_negative": 2808,
+          "true_positive": 4261
         }
       }
     }
