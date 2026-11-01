@@ -22,7 +22,7 @@ class Orchestrator:
 
     def run(self, patient_data):
         prob, patient = self.model.assess(patient_data)
-        risk = classify_risk(prob)
+        risk = classify_risk(prob, self.model.artifact_metadata.get("risk_bands"))
         feature_explanation = (
             self.feature_explainer.explain(patient)
             if self.feature_explainer is not None

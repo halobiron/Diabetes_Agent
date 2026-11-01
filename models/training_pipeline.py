@@ -72,6 +72,7 @@ VALIDATION_SIZE = 0.25  # of the non-test rows -> 60/20/20 train/validation/test
 CV_FOLDS = 5
 TUNE_ITERATIONS = 12
 TOP_K_TO_TUNE = 2
+HIGH_RISK_MIN_PRECISION = 0.5  # "High" band: at least half of flagged validation cases are positive
 
 
 def resolve_data_path(path):
@@ -252,6 +253,15 @@ def best_f1_threshold(y_true, y_prob):
     return thresholds[int(np.argmax(f1_scores))]
 
 
+def high_risk_cutoff(y_true, y_prob, low_max, min_precision=HIGH_RISK_MIN_PRECISION):
+    """Lowest probability above low_max whose flagged cases reach min_precision."""
+    precision, _recall, thresholds = precision_recall_curve(y_true, y_prob)
+    candidates = [
+        float(t) for p, t in zip(precision[:-1], thresholds) if p >= min_precision and t > low_max
+    ]
+    return min(candidates) if candidates else None
+
+
 def evaluate_model(model, X_test, y_test, threshold=None):
     """Score a model; pick the F1 threshold from this data only when none is given."""
     y_prob = model.predict_proba(X_test)[:, 1]
@@ -338,6 +348,18 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
         key=lambda item: (item[1]["roc_auc"], item[1]["f1"]),
     )[0]
     selected_threshold = validation_metrics[selected_name]["selected_threshold"]
+    # Binary flag = prob >= selected_threshold. Low/Medium/High bands are derived from it:
+    # Low < selected_threshold <= Medium < high_min <= High (both cut points fixed on validation).
+    high_min = high_risk_cutoff(
+        y_val,
+        final_models[selected_name].predict_proba(X_val)[:, 1],
+        selected_threshold,
+    )
+    risk_bands = {
+        "low_max": selected_threshold,
+        "high_min": round(high_min, 5) if high_min is not None else None,
+        "high_min_rule": f"lowest validation probability with precision >= {HIGH_RISK_MIN_PRECISION}",
+    }
 
     model_metrics = {}
     for name, model in final_models.items():
@@ -360,6 +382,7 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
         "rows_validation": int(len(X_val)),
         "rows_test": int(len(X_test)),
         "selected_threshold": selected_threshold,
+        "risk_bands": risk_bands,
         "feature_names": FEATURE_NAMES,
         "selected_model": selected_name,
         "selection_method": f"{CV_FOLDS}-fold_cv_tuning_then_validation_selection_then_holdout_test",

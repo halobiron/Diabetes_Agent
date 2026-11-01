@@ -1,6 +1,6 @@
 {
   "schema_version": 2,
-  "trained_at": "2026-11-01T11:24:38.170888+00:00",
+  "trained_at": "2026-11-01T13:29:36.773376+00:00",
   "dataset_slug": "alexteboul/diabetes-health-indicators-dataset",
   "dataset_path": "C:\\Users\\tranh\\OneDrive\\Documents\\K\u00ec 1 - N\u0103m 4\\HTTM\\Agent\\healthcare-agent-system\\data\\diabetes_binary_health_indicators_BRFSS2015.csv",
   "target": "Diabetes_binary",
@@ -9,6 +9,11 @@
   "rows_validation": 50736,
   "rows_test": 50736,
   "selected_threshold": 0.26146,
+  "risk_bands": {
+    "low_max": 0.26146,
+    "high_min": 0.39731,
+    "high_min_rule": "lowest validation probability with precision >= 0.5"
+  },
   "feature_names": [
     "HighBP",
     "HighChol",

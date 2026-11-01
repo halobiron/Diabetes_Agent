@@ -5,6 +5,11 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
 
+# BRFSS HighBP is a self-reported diagnosis, not a reading. A systolic value
+# >= 130 mmHg (ACC/AHA stage 1) is used as a proxy when only bp is given.
+HIGH_BP_SYSTOLIC_CUTOFF = 130
+
+
 class RiskModel:
     LEGACY_FEATURE_NAMES = ["age", "bmi", "bp", "glucose"]
     BRFSS_FEATURE_NAMES = [
@@ -149,7 +154,7 @@ class RiskModel:
         bp = self._get(patient, "bp", "blood_pressure")
         high_bp = self._get(patient, "high_bp", "HighBP")
         if high_bp is None and bp is not None:
-            high_bp = 1 if float(bp) >= 130 else 0
+            high_bp = 1 if float(bp) >= HIGH_BP_SYSTOLIC_CUTOFF else 0
 
         sex = self._coerce_sex(self._get(patient, "sex", "Sex"), self._default_for("Sex"))
 
