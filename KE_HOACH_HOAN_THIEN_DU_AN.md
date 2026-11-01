@@ -63,7 +63,6 @@ Kết quả: MLP đứng thứ 2 theo CV (0,8305) nên được tuning, và đư
 ### Bước 5 — Chạy đúng mô hình đã huấn luyện
 
 - [x] Cung cấp artifact và kiểm tra tải được khi khởi động.
-- [ ] Báo rõ khi thiếu mô hình; chỉ dùng CSV 12 dòng trong chế độ thử nghiệm; hiển thị đúng mô hình đang chạy.
 
 ### Bước 6 — Xây KB Neo4j
 
