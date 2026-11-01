@@ -55,8 +55,10 @@ Kiểm tra: 14 tests đạt, coverage 62,2%; Python lint/format và frontend lin
 
 ### Bước 4 — Bổ sung deep learning
 
-- [ ] Huấn luyện MLP, so sánh với các mô hình nền và lưu mô hình cùng tiền xử lý.
-- [ ] Tích hợp dự đoán vào Orchestrator; trả xác suất, nhãn và phiên bản mô hình.
+- [x] Huấn luyện MLP (`models/mlp.py`, PyTorch GPU), so sánh với 4 mô hình nền bằng cùng quy trình CV → validation → test; lưu cùng `StandardScaler` trong một Pipeline đã hiệu chuẩn. Dự đoán chạy bằng NumPy nên không cần torch khi triển khai.
+- [x] Orchestrator trả thêm khối `prediction` gồm xác suất, nhãn nhị phân (theo ngưỡng validation), mức rủi ro, tên và `model_version` của mô hình.
+
+Kết quả: MLP đứng thứ 2 theo CV (0,8305) nên được tuning, và được chọn theo validation AUC (0,8283 so với 0,8278 của hist_gradient_boosting). Chênh lệch này nằm trong nhiễu; trên test MLP đạt 0,8258 so với 0,8266, nên MLP và các mô hình boosting tương đương. Do MLP chiếm suất tuning thứ 2, LightGBM chạy tham số mặc định lần này.
 
 ### Bước 5 — Chạy đúng mô hình đã huấn luyện
 

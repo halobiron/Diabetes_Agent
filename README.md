@@ -93,7 +93,7 @@ Details: [`docs/architecture.md`](docs/architecture.md)
 ## Tech stack
 
 - **ML:** scikit-learn, LightGBM, pandas, joblib — local training
-- **GPU environment:** PyTorch CUDA, verified on the local RTX 5060 Ti; MLP integration is planned in Step 4
+- **GPU environment:** PyTorch CUDA, verified on the local RTX 5060 Ti; trains the MLP candidate (optional, inference runs on NumPy without torch)
 - **Agents:** ChromaDB, local medical knowledge base; optional OpenAI for richer text (not required)
 - **Backend:** FastAPI, Uvicorn, Docker
 - **Frontend:** Next.js 15, TypeScript, Tailwind, TanStack Query, Recharts; Streamlit
