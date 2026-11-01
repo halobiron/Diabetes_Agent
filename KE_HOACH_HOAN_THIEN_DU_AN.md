@@ -50,7 +50,7 @@ Kiểm tra: 14 tests đạt, coverage 62,2%; Python lint/format và frontend lin
 ### Bước 3 — Sửa dữ liệu và đánh giá mô hình
 
 - [x] Chế độ nhị phân chỉ tự chọn CSV có `Diabetes_binary` và kiểm tra nhãn 0/1; hỗ trợ `012` sẽ là chế độ ba lớp riêng nếu cần mở rộng.
-- [ ] Chọn mô hình và ngưỡng trên train/validation; dùng test đánh giá cuối cùng, rồi cập nhật metrics.
+- [x] Chọn mô hình và ngưỡng trên validation (chia 60/20/20); test chỉ đánh giá cuối cùng; đã cập nhật `artifacts/metrics.json` và model card.
 - [ ] Kiểm tra ánh xạ đặc trưng, nhất là `bp → HighBP`; xác định riêng ngưỡng nhị phân và các mức Low/Medium/High.
 
 ### Bước 4 — Bổ sung deep learning
