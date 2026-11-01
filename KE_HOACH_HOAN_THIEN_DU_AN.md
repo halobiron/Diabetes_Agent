@@ -51,7 +51,7 @@ Kiểm tra: 14 tests đạt, coverage 62,2%; Python lint/format và frontend lin
 
 - [x] Chế độ nhị phân chỉ tự chọn CSV có `Diabetes_binary` và kiểm tra nhãn 0/1; hỗ trợ `012` sẽ là chế độ ba lớp riêng nếu cần mở rộng.
 - [x] Chọn mô hình và ngưỡng trên validation (chia 60/20/20); test chỉ đánh giá cuối cùng; đã cập nhật `artifacts/metrics.json` và model card.
-- [ ] Kiểm tra ánh xạ đặc trưng, nhất là `bp → HighBP`; xác định riêng ngưỡng nhị phân và các mức Low/Medium/High.
+- [x] Kiểm tra ánh xạ đặc trưng, nhất là `bp → HighBP`; xác định riêng ngưỡng nhị phân và các mức Low/Medium/High. Chi tiết tại [Ánh xạ đặc trưng và ngưỡng rủi ro](docs/anh_xa_dac_trung_va_nguong_rui_ro.md).
 
 ### Bước 4 — Bổ sung deep learning
 
