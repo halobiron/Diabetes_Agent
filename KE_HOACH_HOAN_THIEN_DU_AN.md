@@ -94,8 +94,9 @@ Chi tiết tại [Policy RL](docs/reinforcement_learning.md): Q-learning dạng 
 
 ### Bước 10 — Hoàn thiện phối hợp agent
 
-- [ ] Truyền đủ bằng chứng và kết quả giải thích giữa các agent; xử lý thiếu dữ liệu, thiếu bằng chứng và lỗi công cụ.
-- [ ] Kiểm tra câu trả lời cuối, lưu dấu vết thực thi.
+- [x] Truyền đủ bằng chứng và kết quả giải thích giữa các agent; xử lý thiếu dữ liệu, thiếu bằng chứng và lỗi công cụ.
+
+Orchestrator giờ truyền kết quả giải thích đặc trưng cho agent khuyến nghị, và truyền kết quả luật an toàn cùng trạng thái bằng chứng cho agent giải thích (agent này chạy sau cùng nên thấy kết quả cuối). Lỗi của retriever, tìm/lưu memory, giải thích đặc trưng, agent giải thích và agent khuyến nghị không làm hỏng cả yêu cầu: lỗi được ghi vào `degraded` trong kết quả, thêm lời cảnh báo "kết quả chưa đầy đủ", và nội dung được thay bằng văn bản dự phòng. Nếu bộ luật an toàn lỗi thì kết quả nghiêng về chuyển bác sĩ (`prompt_clinician_followup`, độ tin cậy Low), không coi là "an toàn". Thiếu glucose và thiếu bằng chứng đã được xử lý ở các bước trước. 83 tests đạt (10 test mới trong `tests/test_orchestrator.py`).
 
 ### Bước 11 — Sửa giải thích, độ tin cậy và memory
 

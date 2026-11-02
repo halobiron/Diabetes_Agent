@@ -1,6 +1,10 @@
+import logging
+
 from agents.retriever import evidence_status
 from rl.environment import TERMINAL_ACTIONS, encode_state
 from tools.risk_classifier import classify_risk
+
+logger = logging.getLogger(__name__)
 
 MAX_POLICY_STEPS = 3
 
@@ -39,26 +43,24 @@ class Orchestrator:
             "model": self.model.artifact_metadata.get("selected_model"),
             "model_version": self.model.model_version,
         }
-        feature_explanation = (
-            self.feature_explainer.explain(patient)
-            if self.feature_explainer is not None
-            else {"method": "none", "features": []}
+        degraded = []
+        feature_explanation = self._guard(
+            degraded,
+            "feature_explainer",
+            lambda: (
+                self.feature_explainer.explain(patient)
+                if self.feature_explainer is not None
+                else {"method": "none", "features": []}
+            ),
+            {"method": "none", "features": []},
         )
-        similar_cases = self.memory.find_similar(patient)
-        retrieved_context = (
-            self.retriever.retrieve(patient, risk, feature_explanation)
-            if self.retriever is not None
-            else []
+        similar_cases = self._guard(
+            degraded, "memory_search", lambda: self.memory.find_similar(patient), []
         )
+        retrieved_context = self._retrieve(patient, risk, feature_explanation, degraded)
 
-        explanation = self.explainer.explain(
-            patient,
-            prob,
-            feature_explanation=feature_explanation,
-            similar_cases=similar_cases,
-        )
         status, safety, recommendation = self._advise(
-            patient, prob, risk, retrieved_context, similar_cases
+            patient, prob, risk, retrieved_context, similar_cases, feature_explanation, degraded
         )
         policy = None
         if self.support_policy is not None:
@@ -69,9 +71,35 @@ class Orchestrator:
                 feature_explanation,
                 similar_cases,
                 (retrieved_context, status, safety, recommendation),
+                degraded,
             )
 
-        self.memory.store(patient, prob, risk)
+        # Explained last so it sees the final evidence status and safety outcome.
+        explanation = self._guard(
+            degraded,
+            "explainer",
+            lambda: self.explainer.explain(
+                patient,
+                prob,
+                feature_explanation=feature_explanation,
+                similar_cases=similar_cases,
+                safety=safety,
+                evidence_status=status,
+            ),
+            "An explanation could not be generated; see feature_explanation for the model drivers.",
+        )
+        self._guard(degraded, "memory_store", lambda: self.memory.store(patient, prob, risk), None)
+
+        if degraded:
+            safety = {
+                **safety,
+                "disclaimers": [
+                    *safety["disclaimers"],
+                    "Some components failed ("
+                    + ", ".join(item["component"] for item in degraded)
+                    + "); this result is incomplete.",
+                ],
+            }
 
         return {
             "probability": prob,
@@ -87,15 +115,44 @@ class Orchestrator:
             "recommendation": recommendation,
             "model": self.model.artifact_metadata,
             "policy": policy,
+            "degraded": degraded,
         }
 
-    def _advise(self, patient, prob, risk, retrieved_context, similar_cases):
+    @staticmethod
+    def _guard(degraded, component, call, fallback):
+        """Run an optional step; on failure record it in `degraded` and return `fallback`."""
+        try:
+            return call()
+        except Exception as exc:
+            logger.warning("%s failed: %s", component, exc)
+            degraded.append({"component": component, "error": f"{type(exc).__name__}: {exc}"})
+            return fallback
+
+    def _retrieve(self, patient, risk, feature_explanation, degraded, broaden=False, previous=()):
+        """Evidence search; if it fails, keep the `previous` passages instead of losing them."""
+        if self.retriever is None:
+            return list(previous)
+        return self._guard(
+            degraded,
+            "retriever",
+            lambda: self.retriever.retrieve(patient, risk, feature_explanation, broaden=broaden),
+            list(previous),
+        )
+
+    def _advise(
+        self,
+        patient,
+        prob,
+        risk,
+        retrieved_context,
+        similar_cases,
+        feature_explanation,
+        degraded,
+    ):
         """Safety rules then recommendation for the current evidence (rules never see the policy)."""
         status = evidence_status(retrieved_context)
-        safety = (
-            self.safety_guard.assess(patient, prob, risk, evidence_status=status)
-            if self.safety_guard is not None
-            else {
+        if self.safety_guard is None:
+            safety = {
                 "alerts": [],
                 "rules": [],
                 "conflicts": [],
@@ -105,17 +162,41 @@ class Orchestrator:
                 "confidence_label": "High",
                 "disclaimers": [],
             }
-        )
-        recommendation = self.recommender.recommend(
-            patient,
-            safety["effective_risk"],
-            retrieved_context=retrieved_context,
-            similar_cases=similar_cases,
-            safety=safety,
+        else:
+            # A failed rule check must not read as "all clear": fail toward clinician review.
+            safety = self._guard(
+                degraded,
+                "safety_guard",
+                lambda: self.safety_guard.assess(patient, prob, risk, evidence_status=status),
+                {
+                    "alerts": ["Safety rules could not be evaluated; seek clinician review."],
+                    "rules": [],
+                    "conflicts": [],
+                    "effective_risk": risk,
+                    "escalation": "prompt_clinician_followup",
+                    "confidence_score": 0.0,
+                    "confidence_label": "Low",
+                    "disclaimers": [],
+                },
+            )
+        recommendation = self._guard(
+            degraded,
+            "recommender",
+            lambda: self.recommender.recommend(
+                patient,
+                safety["effective_risk"],
+                retrieved_context=retrieved_context,
+                similar_cases=similar_cases,
+                safety=safety,
+                feature_explanation=feature_explanation,
+            ),
+            "A recommendation could not be generated; consult a clinician for follow-up.",
         )
         return status, safety, recommendation
 
-    def _choose_next_step(self, patient, prob, risk, feature_explanation, similar_cases, current):
+    def _choose_next_step(
+        self, patient, prob, risk, feature_explanation, similar_cases, current, degraded
+    ):
         """Let the support policy pick the next step; only evidence retrieval is acted on here.
 
         Requesting glucose cannot be done inside one API call, so it is reported as the
@@ -137,11 +218,22 @@ class Orchestrator:
             steps.append(step)
             if action == "retrieve_more_evidence" and self.retriever is not None:
                 retrieved_more = True
-                retrieved_context = self.retriever.retrieve(
-                    patient, risk, feature_explanation, broaden=True
+                retrieved_context = self._retrieve(
+                    patient,
+                    risk,
+                    feature_explanation,
+                    degraded,
+                    broaden=True,
+                    previous=retrieved_context,
                 )
                 status, safety, recommendation = self._advise(
-                    patient, prob, risk, retrieved_context, similar_cases
+                    patient,
+                    prob,
+                    risk,
+                    retrieved_context,
+                    similar_cases,
+                    feature_explanation,
+                    degraded,
                 )
                 step["evidence_status_after"] = status
                 continue

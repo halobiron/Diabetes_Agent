@@ -11,11 +11,17 @@ class RecommendationAgent:
         self.client = OpenAI() if os.getenv("OPENAI_API_KEY") else None
 
     def recommend(
-        self, patient_data, risk, retrieved_context=None, similar_cases=None, safety=None
+        self,
+        patient_data,
+        risk,
+        retrieved_context=None,
+        similar_cases=None,
+        safety=None,
+        feature_explanation=None,
     ):
         if self.client is None:
             return self._fallback_recommendation(
-                patient_data, risk, retrieved_context, similar_cases, safety
+                patient_data, risk, retrieved_context, similar_cases, safety, feature_explanation
             )
 
         prompt = f"""
@@ -25,6 +31,7 @@ class RecommendationAgent:
         {self._evidence_block(retrieved_context)}
         Similar prior cases: {similar_cases}
         Safety assessment: {safety}
+        Main model risk drivers: {self._drivers(feature_explanation)}
 
         Suggest actionable health recommendations. Support each guideline-based
         recommendation with its evidence number in square brackets, e.g. [1]. Use only
@@ -38,10 +45,19 @@ class RecommendationAgent:
             )
             return response.choices[0].message.content + self._sources_note(retrieved_context)
         except Exception as exc:
-            return f"{self._fallback_recommendation(patient_data, risk, retrieved_context, similar_cases, safety)} LLM recommendation unavailable: {exc}"
+            fallback = self._fallback_recommendation(
+                patient_data, risk, retrieved_context, similar_cases, safety, feature_explanation
+            )
+            return f"{fallback} LLM recommendation unavailable: {exc}"
 
     def _fallback_recommendation(
-        self, patient_data, risk, retrieved_context=None, similar_cases=None, safety=None
+        self,
+        patient_data,
+        risk,
+        retrieved_context=None,
+        similar_cases=None,
+        safety=None,
+        feature_explanation=None,
     ):
         glucose_note = ""
         if not patient_data.get("glucose_measured", True):
@@ -59,15 +75,24 @@ class RecommendationAgent:
         if similar_cases:
             memory_note = " Compare against similar historical cases before changing the care plan."
         safety_note = self._safety_note(safety)
+        drivers = self._drivers(feature_explanation)
+        driver_note = f" Focus on the main model risk drivers: {drivers}." if drivers else ""
 
         return (
             recommendation
+            + driver_note
             + glucose_note
             + context_note
             + memory_note
             + safety_note
             + self._sources_note(retrieved_context)
         )
+
+    def _drivers(self, feature_explanation, limit=3):
+        """Names of the features that raise risk the most, e.g. 'BMI, HighBP'."""
+        features = (feature_explanation or {}).get("features", [])
+        raising = [item["feature"] for item in features if item["impact"] > 0]
+        return ", ".join(raising[:limit])
 
     def _context_note(self, retrieved_context):
         status = evidence_status(retrieved_context)
