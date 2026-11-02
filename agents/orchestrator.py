@@ -1,3 +1,4 @@
+from agents.retriever import evidence_status
 from tools.risk_classifier import classify_risk
 
 
@@ -79,6 +80,7 @@ class Orchestrator:
             "patient": patient,
             "feature_explanation": feature_explanation,
             "retrieved_context": retrieved_context,
+            "evidence_status": evidence_status(retrieved_context),
             "similar_cases": similar_cases,
             "safety": safety,
             "explanation": explanation,

@@ -144,6 +144,26 @@ class KnowledgeGraph:
             "RETURN nodes, count(r) AS relationships"
         )[0]
 
+    def all_evidence(self):
+        """Every evidence passage with its source, the corpus the RetrievalAgent embeds."""
+        return self._run(
+            "MATCH (e:Evidence)-[:FROM]->(s:Source) "
+            "RETURN e.id AS evidence_id, e.text AS text, e.section AS section, "
+            "s.id AS source_id, s.title AS source_title, s.publisher AS publisher, "
+            "s.year AS year, s.url AS url ORDER BY evidence_id"
+        )
+
+    def risk_factor_names(self):
+        """Risk-factor key -> display name, e.g. {"BMI": "Overweight or obesity"}."""
+        rows = self._run(
+            "MATCH (f:RiskFactor) WHERE f.key IS NOT NULL RETURN f.key AS key, f.name AS name"
+        )
+        return {row["key"]: row["name"] for row in rows}
+
+    def kb_version(self):
+        rows = self._run("MATCH (s:Source) RETURN s.kb_version AS version LIMIT 1")
+        return rows[0]["version"] if rows else None
+
     def find_entities(self, text, limit=5):
         return self._run(
             "MATCH (n:Entity) WHERE toLower(n.name) CONTAINS toLower($text) "
@@ -185,3 +205,70 @@ class KnowledgeGraph:
             keys=list(factor_keys),
             limit=limit,
         )
+
+
+class FileKnowledgeBase:
+    """Same read API as KnowledgeGraph, served from the KB JSON file (used when Neo4j is down)."""
+
+    def __init__(self, kb):
+        self.kb = validate_kb(kb)
+        self._sources = {s["id"]: s for s in kb["sources"]}
+        self._evidence = {e["id"]: e for e in kb["evidence"]}
+        self._entities = {e["id"]: e for e in kb["entities"]}
+
+    def _evidence_row(self, evidence_id):
+        item = self._evidence[evidence_id]
+        source = self._sources[item["source"]]
+        return {
+            "evidence_id": item["id"],
+            "text": item["text"],
+            "section": item.get("section"),
+            "source_id": source["id"],
+            "source_title": source["title"],
+            "publisher": source.get("publisher"),
+            "year": source.get("year"),
+            "url": source.get("url"),
+        }
+
+    def all_evidence(self):
+        return [self._evidence_row(evidence_id) for evidence_id in sorted(self._evidence)]
+
+    def risk_factor_names(self):
+        return {
+            e["key"]: e["name"]
+            for e in self._entities.values()
+            if e["label"] == "RiskFactor" and e.get("key")
+        }
+
+    def kb_version(self):
+        return self.kb["version"]
+
+    def support_for_risk_factors(self, factor_keys, limit=20):
+        keys = set(factor_keys)
+        factors = {e["id"]: e for e in self._entities.values() if e.get("key") in keys}
+        rows = []
+        for rel in self.kb["relations"]:
+            if rel["type"] not in ("ADDRESSES", "SHOULD_TEST_WITH"):
+                continue
+            for factor_id, support_id in ((rel["from"], rel["to"]), (rel["to"], rel["from"])):
+                support = self._entities[support_id]
+                if factor_id not in factors or support["label"] not in ("Intervention", "Test"):
+                    continue
+                for evidence_id in rel["evidence"]:
+                    row = self._evidence_row(evidence_id)
+                    rows.append(
+                        {
+                            "risk_factor": factor_id,
+                            "support_id": support_id,
+                            "support_name": support["name"],
+                            "support_labels": ["Entity", support["label"]],
+                            "relation": rel["type"],
+                            "evidence_id": evidence_id,
+                            "evidence": row["text"],
+                            "source_id": row["source_id"],
+                            "source_title": row["source_title"],
+                            "url": row["url"],
+                        }
+                    )
+        rows.sort(key=lambda r: (r["risk_factor"], r["support_name"]))
+        return rows[:limit]

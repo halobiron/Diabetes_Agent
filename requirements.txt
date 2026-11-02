@@ -11,6 +11,7 @@ python-dotenv
 openai
 langchain
 chromadb
+sentence-transformers
 neo4j
 shap
 pytest

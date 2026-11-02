@@ -2,6 +2,8 @@ import os
 
 from openai import OpenAI
 
+from agents.retriever import evidence_status
+
 
 class RecommendationAgent:
     def __init__(self, model_name="gpt-4o-mini"):
@@ -19,18 +21,22 @@ class RecommendationAgent:
         prompt = f"""
         Patient data: {patient_data}
         Risk level: {risk}
-        Retrieved medical context: {retrieved_context}
+        Numbered guideline evidence:
+        {self._evidence_block(retrieved_context)}
         Similar prior cases: {similar_cases}
         Safety assessment: {safety}
 
-        Suggest actionable health recommendations.
+        Suggest actionable health recommendations. Support each guideline-based
+        recommendation with its evidence number in square brackets, e.g. [1]. Use only
+        the numbered evidence above for guideline claims; if it does not cover something,
+        say there is no supporting evidence instead of inventing a source.
         """
 
         try:
             response = self.client.chat.completions.create(
                 model=self.model_name, messages=[{"role": "user", "content": prompt}]
             )
-            return response.choices[0].message.content
+            return response.choices[0].message.content + self._sources_note(retrieved_context)
         except Exception as exc:
             return f"{self._fallback_recommendation(patient_data, risk, retrieved_context, similar_cases, safety)} LLM recommendation unavailable: {exc}"
 
@@ -54,14 +60,50 @@ class RecommendationAgent:
             memory_note = " Compare against similar historical cases before changing the care plan."
         safety_note = self._safety_note(safety)
 
-        return recommendation + glucose_note + context_note + memory_note + safety_note
+        return (
+            recommendation
+            + glucose_note
+            + context_note
+            + memory_note
+            + safety_note
+            + self._sources_note(retrieved_context)
+        )
 
     def _context_note(self, retrieved_context):
+        status = evidence_status(retrieved_context)
+        if status == "none":
+            return (
+                " No sufficiently relevant guideline evidence was retrieved, so this advice is"
+                " general and should be confirmed by a clinician."
+            )
+
+        points = " ".join(
+            f"{item['text']} [{number}]" for number, item in enumerate(retrieved_context, 1)
+        )
+        note = f" Guideline evidence: {points}"
+        if status == "limited":
+            note += " Supporting evidence is limited; confirm with a clinician."
+        return note
+
+    def _evidence_block(self, retrieved_context):
+        if not retrieved_context:
+            return "(none retrieved)"
+        return "\n".join(
+            f"[{number}] {item['text']} ({item['source_title']}, {item.get('year')})"
+            for number, item in enumerate(retrieved_context, 1)
+        )
+
+    def _sources_note(self, retrieved_context):
         if not retrieved_context:
             return ""
-
-        titles = ", ".join(item["title"] for item in retrieved_context[:2])
-        return f" Retrieved guidance used: {titles}."
+        lines = [
+            f"[{number}] {item['source_title']}"
+            + (f", {item['publisher']}" if item.get("publisher") else "")
+            + (f" ({item['year']})" if item.get("year") else "")
+            + (f" - {item['url']}" if item.get("url") else "")
+            for number, item in enumerate(retrieved_context, 1)
+        ]
+        return "\n\nSources:\n" + "\n".join(lines)
 
     def _safety_note(self, safety):
         if not safety:

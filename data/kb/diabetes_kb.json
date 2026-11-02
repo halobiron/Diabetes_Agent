@@ -1,5 +1,5 @@
 {
-  "version": "2026.11.1",
+  "version": "2026.11.2",
   "sources": [
     {
       "id": "ada-2025",
@@ -42,12 +42,12 @@
     {"id": "prediabetes", "label": "Condition", "name": "Prediabetes", "description": "Blood glucose above normal but below the diabetes diagnostic range."},
     {"id": "cardiovascular_disease", "label": "Condition", "name": "Cardiovascular disease", "description": "Heart and blood vessel disease, the leading cause of death in people with diabetes."},
 
-    {"id": "high_bmi", "label": "RiskFactor", "name": "Overweight or obesity", "key": "bmi", "description": "BMI of 25 or higher (23 or higher for Asian adults in ADA screening guidance)."},
-    {"id": "high_bp", "label": "RiskFactor", "name": "High blood pressure", "key": "bp", "description": "Blood pressure at or above 130/80 mmHg or treated hypertension."},
-    {"id": "older_age", "label": "RiskFactor", "name": "Older age", "key": "age", "description": "Risk of type 2 diabetes rises with age; ADA recommends screening all adults from age 35."},
+    {"id": "high_bmi", "label": "RiskFactor", "name": "Overweight or obesity", "key": "BMI", "description": "BMI of 25 or higher (23 or higher for Asian adults in ADA screening guidance)."},
+    {"id": "high_bp", "label": "RiskFactor", "name": "High blood pressure", "key": "HighBP", "description": "Blood pressure at or above 130/80 mmHg or treated hypertension."},
+    {"id": "older_age", "label": "RiskFactor", "name": "Older age", "key": "Age", "description": "Risk of type 2 diabetes rises with age; ADA recommends screening all adults from age 35."},
     {"id": "high_glucose", "label": "RiskFactor", "name": "Elevated blood glucose", "key": "glucose", "description": "Fasting glucose of 100 mg/dL or higher, or A1C of 5.7% or higher."},
-    {"id": "physical_inactivity", "label": "RiskFactor", "name": "Physical inactivity", "key": "physical_activity", "description": "Little or no regular physical activity."},
-    {"id": "smoking", "label": "RiskFactor", "name": "Smoking", "key": "smoker", "description": "Current tobacco smoking."},
+    {"id": "physical_inactivity", "label": "RiskFactor", "name": "Physical inactivity", "key": "PhysActivity", "description": "Little or no regular physical activity."},
+    {"id": "smoking", "label": "RiskFactor", "name": "Smoking", "key": "Smoker", "description": "Current tobacco smoking."},
     {"id": "family_history", "label": "RiskFactor", "name": "Family history of diabetes", "description": "A parent or sibling with diabetes."},
 
     {"id": "a1c_test", "label": "Test", "name": "A1C test", "description": "Average blood glucose over about three months."},

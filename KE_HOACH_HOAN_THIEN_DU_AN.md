@@ -73,8 +73,10 @@ Chi tiết tại [Knowledge graph Neo4j](docs/neo4j_kb.md): 20 thực thể, 35 
 
 ### Bước 7 — Hoàn thiện RAG
 
-- [ ] Thay embedding băm bằng embedding ngữ nghĩa; kết nối RetrievalAgent với KB Neo4j.
-- [ ] Dùng nội dung truy xuất để tạo khuyến nghị có nguồn; xử lý thiếu bằng chứng và đánh giá độ liên quan.
+- [x] Thay embedding băm bằng embedding ngữ nghĩa; kết nối RetrievalAgent với KB Neo4j.
+- [x] Dùng nội dung truy xuất để tạo khuyến nghị có nguồn; xử lý thiếu bằng chứng và đánh giá độ liên quan.
+
+Chi tiết: embedding `sentence-transformers/all-MiniLM-L6-v2` (`tools/semantic_embeddings.py`); `RetrievalAgent` nạp 21 đoạn bằng chứng từ Neo4j (hoặc từ file KB khi Neo4j không kết nối được), tìm theo độ tương đồng cosine, cộng điểm cho bằng chứng mà đồ thị gắn với yếu tố nguy cơ của bệnh nhân. Mỗi đoạn có `relevance`, nguồn và URL; dưới ngưỡng 0,3 bị loại. Kết quả có `evidence_status` (none/limited/sufficient); khuyến nghị đánh số trích dẫn `[n]` kèm danh sách nguồn, và nói rõ khi thiếu bằng chứng. Chưa chạy trên server Neo4j thật; ngưỡng liên quan mới đặt theo vài ca thử, chưa hiệu chỉnh trên tập đánh giá.
 
 ### Bước 8 — Hoàn thiện bộ luật
 

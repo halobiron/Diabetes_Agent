@@ -93,5 +93,5 @@ def test_relations_query_passes_entity_and_returns_rows():
 
 def test_support_query_uses_feature_keys():
     driver = FakeDriver()
-    KnowledgeGraph(driver).support_for_risk_factors(["bmi", "bp"])
-    assert driver.calls[0][1]["keys"] == ["bmi", "bp"]
+    KnowledgeGraph(driver).support_for_risk_factors(["BMI", "HighBP"])
+    assert driver.calls[0][1]["keys"] == ["BMI", "HighBP"]

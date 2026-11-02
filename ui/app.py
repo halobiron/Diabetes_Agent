@@ -372,10 +372,18 @@ with evidence_tab:
     contexts = result.get("retrieved_context") or []
     if contexts:
         for item in contexts:
-            with st.expander(item["title"], expanded=False):
+            with st.expander(
+                f"{item['title']} (relevance {item['relevance']:.2f})", expanded=False
+            ):
                 st.write(item["text"])
+                if item.get("supports"):
+                    st.caption("Linked in graph to: " + ", ".join(item["supports"]))
+                if item.get("url"):
+                    st.markdown(f"[{item['source_title']}]({item['url']})")
+        if result.get("evidence_status") == "limited":
+            st.warning("Supporting evidence is limited for this case.")
     else:
-        st.write("No medical context retrieved for this case.")
+        st.warning("No sufficiently relevant guideline evidence was retrieved for this case.")
 
     st.subheader("Similar prior cases")
     similar_cases = result.get("similar_cases") or []

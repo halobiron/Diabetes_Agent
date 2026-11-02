@@ -6,7 +6,7 @@ Nguồn dữ liệu: [data/kb/diabetes_kb.json](../data/kb/diabetes_kb.json) (ve
 
 | Nút | Nhãn | Thuộc tính chính |
 |-----|------|------------------|
-| Thực thể | `:Entity` + `:Condition` / `:RiskFactor` / `:Test` / `:Intervention` | `id`, `name`, `description`, `key` (tên đặc trưng của mô hình: `bmi`, `bp`, `age`, `glucose`…) |
+| Thực thể | `:Entity` + `:Condition` / `:RiskFactor` / `:Test` / `:Intervention` | `id`, `name`, `description`, `key` (tên đặc trưng của mô hình: `BMI`, `HighBP`, `Age`…; riêng `glucose` không phải đầu vào của mô hình) |
 | Bằng chứng | `:Evidence` | `id`, `text`, `section` |
 | Nguồn | `:Source` | `id`, `title`, `publisher`, `year`, `url` |
 
@@ -32,5 +32,6 @@ Cập nhật: sửa file JSON rồi chạy lại script. Nạp là idempotent (`
 `tools/neo4j_kb.py` → `KnowledgeGraph`:
 
 - `relations_with_evidence(entity_id)`: mọi quan hệ của một thực thể cùng bằng chứng và nguồn.
-- `support_for_risk_factors(["bmi", "bp"])`: can thiệp và xét nghiệm gắn với các yếu tố nguy cơ theo tên đặc trưng; dùng cho RetrievalAgent ở Bước 7.
+- `support_for_risk_factors(["BMI", "HighBP"])`: can thiệp và xét nghiệm gắn với các yếu tố nguy cơ theo tên đặc trưng; dùng cho RetrievalAgent.
+- `all_evidence()`: toàn bộ đoạn bằng chứng kèm nguồn, RetrievalAgent nhúng chúng để tìm ngữ nghĩa. `FileKnowledgeBase` có cùng API, đọc từ file JSON khi Neo4j không kết nối được (hoặc chưa đặt `NEO4J_PASSWORD`).
 - `find_entities(text)`, `stats()`.

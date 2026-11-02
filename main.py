@@ -14,7 +14,6 @@ from tools.safety import SafetyGuard
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "patients.csv"
-KNOWLEDGE_PATH = BASE_DIR / "data" / "medical_knowledge.jsonl"
 CHROMA_PATH = Path(os.getenv("CHROMA_PATH", str(BASE_DIR / "data" / "chroma")))
 
 
@@ -30,7 +29,7 @@ def build_agent():
     recommender = RecommendationAgent()
     memory = MemoryAgent(CHROMA_PATH)
     feature_explainer = FeatureExplainer(model)
-    retriever = RetrievalAgent(KNOWLEDGE_PATH, CHROMA_PATH)
+    retriever = RetrievalAgent.from_settings(settings, CHROMA_PATH)
     safety_guard = SafetyGuard()
 
     return Orchestrator(
