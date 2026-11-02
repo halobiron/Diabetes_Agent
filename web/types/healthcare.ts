@@ -52,8 +52,22 @@ export type FeatureExplanation = {
   features: FeatureImpact[];
 };
 
+export type RuleResult = {
+  code: string;
+  name: string;
+  category: "measurement" | "prediction" | "data_quality" | "conflict";
+  priority: number;
+  escalation: SafetyResult["escalation"] | null;
+  message: string;
+  basis: string;
+  resolution?: string;
+};
+
 export type SafetyResult = {
   alerts: string[];
+  rules: RuleResult[];
+  conflicts: RuleResult[];
+  effective_risk: "Low" | "Medium" | "High";
   escalation: "routine_followup" | "prompt_clinician_followup" | "urgent_clinician_review";
   confidence_score: number;
   confidence_label: "Low" | "Medium" | "High";

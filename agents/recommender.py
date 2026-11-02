@@ -113,4 +113,6 @@ class RecommendationAgent:
         if not alerts and escalation == "routine_followup":
             return ""
         alert_text = " ".join(alerts[:2])
-        return f" Safety escalation: {escalation}. {alert_text}"
+        resolutions = "; ".join(c["resolution"] for c in safety.get("conflicts", []))
+        conflict_text = f" Rule conflicts resolved: {resolutions}." if resolutions else ""
+        return f" Safety escalation: {escalation}. {alert_text}{conflict_text}"

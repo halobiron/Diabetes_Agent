@@ -80,8 +80,10 @@ Chi tiết: embedding `sentence-transformers/all-MiniLM-L6-v2` (`tools/semantic_
 
 ### Bước 8 — Hoàn thiện bộ luật
 
-- [ ] Tổ chức luật với điều kiện, mã luật, mức ưu tiên và căn cứ.
-- [ ] Xử lý xung đột giữa dự đoán, bằng chứng và cảnh báo; kiểm thử các luật.
+- [x] Tổ chức luật với điều kiện, mã luật, mức ưu tiên và căn cứ.
+- [x] Xử lý xung đột giữa dự đoán, bằng chứng và cảnh báo; kiểm thử các luật.
+
+Chi tiết tại [Bộ luật an toàn và xử lý xung đột](docs/bo_luat.md): 6 luật cơ sở và 5 luật xung đột trong `tools/rules.py`; số đo thắng dự đoán (`effective_risk`), chuyển tuyến lấy mức nặng nhất và không bị hạ vì thiếu bằng chứng. Luật glucose chỉ áp dụng cho giá trị đo thật. 63 tests đạt (17 test mới cho luật). Ngưỡng là ngưỡng của dự án, chưa được bác sĩ thẩm định.
 
 ### Bước 9 — Bổ sung reinforcement learning
 

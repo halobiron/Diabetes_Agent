@@ -52,11 +52,15 @@ class Orchestrator:
             feature_explanation=feature_explanation,
             similar_cases=similar_cases,
         )
+        status = evidence_status(retrieved_context)
         safety = (
-            self.safety_guard.assess(patient, prob, risk)
+            self.safety_guard.assess(patient, prob, risk, evidence_status=status)
             if self.safety_guard is not None
             else {
                 "alerts": [],
+                "rules": [],
+                "conflicts": [],
+                "effective_risk": risk,
                 "escalation": "routine_followup",
                 "confidence_score": 1.0,
                 "confidence_label": "High",
@@ -65,7 +69,7 @@ class Orchestrator:
         )
         recommendation = self.recommender.recommend(
             patient,
-            risk,
+            safety["effective_risk"],
             retrieved_context=retrieved_context,
             similar_cases=similar_cases,
             safety=safety,
@@ -80,7 +84,7 @@ class Orchestrator:
             "patient": patient,
             "feature_explanation": feature_explanation,
             "retrieved_context": retrieved_context,
-            "evidence_status": evidence_status(retrieved_context),
+            "evidence_status": status,
             "similar_cases": similar_cases,
             "safety": safety,
             "explanation": explanation,

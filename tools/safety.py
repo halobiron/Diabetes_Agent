@@ -1,47 +1,28 @@
+from tools.rules import RuleContext, RuleEngine
+
+
 class SafetyGuard:
-    def assess(self, patient, probability, risk):
-        alerts = []
-        escalation = "routine_followup"
+    def __init__(self, engine=None):
+        self.engine = engine or RuleEngine()
 
-        if patient["bp"] >= 180:
-            alerts.append(
-                "Severely elevated blood pressure; urgent same-day clinical assessment is recommended."
-            )
-            escalation = "urgent_clinician_review"
-        elif patient["bp"] >= 160:
-            alerts.append(
-                "Very high blood pressure detected; prompt clinician follow-up is recommended."
-            )
-            escalation = "prompt_clinician_followup"
-
-        if patient["glucose"] >= 300:
-            alerts.append("Very high glucose value; urgent medical evaluation is recommended.")
-            escalation = "urgent_clinician_review"
-        elif patient["glucose"] >= 200:
-            alerts.append(
-                "High glucose value detected; prompt confirmatory testing and clinician review are recommended."
-            )
-            if escalation == "routine_followup":
-                escalation = "prompt_clinician_followup"
-
-        if not patient.get("glucose_measured", True):
-            alerts.append("Glucose was not measured; risk estimate confidence is reduced.")
-
-        if risk == "High" and probability >= 0.85 and escalation == "routine_followup":
-            escalation = "prompt_clinician_followup"
-            alerts.append(
-                "Model indicates very high predicted risk; expedited clinician review is advised."
-            )
-
+    def assess(self, patient, probability, risk, evidence_status=None):
         confidence_score, confidence_label = self._confidence(patient)
+        outcome = self.engine.evaluate(
+            RuleContext(
+                patient=patient,
+                probability=probability,
+                risk=risk,
+                evidence_status=evidence_status,
+                confidence_label=confidence_label,
+            )
+        )
         disclaimers = [
             "Educational prototype only; not a diagnostic medical device.",
             "Clinical decisions require clinician judgment and measured labs/vitals.",
         ]
 
         return {
-            "alerts": alerts,
-            "escalation": escalation,
+            **outcome,
             "confidence_score": confidence_score,
             "confidence_label": confidence_label,
             "disclaimers": disclaimers,
