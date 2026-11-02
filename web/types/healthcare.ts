@@ -63,6 +63,20 @@ export type RuleResult = {
   resolution?: string;
 };
 
+export type SupportPolicyResult = {
+  next_step:
+    | "request_glucose"
+    | "retrieve_more_evidence"
+    | "recommend_routine"
+    | "recommend_followup"
+    | "escalate_to_clinician";
+  overridden_by_rules: boolean;
+  steps: { action: string; state: number[]; source: string; evidence_status_after?: string }[];
+  q_values: Record<string, number> | null;
+  version: string | null;
+  feedback: string;
+};
+
 export type SafetyResult = {
   alerts: string[];
   rules: RuleResult[];
@@ -136,6 +150,7 @@ export type PredictionResult = {
   retrieved_context: RetrievedContext[];
   similar_cases: SimilarCase[];
   safety: SafetyResult;
+  policy?: SupportPolicyResult | null;
   explanation: string;
   recommendation: string;
   model?: ModelMetadata;

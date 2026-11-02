@@ -87,8 +87,10 @@ Chi tiết tại [Bộ luật an toàn và xử lý xung đột](docs/bo_luat.md
 
 ### Bước 9 — Bổ sung reinforcement learning
 
-- [ ] Xác định state/action/reward cho việc chọn bước hỗ trợ tiếp theo; xây môi trường và huấn luyện policy.
-- [ ] So sánh với chiến lược cố định, ghi rõ phản hồi thực hay mô phỏng và tích hợp policy vào Orchestrator.
+- [x] Xác định state/action/reward cho việc chọn bước hỗ trợ tiếp theo; xây môi trường và huấn luyện policy.
+- [x] So sánh với chiến lược cố định, ghi rõ phản hồi thực hay mô phỏng và tích hợp policy vào Orchestrator.
+
+Chi tiết tại [Policy RL](docs/reinforcement_learning.md): Q-learning dạng bảng trên môi trường mô phỏng (không có phản hồi thật). Reward trung bình: Q-learning 0,956, bảng kiểm cố định 0,946 (chênh lệch trong sai số), chỉ theo rủi ro 0,803, ngẫu nhiên −0,367. Policy được Orchestrator gọi; luật an toàn luôn có quyền ưu tiên. 73 tests đạt.
 
 ### Bước 10 — Hoàn thiện phối hợp agent
 

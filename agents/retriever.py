@@ -10,6 +10,11 @@ logger = logging.getLogger(__name__)
 MIN_RELEVANCE = 0.3  # cosine similarity below this is treated as off-topic
 STRONG_RELEVANCE = 0.45
 GRAPH_BOOST = 0.15
+BROAD_N_RESULTS = 5
+BROAD_QUERY = (
+    "Type 2 diabetes screening, diagnosis, prevention and management guidance for adults,"
+    " including blood glucose testing, lifestyle changes and when to see a clinician."
+)
 
 
 def evidence_status(contexts):
@@ -91,23 +96,31 @@ class RetrievalAgent:
             )
         return collection
 
-    def retrieve(self, patient_data, risk, feature_explanation, n_results=3):
+    def retrieve(self, patient_data, risk, feature_explanation, n_results=3, broaden=False):
+        """Top passages above the relevance floor; `broaden` adds a general-guidance query.
+
+        The broadened search keeps each passage's best score over both queries, so it can
+        surface passages the patient-specific query missed (used when evidence is thin).
+        """
         count = self.collection.count()
         if count == 0:
             return []
 
         factors = self._risk_factors(patient_data, feature_explanation)
-        results = self.collection.query(
-            query_embeddings=[
-                self.embedding_model.embed_text(self._query_text(patient_data, risk, factors))
-            ],
-            n_results=count,
-            include=["distances"],
-        )
-        relevance = {
-            evidence_id: 1.0 - float(distance)
-            for evidence_id, distance in zip(results["ids"][0], results["distances"][0])
-        }
+        queries = [self._query_text(patient_data, risk, factors)]
+        if broaden:
+            queries.append(BROAD_QUERY)
+            n_results = max(n_results, BROAD_N_RESULTS)
+        relevance = {}
+        for query in queries:
+            results = self.collection.query(
+                query_embeddings=[self.embedding_model.embed_text(query)],
+                n_results=count,
+                include=["distances"],
+            )
+            for evidence_id, distance in zip(results["ids"][0], results["distances"][0]):
+                score = 1.0 - float(distance)
+                relevance[evidence_id] = max(score, relevance.get(evidence_id, score))
         linked = self._graph_links(factors)
 
         contexts = []

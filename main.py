@@ -9,6 +9,7 @@ from agents.retriever import RetrievalAgent
 from core.config import get_settings
 from memory.store import MemoryAgent
 from models.risk_model import RiskModel
+from rl.policy import QPolicy
 from tools.explainability import FeatureExplainer
 from tools.safety import SafetyGuard
 
@@ -32,6 +33,10 @@ def build_agent():
     retriever = RetrievalAgent.from_settings(settings, CHROMA_PATH)
     safety_guard = SafetyGuard()
 
+    support_policy = None
+    if settings.support_policy_path.exists():
+        support_policy = QPolicy.load(settings.support_policy_path)
+
     return Orchestrator(
         model,
         explainer,
@@ -40,6 +45,7 @@ def build_agent():
         feature_explainer=feature_explainer,
         retrieval_agent=retriever,
         safety_guard=safety_guard,
+        support_policy=support_policy,
     )
 
 
