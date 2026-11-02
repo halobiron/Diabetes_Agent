@@ -7,7 +7,10 @@ from tools.local_embeddings import LocalEmbeddingModel
 
 
 class MemoryAgent:
-    def __init__(self, chroma_path):
+    def __init__(self, chroma_path, scales=None, max_distance=1.0):
+        """`scales`: per-field spread (age, bmi, bp, glucose) that sets how far apart is "different"."""
+        self.scales = dict(scales or {})
+        self.max_distance = max_distance
         self.embedding_model = LocalEmbeddingModel()
         self.client = create_persistent_client(chroma_path)
         self.collection = self.client.get_or_create_collection("patient_memory")
@@ -46,31 +49,47 @@ class MemoryAgent:
         return records[:limit]
 
     def find_similar(self, patient_data, n_results=3):
-        count = self.collection.count()
-        if count == 0:
-            return []
+        """Stored cases closest in age, BMI, blood pressure and (when both measured) glucose.
 
-        query = self._patient_summary(patient_data, prob=None, risk=None)
-        results = self.collection.query(
-            query_embeddings=[self.embedding_model.embed_text(query)],
-            n_results=min(n_results, count),
-            include=["documents", "metadatas", "distances"],
-        )
-
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        distances = results.get("distances", [[]])[0]
-
+        Ranked by numeric distance over the saved values rather than text embeddings, so a
+        58-year-old matches a 59-year-old. Every match is an earlier model prediction; none
+        has a confirmed clinical outcome.
+        """
+        results = self.collection.get(include=["documents", "metadatas"])
         matches = []
-        for document, metadata, distance in zip(documents, metadatas, distances):
+        for document, metadata in zip(
+            results.get("documents") or [], results.get("metadatas") or []
+        ):
+            distance = self._distance(patient_data, metadata)
+            if distance is None or distance > self.max_distance:
+                continue
             matches.append(
                 {
                     "summary": document,
-                    "metadata": metadata,
-                    "distance": float(distance),
+                    "metadata": {
+                        **metadata,
+                        "outcome_confirmed": bool(metadata.get("outcome_confirmed", False)),
+                    },
+                    "distance": distance,
                 }
             )
-        return matches
+        matches.sort(key=lambda item: item["distance"])
+        return matches[:n_results]
+
+    def _distance(self, patient_data, metadata):
+        squares = []
+        for field, scale in self.scales.items():
+            if field == "glucose" and not (
+                patient_data.get("glucose_measured") and metadata.get("glucose_measured")
+            ):
+                continue
+            current, stored = patient_data.get(field), metadata.get(field)
+            if current is None or stored is None:
+                continue
+            squares.append(((float(current) - float(stored)) / scale) ** 2)
+        if not squares:
+            return None
+        return round((sum(squares) / len(squares)) ** 0.5, 4)
 
     def _patient_summary(self, patient_data, prob, risk):
         probability = "unknown" if prob is None else f"{prob:.3f}"
@@ -85,6 +104,8 @@ class MemoryAgent:
     def _metadata(self, patient_data, prob, risk, timestamp):
         metadata = {
             "timestamp": timestamp,
+            # Stored cases are model predictions; no clinical outcome is ever recorded.
+            "outcome_confirmed": False,
             "risk": risk,
             "probability": float(prob),
             "age": int(patient_data.get("age")),

@@ -25,7 +25,7 @@ export function Evidence({ result }: { result: PredictionResult }) {
         </div>
       </div>
       <div className="console-panel rounded-lg p-5">
-        <PanelHeading icon={<Activity className="h-4 w-4" />} title="Similar Prior Cases" />
+        <PanelHeading icon={<Activity className="h-4 w-4" />} title="Similar Prior Predictions" />
         <DataTable
           rows={result.similar_cases.map((item) => ({
             Risk: item.metadata.risk ?? "—",
@@ -39,6 +39,9 @@ export function Evidence({ result }: { result: PredictionResult }) {
             Distance: item.distance.toFixed(3),
           }))}
         />
+        <p className="mt-3 text-xs text-muted">
+          Earlier model predictions, not confirmed diagnoses or outcomes.
+        </p>
       </div>
     </section>
   );

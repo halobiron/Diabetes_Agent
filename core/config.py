@@ -22,6 +22,10 @@ class Settings:
     neo4j_password: str
     neo4j_database: str
     kb_path: Path
+    similarity_max_distance: float
+    similarity_bp_scale: float
+    similarity_glucose_scale: float
+    data_quality_max_penalty: float
 
 
 def get_settings():
@@ -44,4 +48,11 @@ def get_settings():
         neo4j_password=os.getenv("NEO4J_PASSWORD", ""),
         neo4j_database=os.getenv("NEO4J_DATABASE", "neo4j"),
         kb_path=Path(os.getenv("KB_PATH", str(project_root / "data" / "kb" / "diabetes_kb.json"))),
+        # Similar cases: farther than this many spreads (RMS) are not "similar". Age and BMI
+        # spreads come from the training data; blood pressure and glucose have none there.
+        similarity_max_distance=float(os.getenv("SIMILARITY_MAX_DISTANCE", "1.0")),
+        similarity_bp_scale=float(os.getenv("SIMILARITY_BP_SCALE", "25")),
+        similarity_glucose_scale=float(os.getenv("SIMILARITY_GLUCOSE_SCALE", "40")),
+        # Largest data-quality deduction when every optional model input was auto-filled.
+        data_quality_max_penalty=float(os.getenv("DATA_QUALITY_MAX_PENALTY", "0.2")),
     )

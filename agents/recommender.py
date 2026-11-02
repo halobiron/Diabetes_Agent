@@ -29,7 +29,7 @@ class RecommendationAgent:
         Risk level: {risk}
         Numbered guideline evidence:
         {self._evidence_block(retrieved_context)}
-        Similar prior cases: {similar_cases}
+        Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
         Safety assessment: {safety}
         Main model risk drivers: {self._drivers(feature_explanation)}
 
@@ -73,7 +73,10 @@ class RecommendationAgent:
         context_note = self._context_note(retrieved_context)
         memory_note = ""
         if similar_cases:
-            memory_note = " Compare against similar historical cases before changing the care plan."
+            memory_note = (
+                " Similar stored cases are earlier model predictions without confirmed outcomes;"
+                " do not treat them as evidence of what happens to this patient."
+            )
         safety_note = self._safety_note(safety)
         drivers = self._drivers(feature_explanation)
         driver_note = f" Focus on the main model risk drivers: {drivers}." if drivers else ""

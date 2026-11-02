@@ -100,9 +100,11 @@ Orchestrator giờ truyền kết quả giải thích đặc trưng cho agent kh
 
 ### Bước 11 — Sửa giải thích, độ tin cậy và memory
 
-- [ ] Giải thích theo đúng đặc trưng mô hình và đúng phương pháp SHAP/sensitivity; glucose không tham gia mô hình BRFSS hiện tại.
-- [ ] Làm rõ `confidence_score` là điểm chất lượng dữ liệu nếu vẫn tính bằng heuristic; tính cả trường tự điền.
-- [ ] Cải thiện tìm ca tương tự; phân biệt dự đoán lưu trong memory với kết quả bệnh thực tế.
+- [x] Giải thích theo đúng đặc trưng mô hình và đúng phương pháp SHAP/sensitivity; glucose không tham gia mô hình BRFSS hiện tại.
+- [x] Làm rõ `confidence_score` là điểm chất lượng dữ liệu nếu vẫn tính bằng heuristic; tính cả trường tự điền.
+- [x] Cải thiện tìm ca tương tự; phân biệt dự đoán lưu trong memory với kết quả bệnh thực tế.
+
+Mô hình đang dùng là MLP nên giải thích luôn là sensitivity (thay từng đặc trưng bằng giá trị mặc định); SHAP chỉ áp dụng cho mô hình tuyến tính. Kết quả giải thích có `method_note`, `inputs_not_in_model` (glucose) và cờ `defaulted` cho đặc trưng do hệ thống tự điền; văn bản giải thích chỉ nêu các đặc trưng thật sự tác động và không còn gán "high glucose" cho mô hình. `confidence_score` giữ nguyên tên trường nhưng thêm `confidence_note` nêu rõ đây là điểm chất lượng dữ liệu chứ không phải độ tin cậy thống kê, trừ theo tỉ lệ trường tự điền trên tổng số trường tùy chọn (tối đa `DATA_QUALITY_MAX_PENALTY`, mặc định 0,2) cùng `defaulted_fields`; giao diện đổi nhãn thành "Data quality". Tìm ca tương tự xếp theo khoảng cách số (tuổi, BMI, huyết áp, glucose khi cả hai đều đo) và loại ca quá xa; thang đo tuổi/BMI lấy từ độ lệch chuẩn dữ liệu huấn luyện, còn huyết áp/glucose (không có trong dữ liệu huấn luyện) và ngưỡng loại ca đặt trong cấu hình; mỗi ca mang `outcome_confirmed = false`. 93 tests đạt, typecheck và lint frontend sạch.
 
 ### Bước 12 — Kiểm thử và demo
 

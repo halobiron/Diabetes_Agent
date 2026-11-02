@@ -45,11 +45,14 @@ export type FeatureImpact = {
   impact: number;
   direction: string;
   magnitude: number;
+  defaulted?: boolean;
 };
 
 export type FeatureExplanation = {
   method: string;
+  method_note?: string;
   features: FeatureImpact[];
+  inputs_not_in_model?: string[];
 };
 
 export type RuleResult = {
@@ -85,6 +88,8 @@ export type SafetyResult = {
   escalation: "routine_followup" | "prompt_clinician_followup" | "urgent_clinician_review";
   confidence_score: number;
   confidence_label: "Low" | "Medium" | "High";
+  confidence_note?: string;
+  defaulted_fields?: string[];
   disclaimers: string[];
 };
 
@@ -102,6 +107,7 @@ export type SimilarCase = {
     bmi?: number;
     bp?: number;
     glucose?: number;
+    outcome_confirmed?: boolean;
   };
   distance: number;
 };

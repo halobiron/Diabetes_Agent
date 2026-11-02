@@ -28,10 +28,16 @@ def build_agent():
 
     explainer = ExplanationAgent()
     recommender = RecommendationAgent()
-    memory = MemoryAgent(CHROMA_PATH)
+    # Age/BMI spreads come from the training data; bp and glucose have none, so use settings.
+    scales = {
+        "bp": settings.similarity_bp_scale,
+        "glucose": settings.similarity_glucose_scale,
+        **model.input_spreads(),
+    }
+    memory = MemoryAgent(CHROMA_PATH, scales=scales, max_distance=settings.similarity_max_distance)
     feature_explainer = FeatureExplainer(model)
     retriever = RetrievalAgent.from_settings(settings, CHROMA_PATH)
-    safety_guard = SafetyGuard()
+    safety_guard = SafetyGuard(max_defaulted_penalty=settings.data_quality_max_penalty)
 
     support_policy = None
     if settings.support_policy_path.exists():

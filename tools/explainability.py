@@ -1,5 +1,13 @@
 import numpy as np
 
+METHOD_NOTES = {
+    "shap": "SHAP values: each feature's contribution to this patient's score versus the training average.",
+    "sensitivity": (
+        "Sensitivity: change in predicted probability when one feature is replaced by its"
+        " default (training median) and the others are kept."
+    ),
+}
+
 
 class FeatureExplainer:
     def __init__(self, risk_model):
@@ -32,22 +40,32 @@ class FeatureExplainer:
         if values is None:
             values = self._sensitivity_values(row)
 
+        defaulted = set(patient.get("defaulted_fields", []))
         impacts = []
         for feature, value, impact in zip(self.risk_model.feature_names, row.iloc[0], values):
+            if np.isclose(impact, 0.0):
+                direction = "no effect"
+            else:
+                direction = "raises risk" if impact > 0 else "lowers risk"
             impacts.append(
                 {
                     "feature": feature,
                     "value": float(value),
                     "impact": float(impact),
-                    "direction": "raises risk" if impact > 0 else "lowers risk",
+                    "direction": direction,
                     "magnitude": abs(float(impact)),
+                    # True when the caller gave no value, so `value` is the model's default.
+                    "defaulted": feature in defaulted,
                 }
             )
 
         impacts.sort(key=lambda item: item["magnitude"], reverse=True)
         return {
             "method": self.method,
+            "method_note": METHOD_NOTES[self.method],
             "features": impacts,
+            # Inputs the patient supplied that this model does not use (e.g. glucose, BRFSS model).
+            "inputs_not_in_model": self.risk_model.inputs_not_in_model(patient),
         }
 
     def _shap_values(self, row):

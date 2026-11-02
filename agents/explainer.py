@@ -26,7 +26,7 @@ class ExplanationAgent:
         Patient data: {patient_data}
         Risk probability: {prob}
         Feature explanation: {feature_explanation}
-        Similar prior cases: {similar_cases}
+        Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
         Safety assessment (rules applied to the measurements): {safety}
         Guideline evidence status: {evidence_status}
 
@@ -54,38 +54,71 @@ class ExplanationAgent:
         safety=None,
         evidence_status=None,
     ):
-        age = patient_data["age"]
         bmi = patient_data["bmi"]
-        bp = patient_data["bp"]
-        glucose = patient_data["glucose"]
-        factors = []
-
-        if age >= 55:
-            factors.append("older age")
-        if bmi >= 30:
-            factors.append("elevated BMI")
-        if bp >= 140:
-            factors.append("high blood pressure")
-        if glucose >= 140:
-            factors.append("high glucose")
-        if not patient_data.get("glucose_measured", True):
-            factors.append("glucose was not measured, so the estimate is less certain")
-
-        if not factors:
-            factors.append("the measured values are mostly in lower-risk ranges")
-
-        factor_text = ", ".join(factors)
-        top_impacts = self._top_feature_text(feature_explanation)
+        features = (feature_explanation or {}).get("features", [])
+        if features:
+            driver_text = self._driver_text(feature_explanation)
+        else:
+            driver_text = self._threshold_text(patient_data)
         memory_text = ""
         if similar_cases:
             memory_text = (
-                f" I found {len(similar_cases)} similar prior case(s) in memory for comparison."
+                f"I found {len(similar_cases)} similar prior case(s) in memory; they are earlier"
+                " model predictions, not confirmed outcomes."
             )
 
         return (
             f"The model estimated a {prob:.1%} risk using a calculated BMI of {bmi:.1f}. "
-            f"Key factors: {factor_text}. {top_impacts}{memory_text}"
+            f"{driver_text}{self._glucose_text(patient_data, feature_explanation)}"
+            f"{self._defaults_text(patient_data)}{memory_text}"
             f"{self._safety_text(safety)}{self._evidence_text(evidence_status)}"
+        )
+
+    def _driver_text(self, feature_explanation):
+        """Describe only what the model used; auto-filled inputs are not claimed as patient facts."""
+        method = feature_explanation.get("method", "model").upper()
+        features = [f for f in feature_explanation["features"] if not f.get("defaulted")]
+        raising = [f["feature"] for f in features if f["direction"] == "raises risk"][:3]
+        lowering = [f["feature"] for f in features if f["direction"] == "lowers risk"][:2]
+        parts = []
+        if raising:
+            parts.append(f"raising risk: {', '.join(raising)}")
+        if lowering:
+            parts.append(f"lowering risk: {', '.join(lowering)}")
+        if not parts:
+            return f"The {method} explanation found no input with a notable effect. "
+        return f"The {method} explanation shows {'; '.join(parts)}. "
+
+    def _threshold_text(self, patient_data):
+        """Used only when no model explanation is available: plain range checks, not model output."""
+        notable = []
+        if patient_data["age"] >= 55:
+            notable.append("older age")
+        if patient_data["bmi"] >= 30:
+            notable.append("elevated BMI")
+        if patient_data["bp"] >= 140:
+            notable.append("high blood pressure")
+        if not notable:
+            return "No model explanation was available; the measured values are mostly in lower-risk ranges. "
+        return f"No model explanation was available; values of note: {', '.join(notable)}. "
+
+    def _glucose_text(self, patient_data, feature_explanation):
+        not_in_model = (feature_explanation or {}).get("inputs_not_in_model", [])
+        if "glucose" in not_in_model:
+            return (
+                f"Glucose ({patient_data['glucose']:.0f}) is not an input of this model; it is"
+                " checked by the safety rules instead. "
+            )
+        if not patient_data.get("glucose_measured", True):
+            return "Glucose was not measured, so the glucose rules could not be applied. "
+        return ""
+
+    def _defaults_text(self, patient_data):
+        defaulted = patient_data.get("defaulted_fields", [])
+        if not defaulted:
+            return ""
+        return (
+            f"{len(defaulted)} optional input(s) were not provided and were filled with defaults. "
         )
 
     def _safety_text(self, safety):
@@ -100,12 +133,3 @@ class ExplanationAgent:
         if evidence_status in ("none", "limited"):
             return f" Guideline evidence for this profile is {evidence_status}."
         return ""
-
-    def _top_feature_text(self, feature_explanation):
-        if not feature_explanation or not feature_explanation.get("features"):
-            return ""
-
-        top_features = feature_explanation["features"][:3]
-        parts = [f"{item['feature']} {item['direction']}" for item in top_features]
-        method = feature_explanation.get("method", "model")
-        return f"The {method.upper()} explanation highlights: {', '.join(parts)}. "

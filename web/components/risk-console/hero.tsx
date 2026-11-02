@@ -49,7 +49,7 @@ export function Hero({ result }: { result: PredictionResult | null | undefined }
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <MetricTile label="BMI" value={result ? result.patient.bmi.toFixed(1) : "—"} />
-          <MetricTile label="Confidence" value={confidence} icon={<ShieldCheck className="h-4 w-4" />} />
+          <MetricTile label="Data quality" value={confidence} icon={<ShieldCheck className="h-4 w-4" />} />
           <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
             <div className="field-label">Escalation</div>
             <div className="mt-2 flex min-h-7 items-center gap-2">
