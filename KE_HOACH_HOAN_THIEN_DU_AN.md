@@ -95,7 +95,7 @@ Chi tiết tại [Policy RL](docs/reinforcement_learning.md): Q-learning dạng 
 ### Bước 10 — Hoàn thiện phối hợp agent
 
 - [ ] Truyền đủ bằng chứng và kết quả giải thích giữa các agent; xử lý thiếu dữ liệu, thiếu bằng chứng và lỗi công cụ.
-- [ ] Kiểm tra câu trả lời cuối, lưu dấu vết thực thi; nếu demo hội thoại thì thay phản hồi cố định của `/chat`.
+- [ ] Kiểm tra câu trả lời cuối, lưu dấu vết thực thi.
 
 ### Bước 11 — Sửa giải thích, độ tin cậy và memory
 

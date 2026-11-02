@@ -52,10 +52,6 @@ class PatientRequest(BaseModel):
         return self
 
 
-class ChatRequest(BaseModel):
-    message: str
-
-
 def _authorize(authorization: Optional[str] = Header(default=None)):
     if not settings.require_api_token:
         return
@@ -95,18 +91,6 @@ def predict_summary(patient: PatientRequest, _auth=Depends(_authorize)):
 @app.get("/history")
 def history(limit: int = 25, _auth=Depends(_authorize)):
     return {"records": agent.memory.get_all(limit=limit)}
-
-
-@app.post("/chat")
-def chat(request: ChatRequest, _auth=Depends(_authorize)):
-    return {
-        "response": (
-            "This prototype can analyze a patient profile, explain model drivers, "
-            "retrieve basic medical context, and compare against stored prior cases. "
-            "For clinical decisions, use measured values and clinician review."
-        ),
-        "message": request.message,
-    }
 
 
 @app.get("/v1/health")
