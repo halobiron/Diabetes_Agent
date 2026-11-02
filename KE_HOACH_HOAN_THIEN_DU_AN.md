@@ -66,8 +66,10 @@ Kết quả: MLP đứng thứ 2 theo CV (0,8305) nên được tuning, và đư
 
 ### Bước 6 — Xây KB Neo4j
 
-- [ ] Thiết kế đồ thị tri thức về tiểu đường, thu thập tài liệu có nguồn và viết script nạp/cập nhật dữ liệu.
-- [ ] Thêm cấu hình Neo4j và truy vấn được quan hệ cùng bằng chứng.
+- [x] Thiết kế đồ thị tri thức về tiểu đường, thu thập tài liệu có nguồn và viết script nạp/cập nhật dữ liệu.
+- [x] Thêm cấu hình Neo4j và truy vấn được quan hệ cùng bằng chứng.
+
+Chi tiết tại [Knowledge graph Neo4j](docs/neo4j_kb.md): 20 thực thể, 35 quan hệ, 21 bằng chứng từ 5 nguồn; kiểm thử bằng driver giả, chưa chạy trên server Neo4j thật (máy chưa bật Docker).
 
 ### Bước 7 — Hoàn thiện RAG
 

@@ -184,6 +184,7 @@ Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 | `models/training_pipeline.py` | Training pipeline |
 | `artifacts/` | Model, metrics and model card |
 | `data/chroma/` | Knowledge index and case memory |
+| `data/kb/diabetes_kb.json` | Source file of the Neo4j knowledge graph ([docs/neo4j_kb.md](docs/neo4j_kb.md)) |
 | `logs/` | Decision logs and runtime checks |
 
 ## Project structure

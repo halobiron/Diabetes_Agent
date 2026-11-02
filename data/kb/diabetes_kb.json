@@ -1,0 +1,129 @@
+{
+  "version": "2026.11.1",
+  "sources": [
+    {
+      "id": "ada-2025",
+      "title": "Standards of Care in Diabetes-2025",
+      "publisher": "American Diabetes Association",
+      "year": 2025,
+      "url": "https://diabetesjournals.org/care/issue/48/Supplement_1"
+    },
+    {
+      "id": "who-diabetes",
+      "title": "Diabetes fact sheet",
+      "publisher": "World Health Organization",
+      "year": 2024,
+      "url": "https://www.who.int/news-room/fact-sheets/detail/diabetes"
+    },
+    {
+      "id": "cdc-diabetes",
+      "title": "Diabetes risk factors and prevention",
+      "publisher": "Centers for Disease Control and Prevention",
+      "year": 2024,
+      "url": "https://www.cdc.gov/diabetes/"
+    },
+    {
+      "id": "niddk-diabetes",
+      "title": "Diabetes information",
+      "publisher": "National Institute of Diabetes and Digestive and Kidney Diseases",
+      "year": 2024,
+      "url": "https://www.niddk.nih.gov/health-information/diabetes"
+    },
+    {
+      "id": "dpp-2002",
+      "title": "Reduction in the incidence of type 2 diabetes with lifestyle intervention or metformin",
+      "publisher": "New England Journal of Medicine 346:393-403 (Diabetes Prevention Program Research Group)",
+      "year": 2002,
+      "url": "https://www.nejm.org/doi/full/10.1056/NEJMoa012512"
+    }
+  ],
+  "entities": [
+    {"id": "type2_diabetes", "label": "Condition", "name": "Type 2 diabetes", "description": "Chronic condition of impaired insulin action and secretion leading to high blood glucose."},
+    {"id": "prediabetes", "label": "Condition", "name": "Prediabetes", "description": "Blood glucose above normal but below the diabetes diagnostic range."},
+    {"id": "cardiovascular_disease", "label": "Condition", "name": "Cardiovascular disease", "description": "Heart and blood vessel disease, the leading cause of death in people with diabetes."},
+
+    {"id": "high_bmi", "label": "RiskFactor", "name": "Overweight or obesity", "key": "bmi", "description": "BMI of 25 or higher (23 or higher for Asian adults in ADA screening guidance)."},
+    {"id": "high_bp", "label": "RiskFactor", "name": "High blood pressure", "key": "bp", "description": "Blood pressure at or above 130/80 mmHg or treated hypertension."},
+    {"id": "older_age", "label": "RiskFactor", "name": "Older age", "key": "age", "description": "Risk of type 2 diabetes rises with age; ADA recommends screening all adults from age 35."},
+    {"id": "high_glucose", "label": "RiskFactor", "name": "Elevated blood glucose", "key": "glucose", "description": "Fasting glucose of 100 mg/dL or higher, or A1C of 5.7% or higher."},
+    {"id": "physical_inactivity", "label": "RiskFactor", "name": "Physical inactivity", "key": "physical_activity", "description": "Little or no regular physical activity."},
+    {"id": "smoking", "label": "RiskFactor", "name": "Smoking", "key": "smoker", "description": "Current tobacco smoking."},
+    {"id": "family_history", "label": "RiskFactor", "name": "Family history of diabetes", "description": "A parent or sibling with diabetes."},
+
+    {"id": "a1c_test", "label": "Test", "name": "A1C test", "description": "Average blood glucose over about three months."},
+    {"id": "fasting_plasma_glucose", "label": "Test", "name": "Fasting plasma glucose", "description": "Blood glucose after at least 8 hours without caloric intake."},
+    {"id": "ogtt", "label": "Test", "name": "Oral glucose tolerance test", "description": "Blood glucose 2 hours after a 75 g glucose load."},
+
+    {"id": "lifestyle_program", "label": "Intervention", "name": "Structured lifestyle change program", "description": "Diabetes Prevention Program style coaching on diet, activity and weight."},
+    {"id": "weight_loss", "label": "Intervention", "name": "Modest weight loss", "description": "Losing 5 to 7 percent of body weight."},
+    {"id": "physical_activity_150", "label": "Intervention", "name": "150 minutes of moderate activity per week", "description": "Moderate-intensity aerobic activity such as brisk walking, spread over at least 3 days."},
+    {"id": "bp_control", "label": "Intervention", "name": "Blood pressure control", "description": "Repeat measurement, lifestyle changes and clinician-guided treatment to reach a target below 130/80 mmHg."},
+    {"id": "smoking_cessation", "label": "Intervention", "name": "Smoking cessation", "description": "Counselling and pharmacotherapy to stop tobacco use."},
+    {"id": "metformin_prevention", "label": "Intervention", "name": "Metformin for diabetes prevention", "description": "Considered by a clinician for selected high-risk people with prediabetes."},
+    {"id": "clinician_review", "label": "Intervention", "name": "Clinician review and confirmatory testing", "description": "Professional assessment with laboratory confirmation of glucose status."}
+  ],
+  "evidence": [
+    {"id": "ev-ada-dx-a1c", "source": "ada-2025", "section": "2. Diagnosis and Classification", "text": "Diabetes is diagnosed by an A1C of 6.5% or higher; prediabetes is an A1C of 5.7% to 6.4%."},
+    {"id": "ev-ada-dx-fpg", "source": "ada-2025", "section": "2. Diagnosis and Classification", "text": "Diabetes is diagnosed by a fasting plasma glucose of 126 mg/dL or higher; prediabetes is a fasting plasma glucose of 100 to 125 mg/dL."},
+    {"id": "ev-ada-dx-ogtt", "source": "ada-2025", "section": "2. Diagnosis and Classification", "text": "Diabetes is diagnosed by a 2-hour plasma glucose of 200 mg/dL or higher during a 75 g oral glucose tolerance test; prediabetes is 140 to 199 mg/dL."},
+    {"id": "ev-ada-confirm", "source": "ada-2025", "section": "2. Diagnosis and Classification", "text": "In the absence of unequivocal hyperglycemia, diagnosis requires two abnormal results from the same sample or two separate samples."},
+    {"id": "ev-ada-screen-age", "source": "ada-2025", "section": "3. Prevention or Delay of Diabetes", "text": "Screening for prediabetes and type 2 diabetes should begin at age 35 for all adults, and earlier in adults with overweight or obesity who have one or more additional risk factors."},
+    {"id": "ev-ada-screen-factors", "source": "ada-2025", "section": "3. Prevention or Delay of Diabetes", "text": "Risk factors prompting testing include overweight or obesity, a first-degree relative with diabetes, physical inactivity, and hypertension (blood pressure of 130/80 mmHg or higher, or on therapy)."},
+    {"id": "ev-ada-bmi-asian", "source": "ada-2025", "section": "3. Prevention or Delay of Diabetes", "text": "In Asian American individuals, testing is considered at a lower BMI threshold of 23 kg/m2."},
+    {"id": "ev-ada-prediabetes-progress", "source": "ada-2025", "section": "3. Prevention or Delay of Diabetes", "text": "People with prediabetes are at increased risk of developing type 2 diabetes and should be referred to an intensive lifestyle behavior change program."},
+    {"id": "ev-dpp-lifestyle", "source": "dpp-2002", "section": "Results", "text": "Intensive lifestyle intervention reduced the incidence of type 2 diabetes by 58% compared with placebo in adults with impaired glucose tolerance."},
+    {"id": "ev-dpp-metformin", "source": "dpp-2002", "section": "Results", "text": "Metformin reduced the incidence of type 2 diabetes by 31% compared with placebo, and was less effective than lifestyle intervention."},
+    {"id": "ev-dpp-weight", "source": "dpp-2002", "section": "Methods", "text": "The lifestyle goals were at least 7% weight loss and at least 150 minutes of physical activity per week."},
+    {"id": "ev-ada-activity", "source": "ada-2025", "section": "5. Facilitating Positive Health Behaviors", "text": "Adults should do at least 150 minutes per week of moderate- to vigorous-intensity aerobic activity, spread over at least 3 days per week."},
+    {"id": "ev-ada-weight", "source": "ada-2025", "section": "8. Obesity and Weight Management", "text": "A weight loss of 5% or more of body weight can improve glycemia and cardiometabolic risk factors."},
+    {"id": "ev-ada-bp-target", "source": "ada-2025", "section": "10. Cardiovascular Disease and Risk Management", "text": "Blood pressure should be measured at every routine visit, elevated readings confirmed on a separate day, and the treatment target is below 130/80 mmHg."},
+    {"id": "ev-ada-cvd", "source": "ada-2025", "section": "10. Cardiovascular Disease and Risk Management", "text": "Atherosclerotic cardiovascular disease is the leading cause of morbidity and mortality in people with diabetes, and hypertension is a major contributing risk factor."},
+    {"id": "ev-ada-smoking", "source": "ada-2025", "section": "5. Facilitating Positive Health Behaviors", "text": "All people should be advised not to use cigarettes or other tobacco products, and cessation counselling should be part of care."},
+    {"id": "ev-cdc-risk", "source": "cdc-diabetes", "section": "Risk factors", "text": "Having prediabetes, overweight, being 45 or older, a parent or sibling with type 2 diabetes, and being physically active less than three times a week raise the risk of type 2 diabetes."},
+    {"id": "ev-cdc-smoking", "source": "cdc-diabetes", "section": "Risk factors", "text": "Smokers are more likely to develop type 2 diabetes than non-smokers."},
+    {"id": "ev-who-risk", "source": "who-diabetes", "section": "Causes and risk factors", "text": "Overweight, obesity and physical inactivity are major modifiable factors for type 2 diabetes, and healthy diet, regular activity and avoiding tobacco prevent or delay it."},
+    {"id": "ev-who-bp", "source": "who-diabetes", "section": "Complications", "text": "Diabetes increases the risk of heart attack and stroke, and people with diabetes often also have high blood pressure."},
+    {"id": "ev-niddk-clinician", "source": "niddk-diabetes", "section": "Diagnosis", "text": "Health care professionals diagnose prediabetes and diabetes using blood tests; a home glucose reading is not a diagnosis."}
+  ],
+  "relations": [
+    {"from": "high_bmi", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-screen-factors", "ev-who-risk", "ev-cdc-risk"]},
+    {"from": "high_bmi", "type": "INCREASES_RISK_OF", "to": "prediabetes", "evidence": ["ev-ada-screen-factors"]},
+    {"from": "older_age", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-screen-age", "ev-cdc-risk"]},
+    {"from": "family_history", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-screen-factors", "ev-cdc-risk"]},
+    {"from": "physical_inactivity", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-screen-factors", "ev-who-risk", "ev-cdc-risk"]},
+    {"from": "high_bp", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-screen-factors"]},
+    {"from": "high_bp", "type": "INCREASES_RISK_OF", "to": "cardiovascular_disease", "evidence": ["ev-ada-cvd", "ev-who-bp"]},
+    {"from": "smoking", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-cdc-smoking"]},
+    {"from": "high_glucose", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-prediabetes-progress"]},
+    {"from": "prediabetes", "type": "INCREASES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-prediabetes-progress", "ev-cdc-risk"]},
+    {"from": "type2_diabetes", "type": "INCREASES_RISK_OF", "to": "cardiovascular_disease", "evidence": ["ev-ada-cvd", "ev-who-bp"]},
+
+    {"from": "a1c_test", "type": "DIAGNOSES", "to": "type2_diabetes", "evidence": ["ev-ada-dx-a1c", "ev-ada-confirm"]},
+    {"from": "a1c_test", "type": "DIAGNOSES", "to": "prediabetes", "evidence": ["ev-ada-dx-a1c"]},
+    {"from": "fasting_plasma_glucose", "type": "DIAGNOSES", "to": "type2_diabetes", "evidence": ["ev-ada-dx-fpg", "ev-ada-confirm"]},
+    {"from": "fasting_plasma_glucose", "type": "DIAGNOSES", "to": "prediabetes", "evidence": ["ev-ada-dx-fpg"]},
+    {"from": "ogtt", "type": "DIAGNOSES", "to": "type2_diabetes", "evidence": ["ev-ada-dx-ogtt", "ev-ada-confirm"]},
+    {"from": "ogtt", "type": "DIAGNOSES", "to": "prediabetes", "evidence": ["ev-ada-dx-ogtt"]},
+
+    {"from": "high_glucose", "type": "SHOULD_TEST_WITH", "to": "a1c_test", "evidence": ["ev-ada-dx-a1c", "ev-niddk-clinician"]},
+    {"from": "high_glucose", "type": "SHOULD_TEST_WITH", "to": "fasting_plasma_glucose", "evidence": ["ev-ada-dx-fpg", "ev-niddk-clinician"]},
+    {"from": "older_age", "type": "SHOULD_TEST_WITH", "to": "a1c_test", "evidence": ["ev-ada-screen-age"]},
+    {"from": "high_bmi", "type": "SHOULD_TEST_WITH", "to": "a1c_test", "evidence": ["ev-ada-screen-age", "ev-ada-bmi-asian"]},
+
+    {"from": "lifestyle_program", "type": "REDUCES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-dpp-lifestyle", "ev-ada-prediabetes-progress"]},
+    {"from": "metformin_prevention", "type": "REDUCES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-dpp-metformin"]},
+    {"from": "weight_loss", "type": "REDUCES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-dpp-weight", "ev-ada-weight"]},
+    {"from": "physical_activity_150", "type": "REDUCES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-dpp-weight", "ev-who-risk"]},
+    {"from": "bp_control", "type": "REDUCES_RISK_OF", "to": "cardiovascular_disease", "evidence": ["ev-ada-bp-target", "ev-ada-cvd"]},
+    {"from": "smoking_cessation", "type": "REDUCES_RISK_OF", "to": "type2_diabetes", "evidence": ["ev-ada-smoking", "ev-who-risk"]},
+
+    {"from": "weight_loss", "type": "ADDRESSES", "to": "high_bmi", "evidence": ["ev-ada-weight", "ev-dpp-weight"]},
+    {"from": "lifestyle_program", "type": "ADDRESSES", "to": "high_bmi", "evidence": ["ev-dpp-lifestyle", "ev-ada-prediabetes-progress"]},
+    {"from": "physical_activity_150", "type": "ADDRESSES", "to": "physical_inactivity", "evidence": ["ev-ada-activity"]},
+    {"from": "bp_control", "type": "ADDRESSES", "to": "high_bp", "evidence": ["ev-ada-bp-target"]},
+    {"from": "smoking_cessation", "type": "ADDRESSES", "to": "smoking", "evidence": ["ev-ada-smoking"]},
+    {"from": "clinician_review", "type": "ADDRESSES", "to": "high_glucose", "evidence": ["ev-niddk-clinician", "ev-ada-confirm"]},
+    {"from": "clinician_review", "type": "ADDRESSES", "to": "family_history", "evidence": ["ev-ada-screen-factors"]},
+    {"from": "metformin_prevention", "type": "ADDRESSES", "to": "high_glucose", "evidence": ["ev-dpp-metformin"]}
+  ]
+}

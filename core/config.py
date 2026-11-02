@@ -16,6 +16,11 @@ class Settings:
     request_timeout_seconds: int
     log_dir: Path
     model_artifact_path: Path
+    neo4j_uri: str
+    neo4j_user: str
+    neo4j_password: str
+    neo4j_database: str
+    kb_path: Path
 
 
 def get_settings():
@@ -28,4 +33,9 @@ def get_settings():
         model_artifact_path=Path(
             os.getenv("MODEL_ARTIFACT_PATH", str(project_root / "artifacts" / "risk_model.joblib"))
         ),
+        neo4j_uri=os.getenv("NEO4J_URI", "bolt://localhost:7687"),
+        neo4j_user=os.getenv("NEO4J_USER", "neo4j"),
+        neo4j_password=os.getenv("NEO4J_PASSWORD", ""),
+        neo4j_database=os.getenv("NEO4J_DATABASE", "neo4j"),
+        kb_path=Path(os.getenv("KB_PATH", str(project_root / "data" / "kb" / "diabetes_kb.json"))),
     )
