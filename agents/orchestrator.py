@@ -64,14 +64,19 @@ class Orchestrator:
         )
         policy = None
         if self.support_policy is not None:
-            retrieved_context, status, safety, recommendation, policy = self._choose_next_step(
-                patient,
-                prob,
-                risk,
-                feature_explanation,
-                similar_cases,
-                (retrieved_context, status, safety, recommendation),
+            retrieved_context, status, safety, recommendation, policy = self._guard(
                 degraded,
+                "support_policy",
+                lambda: self._choose_next_step(
+                    patient,
+                    prob,
+                    risk,
+                    feature_explanation,
+                    similar_cases,
+                    (retrieved_context, status, safety, recommendation),
+                    degraded,
+                ),
+                (retrieved_context, status, safety, recommendation, None),
             )
 
         # Explained last so it sees the final evidence status and safety outcome.

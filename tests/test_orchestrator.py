@@ -182,3 +182,19 @@ def test_text_agent_failure_uses_fixed_text():
 
     assert "consult a clinician" in result["recommendation"]
     assert set(components(result)) == {"recommender", "explainer"}
+
+
+def test_policy_failure_keeps_prediction_and_urgent_safety_result():
+    class BrokenPolicy:
+        def decide(self, state):
+            raise ConnectionError("policy unavailable")
+
+    orchestrator, _ = build()
+    orchestrator.support_policy = BrokenPolicy()
+    result = orchestrator.run({"bp": 190})
+
+    assert result["probability"] == 0.6
+    assert result["safety"]["escalation"] == "urgent_clinician_review"
+    assert result["policy"] is None
+    assert components(result) == ["support_policy"]
+    assert any("incomplete" in text for text in result["safety"]["disclaimers"])

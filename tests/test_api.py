@@ -1,5 +1,9 @@
+from pathlib import Path
+
 import pytest
 from fastapi.testclient import TestClient
+
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="module")
@@ -10,7 +14,7 @@ def client(tmp_path_factory):
         patch.setenv("REQUIRE_API_TOKEN", "false")
         patch.setenv("CHROMA_PATH", str(test_dir / "chroma"))
         patch.setenv("LOG_DIR", str(test_dir / "logs"))
-        patch.setenv("MODEL_ARTIFACT_PATH", str(test_dir / "missing-model.joblib"))
+        patch.setenv("MODEL_ARTIFACT_PATH", str(PROJECT_ROOT / "artifacts/risk_model.joblib"))
         from api.app import app
 
         with TestClient(app) as test_client:

@@ -108,8 +108,10 @@ Mô hình đang dùng là MLP nên giải thích luôn là sensitivity (thay t�
 
 ### Bước 12 — Kiểm thử và demo
 
-- [ ] Chạy kiểm thử backend, lint/typecheck/build frontend và toàn bộ luồng tích hợp.
-- [ ] Demo hồ sơ đủ/thiếu dữ liệu, cảnh báo, thiếu bằng chứng và lỗi dịch vụ; thể hiện vai trò từng thành phần.
+- [x] Chạy kiểm thử backend, lint/typecheck/build frontend và toàn bộ luồng tích hợp.
+- [x] Demo hồ sơ đủ/thiếu dữ liệu, cảnh báo, thiếu bằng chứng và lỗi dịch vụ; thể hiện vai trò từng thành phần.
+
+Kết quả: 96 tests đạt, coverage 80,97%; frontend lint/typecheck/build đạt; demo tích hợp 26/26 ca đạt. Kịch bản và cách chạy lại: [Kiểm thử và demo](docs/kiem_thu_va_demo.md).
 
 ### Bước 13 — Hoàn thiện báo cáo
 
