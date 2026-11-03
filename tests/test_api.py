@@ -27,6 +27,43 @@ def test_health_endpoint(client):
     assert response.json()["status"] == "ok"
 
 
+def test_followup_answer_updates_guidance_without_changing_mlp_probability(client):
+    profile = {"age": 45, "bmi": 27, "bp": 120, "glucose": None}
+    before = client.post("/v1/predict", json=profile).json()
+    assert before["followup"]["kind"] == "glucose"
+    assert before["measurement_scales"][2]["value"] is None
+
+    after = client.post(
+        "/v1/predict", json={**profile, "glucose": 126, "glucose_context": "fasting"}
+    ).json()
+    assert after["patient"]["glucose_context"] == "fasting"
+    assert after["probability"] == before["probability"]
+    assert after["measurement_scales"][2]["status"] == "Từ 126: cần xác nhận"
+    assert after["followup"] is None
+    assert after["safety"]["confidence_score"] > before["safety"]["confidence_score"]
+
+
+def test_unavailable_answer_suppresses_question_and_policy_reask(client):
+    response = client.post(
+        "/v1/predict", json={"age": 45, "bmi": 27, "bp": 120, "glucose_unavailable": True}
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["followup"] is None
+    assert body["patient"]["glucose_unavailable"] is True
+    assert all(step["action"] != "request_glucose" for step in body["policy"]["steps"])
+
+
+def test_glucose_context_validation_and_urgent_question_suppression(client):
+    base = {"age": 45, "bmi": 27, "bp": 190}
+    assert (
+        client.post("/v1/predict", json={**base, "glucose_context": "invalid"}).status_code == 422
+    )
+    body = client.post("/v1/predict", json=base).json()
+    assert body["followup"] is None
+    assert body["safety"]["escalation"] == "urgent_clinician_review"
+
+
 def test_v1_health_endpoint(client):
     response = client.get("/v1/health")
     assert response.status_code == 200

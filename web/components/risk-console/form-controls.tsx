@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 export function InputSection({
   title,
@@ -69,7 +69,10 @@ export function GlucoseField({
   value: number | null;
   onChange: (value: number | null) => void;
 }) {
-  const hasGlucose = value !== null;
+  const [hasGlucose, setHasGlucose] = useState(value !== null);
+  useEffect(() => {
+    if (value !== null) setHasGlucose(true);
+  }, [value]);
 
   return (
     <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
@@ -78,7 +81,10 @@ export function GlucoseField({
         <input
           type="checkbox"
           checked={hasGlucose}
-          onChange={(event) => onChange(event.target.checked ? 110 : null)}
+          onChange={(event) => {
+            setHasGlucose(event.target.checked);
+            onChange(null);
+          }}
           className="h-4 w-4 accent-info"
         />
       </label>

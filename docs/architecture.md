@@ -76,3 +76,4 @@ Lỗi thành phần tùy chọn có nội dung dự phòng và được công b�
 - MLP hiện tại: test ROC AUC 0,82581, F1 0,46543; xem [model card](../artifacts/model_card.md).
 - RL dùng phản hồi mô phỏng; xem [môi trường và đánh giá policy](reinforcement_learning.md).
 - Cách chạy và bằng chứng kiểm tra: [kiểm thử và demo](kiem_thu_va_demo.md), [KB Neo4j](neo4j_kb.md).
+- Luồng bổ sung dữ liệu tương tác và thang chỉ số có nguồn: [hỏi bổ sung và thang đo](hoi_bo_sung_va_thang_do.md). API trả thêm `followup` và `measurement_scales`; trạng thái chưa có số đo được truyền vào policy để tránh hỏi lặp.

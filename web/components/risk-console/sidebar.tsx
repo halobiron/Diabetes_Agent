@@ -94,8 +94,26 @@ export function PatientSidebar({
             value={form.bp}
             onChange={(value) => onFieldChange("bp", value)}
           />
-          <GlucoseField value={form.glucose} onChange={(value) => onFieldChange("glucose", value)} />
+          <GlucoseField value={form.glucose} onChange={(value) => {
+            onFieldChange("glucose", value);
+            onFieldChange("glucose_unavailable", false);
+            if (value === null) onFieldChange("glucose_context", "unspecified");
+          }} />
         </div>
+        {form.glucose !== null ? (
+          <SelectField
+            label="Bối cảnh đo đường huyết"
+            value={form.glucose_context ?? "unspecified"}
+            options={[
+              { value: "unspecified", label: "Chưa chọn bối cảnh đo" },
+              { value: "fasting", label: "Lúc đói (nhịn ăn ít nhất 8 giờ)" },
+              { value: "random", label: "Ngẫu nhiên" },
+              { value: "after_meal", label: "Sau ăn thông thường" },
+              { value: "unknown", label: "Không nhớ / không rõ" },
+            ]}
+            onChange={(value) => onFieldChange("glucose_context", value as PatientInput["glucose_context"])}
+          />
+        ) : null}
         <MiniStat label="BMI tính từ chiều cao và cân nặng" value={calculatedBmi.toFixed(1)} />
       </InputSection>
 

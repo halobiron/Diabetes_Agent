@@ -91,6 +91,11 @@ The **local demo runs without paid API keys**. Risk scoring, feature drivers, RA
 
 Details: [`docs/architecture.md`](docs/architecture.md)
 
+The Assessment tab also offers source-backed measurement scales and an actionable
+follow-up question for missing glucose or measurement context. Answering reruns the
+assessment; declining a measurement prevents repeated questions for that profile.
+See [`docs/hoi_bo_sung_va_thang_do.md`](docs/hoi_bo_sung_va_thang_do.md).
+
 ## Tech stack
 
 - **ML:** scikit-learn, LightGBM, pandas, joblib — local training

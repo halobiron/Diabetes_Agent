@@ -1,6 +1,6 @@
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Literal, Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -26,6 +26,10 @@ class PatientRequest(BaseModel):
     bmi: Optional[float] = Field(None, gt=0, le=80)
     bp: int = Field(..., ge=0, le=260)
     glucose: Optional[float] = Field(None, ge=0, le=500)
+    glucose_context: Literal["unspecified", "fasting", "random", "after_meal", "unknown"] = (
+        "unspecified"
+    )
+    glucose_unavailable: bool = False
     high_chol: Optional[bool] = None
     chol_check: Optional[bool] = None
     smoker: Optional[bool] = None

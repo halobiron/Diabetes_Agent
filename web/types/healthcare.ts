@@ -6,6 +6,8 @@ export type PatientInput = {
   weight_kg: number;
   bp: number;
   glucose: number | null;
+  glucose_context?: "unspecified" | "fasting" | "random" | "after_meal" | "unknown";
+  glucose_unavailable?: boolean;
   high_chol: boolean;
   chol_check: boolean;
   smoker: boolean;
@@ -34,6 +36,8 @@ export type PreparedPatient = {
   bp: number;
   glucose: number;
   glucose_measured: boolean;
+  glucose_context?: PatientInput["glucose_context"];
+  glucose_unavailable?: boolean;
   high_bp?: number;
   age_bucket?: number;
   sex?: number;
@@ -160,4 +164,36 @@ export type PredictionResult = {
   explanation: string;
   recommendation: string;
   model?: ModelMetadata;
+  measurement_scales?: MeasurementScale[];
+  followup?: FollowupQuestion | null;
+};
+
+export type MeasurementBand = {
+  min: number | null;
+  max: number | null;
+  label: string;
+  tone: "neutral" | "success" | "warning" | "danger";
+};
+
+export type MeasurementScale = {
+  key: string;
+  title: string;
+  unit: string;
+  value: number | null;
+  display_min: number;
+  display_max: number;
+  bands: MeasurementBand[];
+  status: string;
+  tone: MeasurementBand["tone"];
+  note: string;
+  sources: { title: string; url: string }[];
+};
+
+export type FollowupQuestion = {
+  id: string;
+  kind: "glucose" | "glucose_context";
+  source: "policy" | "data_quality" | "measurement_context";
+  question: string;
+  reason: string;
+  model_note: string;
 };

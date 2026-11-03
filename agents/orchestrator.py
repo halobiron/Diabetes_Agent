@@ -2,6 +2,7 @@ import logging
 
 from agents.retriever import evidence_status
 from rl.environment import TERMINAL_ACTIONS, encode_state
+from tools.patient_guidance import build_followup, measurement_scales
 from tools.risk_classifier import classify_risk
 
 logger = logging.getLogger(__name__)
@@ -121,6 +122,8 @@ class Orchestrator:
             "model": self.model.artifact_metadata,
             "policy": policy,
             "degraded": degraded,
+            "measurement_scales": measurement_scales(patient),
+            "followup": build_followup(patient, safety, policy),
         }
 
     @staticmethod
@@ -216,7 +219,13 @@ class Orchestrator:
             if patient.get("glucose_measured", True):
                 codes = {rule["code"] for rule in safety["rules"]}
                 glucose = "elevated" if codes & {"GLU-200", "GLU-300"} else "normal"
-            state = encode_state(risk, glucose, status, retrieved_more=retrieved_more)
+            state = encode_state(
+                risk,
+                glucose,
+                status,
+                asked_glucose=patient.get("glucose_unavailable", False),
+                retrieved_more=retrieved_more,
+            )
             decision = self.support_policy.decide(state)
             action = decision["action"]
             step = {"action": action, "state": list(state), "source": decision["source"]}

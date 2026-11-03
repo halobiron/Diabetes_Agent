@@ -211,6 +211,11 @@ class RiskModel:
             "bp": int(bp) if bp is not None else int(self._default_for("bp", 0)),
             "glucose": glucose,
             "glucose_measured": glucose_measured,
+            "glucose_context": patient.get("glucose_context", "unspecified")
+            if glucose_measured
+            else "unspecified",
+            "glucose_unavailable": bool(patient.get("glucose_unavailable", False))
+            and not glucose_measured,
             "high_bp": self._coerce_binary(high_bp, self._default_for("HighBP")),
             "age_bucket": int(age_bucket),
             "sex": sex,
