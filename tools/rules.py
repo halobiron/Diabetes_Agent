@@ -83,85 +83,81 @@ def _glucose_between(low, high):
 BASE_RULES = [
     Rule(
         code="GLU-300",
-        name="Very high measured glucose",
+        name="Đường huyết đo được rất cao",
         category="measurement",
         priority=100,
         condition=_glucose_between(300, float("inf")),
-        message="Very high glucose value; urgent medical evaluation is recommended.",
-        basis="Project threshold: measured glucose >= 300 mg/dL.",
+        message="Đường huyết rất cao; cần được đánh giá y tế khẩn cấp.",
+        basis="Ngưỡng của dự án: đường huyết đo được >= 300 mg/dL.",
         escalation="urgent_clinician_review",
     ),
     Rule(
         code="BP-180",
-        name="Severely elevated blood pressure",
+        name="Huyết áp tăng nghiêm trọng",
         category="measurement",
         priority=95,
         condition=_bp_between(180, float("inf")),
-        message="Severely elevated blood pressure; urgent same-day clinical assessment is recommended.",
-        basis="Project threshold: systolic BP >= 180 mmHg (ACC/AHA hypertensive-crisis range).",
+        message="Huyết áp tăng nghiêm trọng; cần khám khẩn trong ngày.",
+        basis="Ngưỡng của dự án: huyết áp tâm thu >= 180 mmHg (khoảng cơn tăng huyết áp theo ACC/AHA).",
         escalation="urgent_clinician_review",
     ),
     Rule(
         code="GLU-200",
-        name="High measured glucose",
+        name="Đường huyết đo được cao",
         category="measurement",
         priority=80,
         condition=_glucose_between(200, 300),
-        message=(
-            "High glucose value detected; prompt confirmatory testing and clinician review are"
-            " recommended."
-        ),
-        basis="Project threshold: measured glucose 200-299 mg/dL (ADA: >= 200 mg/dL is in the diabetes range).",
+        message=("Phát hiện đường huyết cao; cần sớm xét nghiệm xác nhận và khám bác sĩ."),
+        basis="Ngưỡng của dự án: đường huyết đo được 200–299 mg/dL (ADA: từ 200 mg/dL thuộc khoảng đái tháo đường).",
         escalation="prompt_clinician_followup",
     ),
     Rule(
         code="BP-160",
-        name="Very high blood pressure",
+        name="Huyết áp rất cao",
         category="measurement",
         priority=75,
         condition=_bp_between(160, 180),
-        message="Very high blood pressure detected; prompt clinician follow-up is recommended.",
-        basis="Project threshold: systolic BP 160-179 mmHg (ACC/AHA stage 2 hypertension or above).",
+        message="Phát hiện huyết áp rất cao; cần sớm khám bác sĩ.",
+        basis="Ngưỡng của dự án: huyết áp tâm thu 160–179 mmHg (tăng huyết áp giai đoạn 2 trở lên theo ACC/AHA).",
         escalation="prompt_clinician_followup",
     ),
     Rule(
         code="PRED-VERYHIGH",
-        name="Very high predicted risk",
+        name="Nguy cơ dự đoán rất cao",
         category="prediction",
         priority=60,
         condition=lambda ctx: ctx.risk == "High" and ctx.probability >= HIGH_PROBABILITY,
-        message="Model indicates very high predicted risk; expedited clinician review is advised.",
-        basis=f"Project threshold: High risk band and model probability >= {HIGH_PROBABILITY}.",
+        message="Mô hình dự đoán nguy cơ rất cao; nên sớm được bác sĩ đánh giá.",
+        basis=f"Ngưỡng của dự án: mức nguy cơ Cao và xác suất mô hình >= {HIGH_PROBABILITY}.",
         escalation="prompt_clinician_followup",
     ),
     Rule(
         code="DQ-GLU-MISSING",
-        name="Glucose not measured",
+        name="Chưa đo đường huyết",
         category="data_quality",
         priority=45,
         condition=lambda ctx: not ctx.glucose_measured,
-        message="Glucose was not measured; risk estimate confidence is reduced.",
-        basis="Glucose is not a BRFSS model input, so the estimate cannot be checked against a lab value.",
+        message="Chưa đo đường huyết; chất lượng dữ liệu đánh giá nguy cơ bị giảm.",
+        basis="Đường huyết không phải đầu vào mô hình BRFSS nên chưa thể đối chiếu ước tính với kết quả xét nghiệm.",
     ),
 ]
 
 CONFLICT_RULES = [
     Rule(
         code="CF-PRED-LOW-MEASURED-HIGH",
-        name="Low model risk vs dangerous measured value",
+        name="Mô hình dự đoán thấp nhưng số đo nguy hiểm",
         category="conflict",
         priority=85,
         condition=lambda ctx: ctx.risk == "Low" and bool(ctx.fired_category("measurement")),
         message=(
-            "Model risk is Low but a measured value is in a dangerous range; the measurement"
-            " takes precedence over the model prediction."
+            "Mô hình dự đoán nguy cơ thấp nhưng số đo nằm trong khoảng nguy hiểm; ưu tiên số đo thực tế hơn dự đoán."
         ),
-        basis="Policy: measured clinical values override a statistical prediction.",
+        basis="Nguyên tắc: số đo lâm sàng thực tế được ưu tiên hơn dự đoán thống kê.",
         resolution="measurement_overrides_prediction",
     ),
     Rule(
         code="CF-PRED-HIGH-GLUCOSE-NORMAL",
-        name="High model risk vs normal measured glucose",
+        name="Mô hình dự đoán cao nhưng đường huyết bình thường",
         category="conflict",
         priority=55,
         condition=lambda ctx: (
@@ -171,41 +167,38 @@ CONFLICT_RULES = [
             and not ctx.fired_category("measurement")
         ),
         message=(
-            "Model flags High risk although the measured glucose is normal; a single normal"
-            " value does not rule out risk, so the High risk is kept and an A1C test is advised."
+            "Mô hình dự đoán nguy cơ cao dù đường huyết đo được bình thường; một số đo bình thường không loại trừ nguy cơ, vì vậy giữ mức nguy cơ cao và khuyến nghị xét nghiệm A1C."
         ),
-        basis="Policy: a model-based risk is not downgraded by one normal glucose reading.",
+        basis="Nguyên tắc: không hạ nguy cơ mô hình chỉ vì một số đo đường huyết bình thường.",
         resolution="prediction_kept_confirm_with_a1c",
     ),
     Rule(
         code="CF-PRED-LOW-GLUCOSE-MISSING",
-        name="Low model risk without glucose",
+        name="Nguy cơ mô hình thấp nhưng chưa đo đường huyết",
         category="conflict",
         priority=50,
         condition=lambda ctx: ctx.risk == "Low" and not ctx.glucose_measured,
         message=(
-            "Low model risk is unconfirmed because glucose was not measured; do not treat it as"
-            " reassurance until a glucose or A1C test is done."
+            "Nguy cơ thấp từ mô hình chưa được xác nhận vì chưa đo đường huyết; không coi đây là dấu hiệu yên tâm trước khi xét nghiệm đường huyết hoặc A1C."
         ),
-        basis="Policy: absence of a measurement is not evidence of normal values.",
+        basis="Nguyên tắc: thiếu số đo không phải bằng chứng cho thấy giá trị bình thường.",
         resolution="prediction_unconfirmed_testing_advised",
     ),
     Rule(
         code="CF-PRED-HIGH-LOW-QUALITY",
-        name="High model risk on low-quality data",
+        name="Nguy cơ mô hình cao trên dữ liệu chất lượng thấp",
         category="conflict",
         priority=40,
         condition=lambda ctx: ctx.risk == "High" and ctx.confidence_label == "Low",
         message=(
-            "High model risk rests on low-quality input data; treat it as provisional and"
-            " confirm with measured values."
+            "Nguy cơ cao từ mô hình dựa trên dữ liệu đầu vào chất lượng thấp; coi là kết quả tạm thời và xác nhận bằng số đo thực tế."
         ),
-        basis="Policy: predictions made on implausible or missing inputs are provisional.",
+        basis="Nguyên tắc: dự đoán trên đầu vào thiếu hoặc không hợp lý chỉ có tính tạm thời.",
         resolution="prediction_kept_marked_provisional",
     ),
     Rule(
         code="CF-ESCALATION-NO-EVIDENCE",
-        name="Escalation without supporting guideline evidence",
+        name="Chuyển bác sĩ khi thiếu bằng chứng hướng dẫn",
         category="conflict",
         priority=30,
         condition=lambda ctx: (
@@ -213,10 +206,9 @@ CONFLICT_RULES = [
             and ESCALATION_LEVELS.index(ctx.escalation) > 0
         ),
         message=(
-            "Escalation is driven by the rules above, not by retrieved guideline text, which is"
-            " missing or limited; the escalation is not lowered for lack of evidence."
+            "Hướng xử trí do các luật trên quyết định trong khi bằng chứng hướng dẫn còn thiếu hoặc hạn chế; không hạ mức chuyển bác sĩ vì thiếu bằng chứng."
         ),
-        basis="Policy: safety escalation never depends on retrieval results.",
+        basis="Nguyên tắc: hướng xử trí an toàn không phụ thuộc kết quả truy xuất.",
         resolution="escalation_kept_evidence_limited",
     ),
 ]

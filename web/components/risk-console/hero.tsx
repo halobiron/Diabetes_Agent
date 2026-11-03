@@ -1,6 +1,6 @@
 import { Brain, Gauge, ShieldCheck } from "lucide-react";
 
-import { ESCALATION_COLORS, ESCALATION_LABELS, RISK_COLORS } from "@/lib/labels";
+import { ESCALATION_COLORS, ESCALATION_LABELS, RISK_COLORS, RISK_LABELS } from "@/lib/labels";
 import type { PredictionResult } from "@/types/healthcare";
 
 import { MetricTile, ProbabilityGauge, RiskBadge } from "./shared-ui";
@@ -8,7 +8,7 @@ import { MetricTile, ProbabilityGauge, RiskBadge } from "./shared-ui";
 export function Hero({ result }: { result: PredictionResult | null | undefined }) {
   const risk = result?.risk ?? "Low";
   const riskColor = RISK_COLORS[risk];
-  const confidenceLabel = result?.safety?.confidence_label ?? "Waiting";
+  const confidenceLabel = RISK_LABELS[result?.safety?.confidence_label ?? ""] ?? "Chờ đánh giá";
   const confidenceScore = result?.safety?.confidence_score;
   const confidence =
     confidenceScore !== undefined
@@ -23,11 +23,11 @@ export function Hero({ result }: { result: PredictionResult | null | undefined }
       <div>
         <div className="flex items-center gap-2 text-sm font-semibold text-info">
           <Brain className="h-4 w-4" />
-          AI/ML Decision Support
+          Hỗ trợ quyết định bằng AI
         </div>
         <p className="mt-3 max-w-3xl text-sm leading-6 text-muted">
-          Trained Kaggle risk model with explainability, retrieved clinical context, memory, and
-          deployment-ready API/UI separation. Educational prototype only; not medical advice.
+          Mô hình học máy kết hợp giải thích đặc trưng, truy xuất bằng chứng và luật an toàn.
+          Nguyên mẫu phục vụ học tập; không thay thế tư vấn y tế.
         </p>
       </div>
 
@@ -36,9 +36,9 @@ export function Hero({ result }: { result: PredictionResult | null | undefined }
           <div className="flex items-center gap-3">
             <RiskBadge risk={result ? result.risk : "Low"} muted={!result} />
             <div>
-              <div className="field-label">Predicted Risk</div>
+              <div className="field-label">Nguy cơ dự đoán</div>
               <div className="mt-1 text-sm text-muted">
-                {result ? `${probability.toFixed(1)}% probability` : "Awaiting assessment"}
+                {result ? `${probability.toFixed(1)}% xác suất` : "Chờ đánh giá"}
               </div>
             </div>
           </div>
@@ -49,12 +49,12 @@ export function Hero({ result }: { result: PredictionResult | null | undefined }
 
         <div className="mt-4 grid gap-3 sm:grid-cols-3">
           <MetricTile label="BMI" value={result ? result.patient.bmi.toFixed(1) : "—"} />
-          <MetricTile label="Data quality" value={confidence} icon={<ShieldCheck className="h-4 w-4" />} />
+          <MetricTile label="Chất lượng dữ liệu" value={confidence} icon={<ShieldCheck className="h-4 w-4" />} />
           <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
-            <div className="field-label">Escalation</div>
+            <div className="field-label">Hướng xử trí</div>
             <div className="mt-2 flex min-h-7 items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: ESCALATION_COLORS[escalation] }} />
-              <span className="text-sm font-semibold text-ink">{result ? escalationLabel : "Not assigned"}</span>
+              <span className="text-sm font-semibold text-ink">{result ? escalationLabel : "Chưa xác định"}</span>
             </div>
           </div>
         </div>

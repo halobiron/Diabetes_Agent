@@ -74,7 +74,7 @@ export function GlucoseField({
   return (
     <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
       <label className="flex items-center justify-between gap-3 text-sm text-ink">
-        <span className="font-semibold">Glucose available</span>
+        <span className="font-semibold">Có kết quả đường huyết</span>
         <input
           type="checkbox"
           checked={hasGlucose}
@@ -84,7 +84,7 @@ export function GlucoseField({
       </label>
       <label className="mt-3 block">
         <div className="mb-1 flex items-center justify-between gap-2">
-          <span className="field-label">Glucose</span>
+          <span className="field-label">Đường huyết</span>
           <span className="text-xs text-muted">mg/dL</span>
         </div>
         <input
@@ -93,7 +93,7 @@ export function GlucoseField({
           min={0}
           max={500}
           value={value ?? ""}
-          placeholder="Use model median"
+          placeholder="Chưa có số đo"
           disabled={!hasGlucose}
           onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
         />

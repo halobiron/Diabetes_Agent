@@ -42,33 +42,33 @@ export function PatientSidebar({
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold text-info">
             <Stethoscope className="h-4 w-4" />
-            Patient Intake
+            Thông tin bệnh nhân
           </div>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight">Healthcare AI Risk Console</h1>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight">Đánh giá nguy cơ sức khỏe bằng AI</h1>
         </div>
-        <Pill tone="neutral">Local</Pill>
+        <Pill tone="neutral">Cục bộ</Pill>
       </div>
 
-      <InputSection title="Vitals" icon={<HeartPulse className="h-4 w-4" />}>
+      <InputSection title="Chỉ số cơ thể" icon={<HeartPulse className="h-4 w-4" />}>
         <NumberField
-          label="Age"
+          label="Tuổi"
           min={0}
           max={120}
           value={form.age}
           onChange={(value) => onFieldChange("age", value)}
         />
         <SelectField
-          label="Sex"
+          label="Giới tính"
           value={form.sex}
           options={[
-            { value: "female", label: "Female" },
-            { value: "male", label: "Male" },
+            { value: "female", label: "Nữ" },
+            { value: "male", label: "Nam" },
           ]}
           onChange={(value) => onFieldChange("sex", value as PatientInput["sex"])}
         />
         <div className="grid grid-cols-2 gap-3">
           <NumberField
-            label="Height"
+            label="Chiều cao"
             suffix="cm"
             min={50}
             max={250}
@@ -77,7 +77,7 @@ export function PatientSidebar({
             onChange={(value) => onFieldChange("height_cm", value)}
           />
           <NumberField
-            label="Weight"
+            label="Cân nặng"
             suffix="kg"
             min={2}
             max={300}
@@ -88,7 +88,7 @@ export function PatientSidebar({
         </div>
         <div className="grid grid-cols-2 gap-3">
           <NumberField
-            label="Systolic BP"
+            label="Huyết áp tâm thu"
             min={0}
             max={260}
             value={form.bp}
@@ -96,54 +96,54 @@ export function PatientSidebar({
           />
           <GlucoseField value={form.glucose} onChange={(value) => onFieldChange("glucose", value)} />
         </div>
-        <MiniStat label="Calculated BMI" value={calculatedBmi.toFixed(1)} />
+        <MiniStat label="BMI tính từ chiều cao và cân nặng" value={calculatedBmi.toFixed(1)} />
       </InputSection>
 
-      <InputSection title="Health Profile" icon={<ClipboardList className="h-4 w-4" />} defaultOpen={false}>
+      <InputSection title="Tiền sử và sức khỏe" icon={<ClipboardList className="h-4 w-4" />} defaultOpen={false}>
         <ToggleGrid>
           <Toggle
-            label="High cholesterol"
+            label="Cholesterol cao"
             checked={form.high_chol}
             onChange={(value) => onFieldChange("high_chol", value)}
           />
           <Toggle
-            label="Cholesterol checked"
+            label="Đã kiểm tra cholesterol"
             checked={form.chol_check}
             onChange={(value) => onFieldChange("chol_check", value)}
           />
-          <Toggle label="Smoker" checked={form.smoker} onChange={(value) => onFieldChange("smoker", value)} />
+          <Toggle label="Hút thuốc" checked={form.smoker} onChange={(value) => onFieldChange("smoker", value)} />
           <Toggle
-            label="Stroke history"
+            label="Tiền sử đột quỵ"
             checked={form.stroke}
             onChange={(value) => onFieldChange("stroke", value)}
           />
           <Toggle
-            label="Heart disease"
+            label="Tiền sử bệnh tim"
             checked={form.heart_disease_or_attack}
             onChange={(value) => onFieldChange("heart_disease_or_attack", value)}
           />
           <Toggle
-            label="Difficulty walking"
+            label="Khó khăn khi đi lại"
             checked={form.diff_walk}
             onChange={(value) => onFieldChange("diff_walk", value)}
           />
         </ToggleGrid>
         <SliderField
-          label="General health"
+          label="Sức khỏe tổng quát"
           min={1}
           max={5}
           value={form.general_health}
           onChange={(value) => onFieldChange("general_health", value)}
         />
         <SliderField
-          label="Mental health days"
+          label="Số ngày tinh thần kém"
           min={0}
           max={30}
           value={form.mental_health_days}
           onChange={(value) => onFieldChange("mental_health_days", value)}
         />
         <SliderField
-          label="Physical health days"
+          label="Số ngày thể chất kém"
           min={0}
           max={30}
           value={form.physical_health_days}
@@ -151,48 +151,48 @@ export function PatientSidebar({
         />
       </InputSection>
 
-      <InputSection title="Lifestyle and Access" icon={<Activity className="h-4 w-4" />} defaultOpen={false}>
+      <InputSection title="Lối sống và tiếp cận y tế" icon={<Activity className="h-4 w-4" />} defaultOpen={false}>
         <ToggleGrid>
           <Toggle
-            label="Physical activity"
+            label="Vận động thể chất"
             checked={form.phys_activity}
             onChange={(value) => onFieldChange("phys_activity", value)}
           />
           <Toggle
-            label="Fruit intake"
+            label="Ăn trái cây"
             checked={form.fruits}
             onChange={(value) => onFieldChange("fruits", value)}
           />
           <Toggle
-            label="Vegetable intake"
+            label="Ăn rau"
             checked={form.veggies}
             onChange={(value) => onFieldChange("veggies", value)}
           />
           <Toggle
-            label="Heavy alcohol"
+            label="Uống nhiều rượu bia"
             checked={form.heavy_alcohol_consump}
             onChange={(value) => onFieldChange("heavy_alcohol_consump", value)}
           />
           <Toggle
-            label="Healthcare coverage"
+            label="Tiếp cận dịch vụ y tế"
             checked={form.any_healthcare}
             onChange={(value) => onFieldChange("any_healthcare", value)}
           />
           <Toggle
-            label="Cost barrier"
+            label="Rào cản chi phí"
             checked={form.no_doc_bc_cost}
             onChange={(value) => onFieldChange("no_doc_bc_cost", value)}
           />
         </ToggleGrid>
         <SliderField
-          label="Education level"
+          label="Trình độ học vấn"
           min={1}
           max={6}
           value={form.education}
           onChange={(value) => onFieldChange("education", value)}
         />
         <SliderField
-          label="Income level"
+          label="Mức thu nhập"
           min={1}
           max={8}
           value={form.income}
@@ -207,7 +207,7 @@ export function PatientSidebar({
         className="mt-4 flex h-12 w-full items-center justify-center gap-2 rounded-md bg-info px-4 text-sm font-bold text-canvas transition hover:bg-[#7bbce9] disabled:cursor-not-allowed disabled:opacity-60"
       >
         {isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
-        Analyze Patient
+        Phân tích hồ sơ
       </button>
 
       {error ? (

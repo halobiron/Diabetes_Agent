@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 
 from agents.retriever import evidence_status
+from tools.vietnamese import ESCALATION_LABELS, feature_label
 
 
 class RecommendationAgent:
@@ -37,6 +38,7 @@ class RecommendationAgent:
         recommendation with its evidence number in square brackets, e.g. [1]. Use only
         the numbered evidence above for guideline claims; if it does not cover something,
         say there is no supporting evidence instead of inventing a source.
+        Viết hoàn toàn bằng tiếng Việt. Giữ nguyên số trích dẫn và tên tài liệu gốc.
         """
 
         try:
@@ -44,11 +46,11 @@ class RecommendationAgent:
                 model=self.model_name, messages=[{"role": "user", "content": prompt}]
             )
             return response.choices[0].message.content + self._sources_note(retrieved_context)
-        except Exception as exc:
+        except Exception:
             fallback = self._fallback_recommendation(
                 patient_data, risk, retrieved_context, similar_cases, safety, feature_explanation
             )
-            return f"{fallback} LLM recommendation unavailable: {exc}"
+            return f"{fallback} Không thể tạo khuyến nghị bằng LLM; đang dùng nội dung dự phòng."
 
     def _fallback_recommendation(
         self,
@@ -61,25 +63,27 @@ class RecommendationAgent:
     ):
         glucose_note = ""
         if not patient_data.get("glucose_measured", True):
-            glucose_note = " Because glucose was not measured, get an A1C or fasting blood glucose test before making clinical decisions."
+            glucose_note = " Do chưa đo đường huyết, cần xét nghiệm A1C hoặc đường huyết lúc đói trước khi đưa ra quyết định lâm sàng."
 
         if risk == "High":
-            recommendation = "Recommend prompt clinician review, repeat vitals/labs, and a care plan focused on blood pressure, glucose, nutrition, activity, and medication adherence."
+            recommendation = "Nên sớm khám bác sĩ, đo lại các chỉ số và xét nghiệm; lập kế hoạch chăm sóc tập trung vào huyết áp, đường huyết, dinh dưỡng, vận động và tuân thủ dùng thuốc."
         elif risk == "Medium":
-            recommendation = "Recommend follow-up monitoring, lifestyle coaching, and reviewing blood pressure and glucose trends with a clinician."
+            recommendation = "Nên tiếp tục theo dõi, được hướng dẫn điều chỉnh lối sống và trao đổi với bác sĩ về diễn biến huyết áp, đường huyết."
         else:
-            recommendation = "Recommend routine preventive care, healthy activity, balanced nutrition, and periodic monitoring."
+            recommendation = "Nên chăm sóc dự phòng định kỳ, vận động phù hợp, ăn uống cân bằng và theo dõi sức khỏe thường xuyên."
 
         context_note = self._context_note(retrieved_context)
         memory_note = ""
         if similar_cases:
             memory_note = (
-                " Similar stored cases are earlier model predictions without confirmed outcomes;"
-                " do not treat them as evidence of what happens to this patient."
+                " Các hồ sơ tương tự đã lưu là dự đoán trước đây chưa có kết quả bệnh được xác nhận;"
+                " không dùng chúng làm bằng chứng về diễn biến bệnh của bệnh nhân này."
             )
         safety_note = self._safety_note(safety)
         drivers = self._drivers(feature_explanation)
-        driver_note = f" Focus on the main model risk drivers: {drivers}." if drivers else ""
+        driver_note = (
+            f" Chú ý các yếu tố chính làm tăng nguy cơ theo mô hình: {drivers}." if drivers else ""
+        )
 
         return (
             recommendation
@@ -95,27 +99,27 @@ class RecommendationAgent:
         """Names of the features that raise risk the most, e.g. 'BMI, HighBP'."""
         features = (feature_explanation or {}).get("features", [])
         raising = [item["feature"] for item in features if item["impact"] > 0]
-        return ", ".join(raising[:limit])
+        return ", ".join(map(feature_label, raising[:limit]))
 
     def _context_note(self, retrieved_context):
         status = evidence_status(retrieved_context)
         if status == "none":
             return (
-                " No sufficiently relevant guideline evidence was retrieved, so this advice is"
-                " general and should be confirmed by a clinician."
+                " Chưa truy xuất được bằng chứng hướng dẫn đủ phù hợp; khuyến nghị này mang tính"
+                " tổng quát và cần được bác sĩ xác nhận."
             )
 
         points = " ".join(
             f"{item['text']} [{number}]" for number, item in enumerate(retrieved_context, 1)
         )
-        note = f" Guideline evidence: {points}"
+        note = f" Bằng chứng hướng dẫn: {points}"
         if status == "limited":
-            note += " Supporting evidence is limited; confirm with a clinician."
+            note += " Bằng chứng hỗ trợ còn hạn chế; cần xác nhận với bác sĩ."
         return note
 
     def _evidence_block(self, retrieved_context):
         if not retrieved_context:
-            return "(none retrieved)"
+            return "(chưa truy xuất được bằng chứng)"
         return "\n".join(
             f"[{number}] {item['text']} ({item['source_title']}, {item.get('year')})"
             for number, item in enumerate(retrieved_context, 1)
@@ -131,7 +135,7 @@ class RecommendationAgent:
             + (f" - {item['url']}" if item.get("url") else "")
             for number, item in enumerate(retrieved_context, 1)
         ]
-        return "\n\nSources:\n" + "\n".join(lines)
+        return "\n\nNguồn tham khảo:\n" + "\n".join(lines)
 
     def _safety_note(self, safety):
         if not safety:
@@ -141,6 +145,6 @@ class RecommendationAgent:
         if not alerts and escalation == "routine_followup":
             return ""
         alert_text = " ".join(alerts[:2])
-        resolutions = "; ".join(c["resolution"] for c in safety.get("conflicts", []))
-        conflict_text = f" Rule conflicts resolved: {resolutions}." if resolutions else ""
-        return f" Safety escalation: {escalation}. {alert_text}{conflict_text}"
+        resolutions = "; ".join(c["message"] for c in safety.get("conflicts", []))
+        conflict_text = f" Xử lý xung đột luật: {resolutions}." if resolutions else ""
+        return f" Hướng xử trí theo luật an toàn: {ESCALATION_LABELS.get(escalation, escalation)}. {alert_text}{conflict_text}"

@@ -14,7 +14,7 @@ from core.config import get_settings
 from main import agent
 from tools.audit_logger import AuditLogger
 
-app = FastAPI(title="Healthcare Agent API")
+app = FastAPI(title="API hỗ trợ đánh giá nguy cơ sức khỏe")
 settings = get_settings()
 audit_logger = AuditLogger(settings.log_dir)
 
@@ -48,7 +48,7 @@ class PatientRequest(BaseModel):
     @model_validator(mode="after")
     def require_body_measurements(self):
         if self.bmi is None and (self.height_cm is None or self.weight_kg is None):
-            raise ValueError("Provide bmi or both height_cm and weight_kg.")
+            raise ValueError("Cần cung cấp BMI hoặc cả chiều cao và cân nặng.")
         return self
 
 
@@ -56,10 +56,12 @@ def _authorize(authorization: Optional[str] = Header(default=None)):
     if not settings.require_api_token:
         return
     if not settings.api_token:
-        raise HTTPException(status_code=500, detail="API token is required but not configured.")
+        raise HTTPException(
+            status_code=500, detail="Hệ thống yêu cầu mã truy cập API nhưng chưa được cấu hình."
+        )
     expected = f"Bearer {settings.api_token}"
     if authorization != expected:
-        raise HTTPException(status_code=401, detail="Unauthorized")
+        raise HTTPException(status_code=401, detail="Không có quyền truy cập.")
 
 
 @app.get("/health")

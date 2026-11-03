@@ -91,7 +91,7 @@ def test_predict_requires_bmi_or_height_and_weight(client, measurements):
 
     assert response.status_code == 422
     assert any(
-        "Provide bmi or both height_cm and weight_kg." in error["msg"]
+        "Cần cung cấp BMI hoặc cả chiều cao và cân nặng." in error["msg"]
         for error in response.json()["detail"]
     )
 

@@ -12,7 +12,8 @@ export function formatMemoryTimestamp(value: string | undefined, fallback: strin
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return fallback;
 
-  return new Intl.DateTimeFormat(undefined, {
+  return new Intl.DateTimeFormat("vi-VN", {
+    timeZone: "Asia/Ho_Chi_Minh",
     month: "short",
     day: "numeric",
     year: "numeric",

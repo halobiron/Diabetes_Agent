@@ -91,7 +91,7 @@ class Orchestrator:
                 safety=safety,
                 evidence_status=status,
             ),
-            "An explanation could not be generated; see feature_explanation for the model drivers.",
+            "Không tạo được giải thích; xem phần tác động đặc trưng để biết các yếu tố ảnh hưởng đến mô hình.",
         )
         self._guard(degraded, "memory_store", lambda: self.memory.store(patient, prob, risk), None)
 
@@ -100,9 +100,9 @@ class Orchestrator:
                 **safety,
                 "disclaimers": [
                     *safety["disclaimers"],
-                    "Some components failed ("
+                    "Một số thành phần gặp lỗi ("
                     + ", ".join(item["component"] for item in degraded)
-                    + "); this result is incomplete.",
+                    + "); kết quả này chưa đầy đủ.",
                 ],
             }
 
@@ -174,7 +174,7 @@ class Orchestrator:
                 "safety_guard",
                 lambda: self.safety_guard.assess(patient, prob, risk, evidence_status=status),
                 {
-                    "alerts": ["Safety rules could not be evaluated; seek clinician review."],
+                    "alerts": ["Không kiểm tra được các luật an toàn; cần được bác sĩ đánh giá."],
                     "rules": [],
                     "conflicts": [],
                     "effective_risk": risk,
@@ -195,7 +195,7 @@ class Orchestrator:
                 safety=safety,
                 feature_explanation=feature_explanation,
             ),
-            "A recommendation could not be generated; consult a clinician for follow-up.",
+            "Không tạo được khuyến nghị; hãy khám bác sĩ để được theo dõi.",
         )
         return status, safety, recommendation
 

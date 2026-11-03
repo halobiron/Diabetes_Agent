@@ -4,9 +4,9 @@ import type { TabKey } from "./types";
 
 export function Tabs({ activeTab, onChange }: { activeTab: TabKey; onChange: (tab: TabKey) => void }) {
   const tabs: Array<{ key: TabKey; label: string }> = [
-    { key: "assessment", label: "Assessment" },
-    { key: "evidence", label: "Evidence" },
-    { key: "history", label: "History" },
+    { key: "assessment", label: "Đánh giá" },
+    { key: "evidence", label: "Bằng chứng" },
+    { key: "history", label: "Lịch sử" },
   ];
 
   return (

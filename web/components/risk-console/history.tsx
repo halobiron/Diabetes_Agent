@@ -11,7 +11,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { RISK_COLORS } from "@/lib/labels";
+import { RISK_COLORS, RISK_LABELS } from "@/lib/labels";
 import type { MemoryRecord, PredictionResult } from "@/types/healthcare";
 
 import { DataTable, PanelHeading } from "./shared-ui";
@@ -32,7 +32,7 @@ export function History({
         id: index + 1,
         risk: item.metadata.risk ?? "Unknown",
         probability: item.metadata.probability ?? 0,
-        timestamp: formatMemoryTimestamp(item.metadata.timestamp, "Stored memory"),
+        timestamp: formatMemoryTimestamp(item.metadata.timestamp, "Hồ sơ đã lưu"),
       })),
     [result.similar_cases],
   );
@@ -43,7 +43,7 @@ export function History({
             id: index + 1,
             risk: item.metadata.risk ?? "Unknown",
             probability: item.metadata.probability ?? 0,
-            timestamp: formatMemoryTimestamp(item.metadata.timestamp, item.summary),
+            timestamp: formatMemoryTimestamp(item.metadata.timestamp, "Không rõ thời gian"),
           }))
         : fallbackRows,
     [fallbackRows, records],
@@ -51,16 +51,17 @@ export function History({
   const distribution = useMemo(() => riskDistribution(rows), [rows]);
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-      <div className="console-panel rounded-lg p-5">
-        <PanelHeading icon={<BarChart3 className="h-4 w-4" />} title="Risk Distribution" />
+    <section className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="console-panel min-w-0 rounded-lg p-5">
+        <PanelHeading icon={<BarChart3 className="h-4 w-4" />} title="Phân bố mức nguy cơ" />
         <div className="mt-4 h-72">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={distribution} margin={{ top: 8, right: 8, bottom: 8, left: 0 }}>
               <CartesianGrid stroke="rgba(255,255,255,0.08)" vertical={false} />
-              <XAxis dataKey="risk" stroke="#9aa4b2" tickLine={false} axisLine={false} />
+              <XAxis dataKey="risk" tickFormatter={(value) => RISK_LABELS[value] ?? value} stroke="#9aa4b2" tickLine={false} axisLine={false} />
               <YAxis stroke="#9aa4b2" tickLine={false} axisLine={false} />
               <Tooltip
+                labelFormatter={(value) => RISK_LABELS[String(value)] ?? value}
                 cursor={{ fill: "rgba(255,255,255,0.04)" }}
                 contentStyle={{
                   background: "#101318",
@@ -68,7 +69,7 @@ export function History({
                   borderRadius: 8,
                 }}
               />
-              <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+              <Bar name="Số hồ sơ" dataKey="count" radius={[4, 4, 0, 0]}>
                 {distribution.map((entry) => (
                   <Cell key={entry.risk} fill={RISK_COLORS[entry.risk] ?? "#5aa3d9"} />
                 ))}
@@ -77,15 +78,15 @@ export function History({
           </ResponsiveContainer>
         </div>
       </div>
-      <div className="console-panel rounded-lg p-5">
-        <PanelHeading icon={<Database className="h-4 w-4" />} title="Memory Records" />
-        {isLoading ? <p className="mt-4 text-sm text-muted">Loading memory records...</p> : null}
+      <div className="console-panel min-w-0 rounded-lg p-5">
+        <PanelHeading icon={<Database className="h-4 w-4" />} title="Lịch sử hồ sơ" />
+        {isLoading ? <p className="mt-4 text-sm text-muted">Đang tải lịch sử hồ sơ...</p> : null}
         <DataTable
           rows={rows.map((row) => ({
-            Case: row.id,
-            Risk: row.risk,
-            Probability: `${(row.probability * 100).toFixed(1)}%`,
-            Timestamp: row.timestamp,
+            "Hồ sơ": row.id,
+            "Nguy cơ": RISK_LABELS[row.risk] ?? "Chưa rõ",
+            "Xác suất": `${(row.probability * 100).toFixed(1)}%`,
+            "Thời gian": row.timestamp,
           }))}
         />
       </div>

@@ -62,8 +62,8 @@ def test_glucose_is_reported_as_outside_the_model(model):
     text = ExplanationAgent().explain(
         prepared, 0.3, feature_explanation=explanation, evidence_status="sufficient"
     )
-    assert "not an input of this model" in text
-    assert "high glucose" not in text
+    assert "không phải đầu vào của mô hình này" in text
+    assert "đường huyết cao" not in text
 
 
 def test_zero_impact_feature_is_not_called_risk_lowering(model):
@@ -107,7 +107,7 @@ def test_defaulted_fields_lower_the_data_quality_score(model):
     assert full["confidence_score"] == 1.0
     assert sparse["confidence_score"] < full["confidence_score"]
     assert sparse["defaulted_fields"] == minimal["defaulted_fields"]
-    assert "not a statistical" in sparse["confidence_note"]
+    assert "không phải độ tin cậy thống kê" in sparse["confidence_note"]
 
 
 def test_penalty_scales_with_share_of_defaulted_inputs():

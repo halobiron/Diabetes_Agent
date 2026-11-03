@@ -70,7 +70,7 @@ function RiskConsoleInner() {
           onFieldChange={updateField}
         />
 
-        <section className="px-5 py-6 md:px-8 lg:px-10">
+        <section className="min-w-0 px-5 py-6 md:px-8 lg:px-10">
           <div className="mx-auto flex max-w-7xl flex-col gap-6">
             <Hero result={result} />
             {result ? (

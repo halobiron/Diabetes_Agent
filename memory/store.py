@@ -4,6 +4,7 @@ from uuid import uuid4
 
 from tools.chroma_client import create_persistent_client
 from tools.local_embeddings import LocalEmbeddingModel
+from tools.vietnamese import RISK_LABELS
 
 
 class MemoryAgent:
@@ -92,13 +93,13 @@ class MemoryAgent:
         return round((sum(squares) / len(squares)) ** 0.5, 4)
 
     def _patient_summary(self, patient_data, prob, risk):
-        probability = "unknown" if prob is None else f"{prob:.3f}"
-        risk_text = "unknown" if risk is None else risk
+        probability = "chưa rõ" if prob is None else f"{prob:.3f}"
+        risk_text = RISK_LABELS.get(risk, "chưa rõ")
         return (
-            f"age {patient_data.get('age')}, bmi {patient_data.get('bmi')}, "
-            f"blood pressure {patient_data.get('bp')}, glucose {patient_data.get('glucose')}, "
-            f"glucose measured {patient_data.get('glucose_measured')}, "
-            f"risk {risk_text}, probability {probability}"
+            f"Tuổi {patient_data.get('age')}, BMI {patient_data.get('bmi')}, "
+            f"huyết áp {patient_data.get('bp')}, đường huyết {patient_data.get('glucose')}, "
+            f"đã đo đường huyết: {'có' if patient_data.get('glucose_measured') else 'không'}, "
+            f"nguy cơ {risk_text}, xác suất {probability}"
         )
 
     def _metadata(self, patient_data, prob, risk, timestamp):

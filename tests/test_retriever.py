@@ -114,11 +114,11 @@ def test_recommendation_cites_numbered_sources(retriever):
     contexts = retriever.retrieve({"glucose": 90}, "High", FEATURES)
     text = RecommendationAgent()._fallback_recommendation({}, "High", contexts)
 
-    assert "[1]" in text and "Sources:" in text and contexts[0]["source_title"] in text
+    assert "[1]" in text and "Nguồn tham khảo:" in text and contexts[0]["source_title"] in text
 
 
 def test_recommendation_admits_missing_evidence():
     text = RecommendationAgent()._fallback_recommendation({}, "Medium", [])
 
-    assert "No sufficiently relevant guideline evidence" in text
-    assert "Sources:" not in text
+    assert "Chưa truy xuất được bằng chứng hướng dẫn đủ phù hợp" in text
+    assert "Nguồn tham khảo:" not in text

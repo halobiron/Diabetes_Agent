@@ -4,6 +4,7 @@ import logging
 from tools.chroma_client import create_persistent_client
 from tools.neo4j_kb import FileKnowledgeBase, KnowledgeGraph, create_driver, load_kb_file
 from tools.semantic_embeddings import SemanticEmbeddingModel
+from tools.vietnamese import EVIDENCE_TEXTS
 
 logger = logging.getLogger(__name__)
 
@@ -133,7 +134,7 @@ class RetrievalAgent:
                 {
                     "evidence_id": evidence_id,
                     "title": f"{item['source_title']} — {item['section']}",
-                    "text": item["text"],
+                    "text": EVIDENCE_TEXTS.get(evidence_id, item["text"]),
                     "source_id": item["source_id"],
                     "source_title": item["source_title"],
                     "publisher": item.get("publisher"),

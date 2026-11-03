@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import type { ReactNode } from "react";
 
-import { RISK_COLORS } from "@/lib/labels";
+import { RISK_COLORS, RISK_LABELS } from "@/lib/labels";
 import type { RiskLevel } from "@/types/healthcare";
 
 export function MetricTile({
@@ -38,7 +38,7 @@ export function RiskBadge({ risk, muted = false }: { risk: RiskLevel; muted?: bo
         color,
       }}
     >
-      {muted ? "Not run" : risk}
+      {muted ? "Chưa đánh giá" : (RISK_LABELS[risk] ?? risk)}
     </span>
   );
 }
@@ -57,7 +57,7 @@ export function ProbabilityGauge({
   return (
     <div className="mt-4">
       <div className="mb-2 flex items-center justify-between gap-3">
-        <span className="field-label">Risk Probability</span>
+        <span className="field-label">Xác suất nguy cơ</span>
         <span className="text-sm font-semibold text-ink">{muted ? "—" : `${safeValue.toFixed(1)}%`}</span>
       </div>
       <div className="h-3 overflow-hidden rounded-full border border-borderSoft bg-canvas">
@@ -107,7 +107,7 @@ export function NarrativePanel({
   return (
     <div className="console-panel rounded-lg p-5">
       <PanelHeading icon={icon} title={title} />
-      <p className="mt-4 text-sm leading-7 text-ink/90">{text}</p>
+      <p className="mt-4 whitespace-pre-line break-words text-sm leading-7 text-ink/90 [overflow-wrap:anywhere]">{text}</p>
     </div>
   );
 }
@@ -125,7 +125,7 @@ export function Pill({ children, tone }: { children: ReactNode; tone: "neutral" 
   return (
     <span
       className={clsx(
-        "rounded-full border px-3 py-1 text-xs font-semibold",
+        "shrink-0 whitespace-nowrap rounded-full border px-3 py-1 text-xs font-semibold",
         tone === "neutral" && "border-borderSoft bg-canvas/70 text-muted",
       )}
     >
@@ -144,7 +144,7 @@ export function DataTable({
   const columns = rows[0] ? Object.keys(rows[0]) : [];
 
   if (!rows.length) {
-    return <p className="mt-4 text-sm text-muted">No records available.</p>;
+    return <p className="mt-4 text-sm text-muted">Chưa có dữ liệu.</p>;
   }
 
   return (

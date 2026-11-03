@@ -129,9 +129,9 @@ def test_fallback_texts_use_drivers_safety_and_evidence_status():
         patient, "High", retrieved_context=[], safety=safety, feature_explanation=FEATURES
     )
 
-    assert "Escalation: urgent_clinician_review" in explanation
-    assert "evidence for this profile is none" in explanation
-    assert "BMI, HighBP" in advice  # only the features that raise risk, in impact order
+    assert "Hướng xử trí: Khám bác sĩ khẩn cấp" in explanation
+    assert "Bằng chứng hướng dẫn cho hồ sơ này: không có" in explanation
+    assert "BMI, tăng huyết áp" in advice  # only the features that raise risk, in impact order
 
 
 @pytest.mark.parametrize(
@@ -151,7 +151,7 @@ def test_tool_failure_degrades_instead_of_failing_the_request(kwargs, component)
     assert component in components(result)
     assert result["probability"] == 0.6
     assert result["recommendation"] and result["explanation"]
-    assert any("incomplete" in text for text in result["safety"]["disclaimers"])
+    assert any("chưa đầy đủ" in text for text in result["safety"]["disclaimers"])
 
 
 def test_retriever_failure_reports_no_evidence():
@@ -180,7 +180,7 @@ def test_text_agent_failure_uses_fixed_text():
     orchestrator, _ = build(recorder=Recorder(fail=True))
     result = orchestrator.run({"bp": 120})
 
-    assert "consult a clinician" in result["recommendation"]
+    assert "khám bác sĩ" in result["recommendation"]
     assert set(components(result)) == {"recommender", "explainer"}
 
 
@@ -197,4 +197,4 @@ def test_policy_failure_keeps_prediction_and_urgent_safety_result():
     assert result["safety"]["escalation"] == "urgent_clinician_review"
     assert result["policy"] is None
     assert components(result) == ["support_policy"]
-    assert any("incomplete" in text for text in result["safety"]["disclaimers"])
+    assert any("chưa đầy đủ" in text for text in result["safety"]["disclaimers"])

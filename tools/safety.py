@@ -18,8 +18,8 @@ class SafetyGuard:
             )
         )
         disclaimers = [
-            "Educational prototype only; not a diagnostic medical device.",
-            "Clinical decisions require clinician judgment and measured labs/vitals.",
+            "Nguyên mẫu phục vụ học tập; không phải thiết bị chẩn đoán y tế.",
+            "Quyết định lâm sàng cần đánh giá của bác sĩ cùng kết quả xét nghiệm và số đo thực tế.",
         ]
 
         return {
@@ -27,8 +27,8 @@ class SafetyGuard:
             "confidence_score": confidence_score,
             "confidence_label": confidence_label,
             "confidence_note": (
-                "Data-quality score from missing or implausible inputs; it is not a"
-                " statistical confidence in the prediction."
+                "Điểm chất lượng dữ liệu dựa trên đầu vào thiếu hoặc không hợp lý; đây không phải"
+                " độ tin cậy thống kê của dự đoán."
             ),
             "defaulted_fields": list(patient.get("defaulted_fields", [])),
             "disclaimers": disclaimers,

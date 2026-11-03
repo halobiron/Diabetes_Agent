@@ -1,10 +1,10 @@
 import numpy as np
 
 METHOD_NOTES = {
-    "shap": "SHAP values: each feature's contribution to this patient's score versus the training average.",
+    "shap": "Giá trị SHAP: đóng góp của từng đặc trưng vào điểm của bệnh nhân so với trung bình dữ liệu huấn luyện.",
     "sensitivity": (
-        "Sensitivity: change in predicted probability when one feature is replaced by its"
-        " default (training median) and the others are kept."
+        "Phân tích độ nhạy: thay đổi xác suất dự đoán khi thay một đặc trưng bằng giá trị"
+        " mặc định (trung vị huấn luyện), giữ nguyên các đặc trưng khác."
     ),
 }
 

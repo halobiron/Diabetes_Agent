@@ -59,7 +59,7 @@ def test_escalation_is_most_severe_and_alerts_ordered_by_priority():
     assert result["escalation"] == "urgent_clinician_review"
     priorities = [rule["priority"] for rule in result["rules"]]
     assert priorities == sorted(priorities, reverse=True)
-    assert result["alerts"][0].startswith("Very high glucose")
+    assert result["alerts"][0].startswith("Đường huyết rất cao")
 
 
 def test_unmeasured_glucose_ignores_imputed_value():

@@ -12,7 +12,7 @@ export async function createPrediction(input: PatientInput): Promise<PredictionR
   const payload = await response.json();
 
   if (!response.ok) {
-    const detail = typeof payload?.detail === "string" ? payload.detail : "Prediction failed.";
+    const detail = typeof payload?.detail === "string" ? payload.detail : "Không thể phân tích hồ sơ. Vui lòng kiểm tra dữ liệu và thử lại.";
     throw new Error(detail);
   }
 
@@ -26,7 +26,7 @@ export async function getHistory(limit = 25): Promise<HistoryResponse> {
   const payload = await response.json();
 
   if (!response.ok) {
-    const detail = typeof payload?.detail === "string" ? payload.detail : "Unable to load history.";
+    const detail = typeof payload?.detail === "string" ? payload.detail : "Không tải được lịch sử hồ sơ. Vui lòng thử lại.";
     throw new Error(detail);
   }
 

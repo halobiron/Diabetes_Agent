@@ -12,7 +12,7 @@ import {
   YAxis,
 } from "recharts";
 
-import { featureLabel, formatFeatureValue } from "@/lib/labels";
+import { featureLabel, formatFeatureValue, METHOD_LABELS } from "@/lib/labels";
 import type { PredictionResult } from "@/types/healthcare";
 
 import { DataTable, NarrativePanel, PanelHeading } from "./shared-ui";
@@ -28,16 +28,16 @@ export function Assessment({ result }: { result: PredictionResult }) {
         ...feature,
         label: featureLabel(feature.feature),
         valueLabel: formatFeatureValue(feature.feature, feature.value),
-        directionLabel: feature.impact > 0 ? "Raises risk" : "Lowers risk",
+        directionLabel: feature.impact > 0 ? "Tăng nguy cơ" : feature.impact < 0 ? "Giảm nguy cơ" : "Không tác động",
       }));
   }, [result.feature_explanation.features]);
 
   return (
-    <section className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
-      <div className="space-y-5">
-        <NarrativePanel title="Explanation" icon={<Brain className="h-4 w-4" />} text={result.explanation} />
+    <section className="grid min-w-0 grid-cols-1 gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="min-w-0 space-y-5">
+        <NarrativePanel title="Giải thích" icon={<Brain className="h-4 w-4" />} text={result.explanation} />
         <NarrativePanel
-          title="Recommendation"
+          title="Khuyến nghị"
           icon={<CheckCircle2 className="h-4 w-4" />}
           text={result.recommendation}
         />
@@ -45,7 +45,7 @@ export function Assessment({ result }: { result: PredictionResult }) {
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-[#ffc1bc]">
             <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
               <AlertTriangle className="h-4 w-4 text-danger" />
-              Safety Alerts
+              Cảnh báo an toàn
             </div>
             <ul className="space-y-1">
               {result.safety.alerts.map((alert) => (
@@ -62,8 +62,8 @@ export function Assessment({ result }: { result: PredictionResult }) {
 
 function FeatureImpactPanel({ features, method }: { features: ChartFeature[]; method: string }) {
   return (
-    <div className="console-panel rounded-lg p-5">
-      <PanelHeading icon={<BarChart3 className="h-4 w-4" />} title="Feature Impact" />
+    <div className="console-panel min-w-0 rounded-lg p-5">
+      <PanelHeading icon={<BarChart3 className="h-4 w-4" />} title="Tác động của đặc trưng" />
       <div className="mt-4 h-80">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={features} layout="vertical" margin={{ top: 8, right: 18, bottom: 8, left: 28 }}>
@@ -80,7 +80,7 @@ function FeatureImpactPanel({ features, method }: { features: ChartFeature[]; me
             />
             <Tooltip
               cursor={{ fill: "rgba(255,255,255,0.04)" }}
-              formatter={(value) => [Number(value).toFixed(4), "Impact"]}
+              formatter={(value) => [Number(value).toFixed(4), "Mức tác động"]}
               contentStyle={{
                 background: "#101318",
                 border: "1px solid rgba(255,255,255,0.1)",
@@ -96,16 +96,16 @@ function FeatureImpactPanel({ features, method }: { features: ChartFeature[]; me
           </BarChart>
         </ResponsiveContainer>
       </div>
-      <div className="mt-4 flex items-center justify-between gap-3 text-xs text-muted">
-        <span>Method: {method}</span>
-        <span>Top {features.length} by absolute impact</span>
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-xs text-muted">
+        <span>Phương pháp: {METHOD_LABELS[method] ?? method}</span>
+        <span>{features.length} đặc trưng có tác động lớn nhất</span>
       </div>
       <DataTable
         rows={features.map((feature) => ({
-          Feature: feature.label,
-          Value: feature.valueLabel,
-          Direction: feature.directionLabel,
-          Impact: feature.impact.toFixed(4),
+          "Đặc trưng": feature.label,
+          "Giá trị": feature.valueLabel,
+          "Chiều tác động": feature.directionLabel,
+          "Mức tác động": feature.impact.toFixed(4),
         }))}
         compact
       />

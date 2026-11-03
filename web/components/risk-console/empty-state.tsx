@@ -8,10 +8,9 @@ export function EmptyState() {
           <Sparkles className="h-5 w-5" />
         </div>
         <div>
-          <h3 className="text-xl font-semibold">Ready for assessment</h3>
+          <h3 className="text-xl font-semibold">Sẵn sàng đánh giá</h3>
           <p className="mt-2 text-sm leading-6 text-muted">
-            Fill in the patient profile and run the trained Kaggle artifact through the FastAPI
-            inference service.
+            Nhập thông tin bệnh nhân ở bảng bên trái, sau đó chọn Phân tích hồ sơ để xem kết quả.
           </p>
         </div>
       </div>

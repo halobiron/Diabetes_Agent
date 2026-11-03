@@ -104,9 +104,9 @@ def run_api_scenarios(client, agent, audit_file):
         assert result["safety"]["escalation"] == "urgent_clinician_review"
         assert result["degraded"] == []  # no matching evidence is not a service failure
         if expected == "none":
-            assert "No sufficiently relevant guideline evidence" in result["recommendation"]
+            assert "Chưa truy xuất được bằng chứng hướng dẫn đủ phù hợp" in result["recommendation"]
         else:
-            assert "Supporting evidence is limited" in result["recommendation"]
+            assert "Bằng chứng hỗ trợ còn hạn chế" in result["recommendation"]
 
     faults = [
         (agent.retriever, "retrieve", "retriever"),
@@ -122,7 +122,7 @@ def run_api_scenarios(client, agent, audit_file):
         with patch.object(target, method, side_effect=ConnectionError("Demo service unavailable")):
             result = predict(f"failure_{component}", WARNING)
         assert component in {d["component"] for d in result["degraded"]}
-        assert any("incomplete" in text for text in result["safety"]["disclaimers"])
+        assert any("chưa đầy đủ" in text for text in result["safety"]["disclaimers"])
         if component == "safety_guard":
             assert result["safety"]["confidence_score"] == 0
             assert result["safety"]["escalation"] != "routine_followup"
