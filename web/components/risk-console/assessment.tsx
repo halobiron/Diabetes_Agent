@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Brain, CheckCircle2, Footprints } from "lucide-react";
+import { AlertTriangle, BarChart3, Brain, CheckCircle2, ShieldCheck } from "lucide-react";
 import { useMemo } from "react";
 
 import { featureLabel, formatFeatureValue, METHOD_LABELS } from "@/lib/labels";
@@ -60,6 +60,22 @@ export function Assessment({ result, scales }: { result: PredictionResult; scale
     <section className="grid min-w-0 gap-5 lg:grid-cols-12">
       <div className="console-panel rounded-2xl p-6 lg:col-span-7 lg:self-start">
         <PanelHeading icon={<CheckCircle2 className="h-5 w-5" />} title="Bạn nên làm gì" />
+        {alerts.length > 0 ? (
+          <div role="alert" className="mt-5 rounded-xl bg-danger/10 p-4 text-danger">
+            <div className="mb-2 flex items-center gap-2 font-bold">
+              <AlertTriangle aria-hidden="true" className="h-5 w-5" /> Cần lưu ý trước
+            </div>
+            <ul className="space-y-1 text-base leading-7">
+              {alerts.map((alert) => (
+                <li key={alert} className="[overflow-wrap:anywhere]">{alert}</li>
+              ))}
+            </ul>
+          </div>
+        ) : (
+          <p className="mt-5 flex items-center gap-2 rounded-xl bg-infoSoft px-4 py-3 text-sm font-semibold text-info">
+            <ShieldCheck aria-hidden="true" className="h-5 w-5 shrink-0" /> Luật an toàn không phát hiện số đo nào cần xử trí gấp.
+          </p>
+        )}
         <ol className="mt-5 space-y-3">
           {actions.map((step, i) => <Step key={step} n={i + 1} text={step} />)}
         </ol>
@@ -88,30 +104,9 @@ export function Assessment({ result, scales }: { result: PredictionResult; scale
         ) : null}
       </div>
 
-      <div className="flex flex-col gap-5 lg:col-span-5">
-        {alerts.length > 0 ? (
-          <div role="alert" className="rounded-2xl border border-danger/30 bg-danger/10 p-6 text-danger">
-            <div className="mb-3 flex items-center gap-2 text-lg font-bold">
-              <AlertTriangle aria-hidden="true" className="h-5 w-5" /> Cần lưu ý
-            </div>
-            <ul className="space-y-2 text-base leading-7">
-              {alerts.map((alert) => (
-                <li key={alert} className="[overflow-wrap:anywhere]">{alert}</li>
-              ))}
-            </ul>
-          </div>
-        ) : (
-          <div className="rounded-2xl bg-infoSoft p-6">
-            <div className="flex items-center gap-2 text-lg font-bold text-info">
-              <Footprints aria-hidden="true" className="h-5 w-5" /> Không có cảnh báo
-            </div>
-            <p className="mt-2 text-base leading-7 text-ink">Các luật an toàn không phát hiện số đo nào cần xử trí gấp.</p>
-          </div>
-        )}
-        <div className="console-panel flex-1 rounded-2xl p-6">
-          <PanelHeading icon={<Brain className="h-5 w-5" />} title="Vì sao có kết quả này" />
-          <p className="mt-4 whitespace-pre-line text-base leading-7 text-muted [overflow-wrap:anywhere]">{result.explanation}</p>
-        </div>
+      <div className="console-panel rounded-2xl p-6 lg:col-span-5 lg:self-start">
+        <PanelHeading icon={<Brain className="h-5 w-5" />} title="Vì sao có kết quả này" />
+        <p className="mt-4 whitespace-pre-line text-base leading-7 text-muted [overflow-wrap:anywhere]">{result.explanation}</p>
       </div>
 
       <div className="lg:col-span-12">
