@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -12,14 +12,17 @@
 
 html {
   min-height: 100%;
-  background: #080a0d;
+  background: #f2f6f5;
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background: #080a0d;
-  color: #f4f6f8;
+  background: #f2f6f5;
+  color: #112f2c;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -28,34 +31,48 @@ select {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: #bfe3dd;
+  color: #0b2926;
+}
+
+:focus-visible {
+  outline: 2px solid #0e7468;
+  outline-offset: 2px;
+}
+
 input[type="range"] {
-  accent-color: #5aa3d9;
+  accent-color: #0e7468;
 }
 
 .range-input {
   height: 0.4rem;
   appearance: none;
   border-radius: 999px;
-  outline: none;
+  outline-offset: 6px;
 }
 
 .range-input::-webkit-slider-thumb {
-  height: 1rem;
-  width: 1rem;
+  height: 1.25rem;
+  width: 1.25rem;
   appearance: none;
-  border: 2px solid #080a0d;
+  border: 3px solid #ffffff;
   border-radius: 999px;
-  background: #5aa3d9;
-  box-shadow: 0 0 0 2px rgba(90, 163, 217, 0.28);
+  background: #0e7468;
+  box-shadow: 0 1px 4px rgba(16, 52, 48, 0.4);
 }
 
 .range-input::-moz-range-thumb {
-  height: 1rem;
-  width: 1rem;
-  border: 2px solid #080a0d;
+  height: 1.25rem;
+  width: 1.25rem;
+  border: 3px solid #ffffff;
   border-radius: 999px;
-  background: #5aa3d9;
-  box-shadow: 0 0 0 2px rgba(90, 163, 217, 0.28);
+  background: #0e7468;
+  box-shadow: 0 1px 4px rgba(16, 52, 48, 0.4);
 }
 
 ::-webkit-scrollbar {
@@ -64,12 +81,33 @@ input[type="range"] {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(16, 52, 48, 0.22);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise {
+    animation: none;
+  }
 }
 
 @layer components {
@@ -78,14 +116,22 @@ input[type="range"] {
   }
 
   .field-label {
-    @apply text-xs font-semibold uppercase tracking-[0.08em] text-muted;
+    @apply text-sm font-semibold text-ink;
   }
 
   .field-input {
-    @apply h-10 w-full rounded-md border border-borderSoft bg-canvas px-3 text-sm text-ink outline-none transition focus:border-info focus:ring-1 focus:ring-info/40;
+    @apply h-12 w-full rounded-lg border border-borderSoft bg-panel px-3 text-base text-ink outline-none transition placeholder:text-muted/70 focus:border-info focus:ring-2 focus:ring-info/25 disabled:bg-panelMuted;
   }
 
   .toggle-row {
-    @apply flex items-center gap-3 rounded-md border border-borderSoft bg-canvas/50 px-3 py-2 text-sm text-ink;
+    @apply flex items-center gap-3 rounded-lg border border-borderSoft bg-panel px-3 py-3 text-base text-ink;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-info px-5 text-base font-semibold text-onAccent transition hover:bg-[#0b5f55] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-borderSoft bg-panel px-5 text-base font-semibold text-ink transition hover:bg-panelMuted disabled:cursor-not-allowed disabled:opacity-60;
   }
 }

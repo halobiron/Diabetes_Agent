@@ -3,7 +3,7 @@ import { Activity, ExternalLink } from "lucide-react";
 import type { MeasurementBand, MeasurementScale } from "@/types/healthcare";
 
 const tones: Record<MeasurementBand["tone"], string> = {
-  neutral: "#9aa4b2", success: "#2f9b6a", warning: "#d49a35", danger: "#d05245",
+  neutral: "#6b7f7c", success: "#1b7a4b", warning: "#c98a1a", danger: "#c4452f",
 };
 
 function position(value: number, scale: MeasurementScale) {
@@ -13,7 +13,7 @@ function position(value: number, scale: MeasurementScale) {
 export function MeasurementScales({ scales }: { scales: MeasurementScale[] }) {
   if (!scales.length) return null;
   return (
-    <section aria-labelledby="measurement-heading" className="console-panel min-w-0 rounded-lg p-5">
+    <section aria-labelledby="measurement-heading" className="console-panel min-w-0 rounded-2xl p-6">
       <h2 id="measurement-heading" className="flex items-center gap-2 text-sm font-semibold">
         <Activity aria-hidden="true" className="h-4 w-4 text-info" /> Chỉ số của bạn trên thang tham khảo
       </h2>
@@ -43,10 +43,10 @@ function Scale({ scale }: { scale: MeasurementScale }) {
           {scale.bands.map((band) => {
             const left = position(band.min ?? scale.display_min, scale);
             const right = position(band.max ?? scale.display_max, scale);
-            return <span key={band.label} style={{ width: `${right - left}%`, background: tones[band.tone] }} className="h-full border-r border-canvas/60 last:border-r-0" />;
+            return <span key={band.label} style={{ width: `${right - left}%`, background: tones[band.tone] }} className="h-full border-r border-white/60 last:border-r-0" />;
           })}
         </div>
-        {scale.value !== null ? <span aria-hidden="true" style={{ left: `${position(scale.value, scale)}%` }} className="absolute -top-1 h-7 w-1 -translate-x-1/2 rounded-sm border border-canvas bg-ink" /> : null}
+        {scale.value !== null ? <span aria-hidden="true" style={{ left: `${position(scale.value, scale)}%` }} className="absolute -top-1 h-7 w-1 -translate-x-1/2 rounded-sm border border-white bg-ink" /> : null}
       </div>
       <div className="mt-2 flex justify-between text-xs tabular-nums text-muted"><span>{scale.display_min}</span><span>{scale.display_max} {scale.unit}</span></div>
       {outside ? <p className="mt-2 text-xs text-ink">{scale.value} {scale.unit} nằm ngoài khoảng hiển thị; dấu đánh dấu được giữ ở mép thang.</p> : null}

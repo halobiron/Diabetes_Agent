@@ -22,7 +22,7 @@ export function AgentTrace({ result }: { result: PredictionResult }) {
   const trace = result.trace;
   if (!trace) return <p className="text-sm text-muted">Phiên bản API này chưa trả về vết xử lý của các agent.</p>;
 
-  const slowest = Math.max(...trace.steps.map((step) => step.ms), 1);
+  const total = Math.max(trace.steps.reduce((sum, step) => sum + step.ms, 0), 1);
   const errors = new Map((result.degraded ?? []).map((item) => [item.component, item.error]));
   const failed = trace.steps.filter((step) => step.status === "degraded").length;
 
@@ -45,25 +45,37 @@ export function AgentTrace({ result }: { result: PredictionResult }) {
         </div>
       ) : null}
 
-      <div className="console-panel min-w-0 rounded-lg p-5">
-        <PanelHeading icon={<Workflow className="h-4 w-4" />} title="Các agent đã chạy theo thứ tự" />
-        <ol className="mt-4 space-y-2">
-          {trace.steps.map((step, index) => (
-            <li key={`${step.component}-${index}`} className={`rounded-md border p-3 ${step.status === "degraded" ? "border-danger/40 bg-danger/10" : "border-borderSoft bg-canvas/40"}`}>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <span className="font-semibold text-ink"><span className="mr-2 tabular-nums text-muted">{index + 1}.</span>{COMPONENT_LABELS[step.component] ?? step.component}</span>
-                <span className="text-xs tabular-nums text-muted">{step.ms.toFixed(1)} ms</span>
-              </div>
-              <div className="mt-2 h-1 overflow-hidden rounded-full bg-borderSoft" aria-hidden="true">
-                <div className={`h-full rounded-full ${step.status === "degraded" ? "bg-danger" : "bg-info"}`} style={{ width: `${Math.max(2, (step.ms / slowest) * 100)}%` }} />
-              </div>
-              <p className="mt-2 text-sm leading-6 text-muted">
-                {step.status === "degraded" ? <><strong className="text-ink">Lỗi, dùng dự phòng:</strong> {step.detail}{errors.get(step.component) ? ` (${errors.get(step.component)})` : ""}</> : step.detail}
-              </p>
-            </li>
-          ))}
+      <div className="console-panel min-w-0 rounded-xl p-5 md:p-6">
+        <PanelHeading icon={<Workflow className="h-4 w-4" />} title="Quy trình xử lý: mỗi thanh là một agent, trục ngang là thời gian" />
+        <ol className="mt-5 divide-y divide-borderSoft">
+          {trace.steps.map((step, index) => {
+            const start = trace.steps.slice(0, index).reduce((sum, item) => sum + item.ms, 0);
+            const degraded = step.status === "degraded";
+            return (
+              <li key={`${step.component}-${index}`}>
+                <details className="group">
+                  <summary className="grid cursor-pointer list-none grid-cols-[minmax(0,10rem)_1fr_4.5rem] items-center gap-3 rounded-lg py-3 hover:bg-canvas sm:grid-cols-[minmax(0,13rem)_1fr_4.5rem] [&::-webkit-details-marker]:hidden">
+                    <span className="flex min-w-0 items-center gap-2 text-sm font-semibold">
+                      <span aria-hidden="true" className={`h-2.5 w-2.5 shrink-0 rounded-full ${degraded ? "bg-danger" : "bg-success"}`} />
+                      <span className="truncate">{COMPONENT_LABELS[step.component] ?? step.component}</span>
+                    </span>
+                    <span className="relative h-5 rounded bg-panelMuted" role="img" aria-label={`${step.ms.toFixed(1)} ms, bắt đầu sau ${start.toFixed(1)} ms`}>
+                      <span
+                        className={`absolute inset-y-0 rounded ${degraded ? "bg-danger" : "bg-info"}`}
+                        style={{ left: `${(start / total) * 100}%`, width: `${Math.max(1.5, (step.ms / total) * 100)}%` }}
+                      />
+                    </span>
+                    <span className="text-right text-xs tabular-nums text-muted">{step.ms.toFixed(1)} ms</span>
+                  </summary>
+                  <p className="pb-3 pl-5 text-sm leading-6 text-muted">
+                    {degraded ? <><strong className="text-ink">Lỗi, dùng dự phòng:</strong> {step.detail}{errors.get(step.component) ? ` (${errors.get(step.component)})` : ""}</> : step.detail}
+                  </p>
+                </details>
+              </li>
+            );
+          })}
         </ol>
-        <p className="mt-3 text-xs leading-5 text-muted">Một thành phần có thể xuất hiện nhiều lần khi policy yêu cầu truy xuất thêm bằng chứng và tính lại khuyến nghị.</p>
+        <p className="mt-3 text-xs leading-5 text-muted">Bấm vào từng dòng để xem agent đã làm gì. Một thành phần có thể xuất hiện nhiều lần khi policy yêu cầu truy xuất thêm bằng chứng và tính lại khuyến nghị.</p>
       </div>
     </section>
   );

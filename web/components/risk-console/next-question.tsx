@@ -11,12 +11,12 @@ export function NextQuestion({ question, pending, error, onAnswer }: {
   onAnswer: (answer: Partial<PatientInput>) => void;
 }) {
   return (
-    <section aria-labelledby="next-question-title" className="console-panel rounded-lg p-5">
+    <section aria-labelledby="next-question-title" className="console-panel rounded-xl p-5 md:p-6">
       <h2 id="next-question-title" className="flex items-start gap-2 text-base font-semibold"><MessageCircleQuestion aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-info" />{question.question}</h2>
       <p className="mt-2 max-w-3xl text-sm leading-6 text-muted">{question.reason}</p>
       {question.kind === "risk_factor" && question.field ? <YesNoAnswer field={question.field} pending={pending} onAnswer={onAnswer} /> : <GlucoseAnswer pending={pending} onAnswer={onAnswer} />}
       <p className="mt-3 text-xs leading-5 text-muted">{question.model_note} Cập nhật áp dụng cho hồ sơ vừa đánh giá.</p>
-      {error ? <p role="alert" className="mt-3 text-sm text-[#ffb4ad]">{error.message} Bạn có thể thử cập nhật lại.</p> : null}
+      {error ? <p role="alert" className="mt-3 text-sm text-danger">{error.message} Bạn có thể thử cập nhật lại.</p> : null}
     </section>
   );
 }
@@ -27,7 +27,7 @@ function YesNoAnswer({ field, pending, onAnswer }: { field: AskableField; pendin
   return (
     <div className="mt-4 flex flex-wrap gap-3">
       {([["Có", true], ["Không", false]] as const).map(([label, value]) => (
-        <button key={label} type="button" disabled={pending} onClick={() => onAnswer({ [field]: value })} className={`${ANSWER_BUTTON} bg-info font-semibold text-canvas transition hover:bg-[#7bbce9]`}>
+        <button key={label} type="button" disabled={pending} onClick={() => onAnswer({ [field]: value })} className={`${ANSWER_BUTTON} bg-info font-semibold text-onAccent transition hover:bg-[#0b5f55]`}>
           {pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : null}{label}
         </button>
       ))}
@@ -56,7 +56,7 @@ function GlucoseAnswer({ pending, onAnswer }: { pending: boolean; onAnswer: (ans
             <option value="after_meal">Sau ăn thông thường</option>
             <option value="unknown">Không nhớ / không rõ</option>
           </select></label>
-          <button type="submit" disabled={pending || context === "unspecified"} className="flex min-h-11 items-center justify-center gap-2 rounded-md bg-info px-4 text-sm font-semibold text-canvas transition hover:bg-[#7bbce9] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info disabled:cursor-not-allowed disabled:opacity-60">{pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="h-4 w-4" />}Cập nhật đánh giá</button>
+          <button type="submit" disabled={pending || context === "unspecified"} className="flex min-h-11 items-center justify-center gap-2 rounded-md bg-info px-4 text-sm font-semibold text-onAccent transition hover:bg-[#0b5f55] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-info disabled:cursor-not-allowed disabled:opacity-60">{pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="h-4 w-4" />}Cập nhật đánh giá</button>
           <button type="button" disabled={pending} onClick={() => onAnswer({ glucose: null, glucose_context: "unspecified", glucose_unavailable: true })} className="min-h-11 rounded-md border border-borderSoft px-4 text-sm text-ink hover:bg-panelMuted focus-visible:outline focus-visible:outline-2 focus-visible:outline-info">Chưa có kết quả đo</button>
         </fieldset>
       </form>

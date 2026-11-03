@@ -10,7 +10,7 @@ export function EvidenceTrail({ trail }: { trail: EvidenceTrailItem[] }) {
   if (trail.length === 0) return null;
 
   return (
-    <section aria-labelledby="evidence-trail-title" className="console-panel min-w-0 rounded-lg p-5">
+    <section aria-labelledby="evidence-trail-title" className="console-panel min-w-0 rounded-xl p-5 md:p-6">
       <div id="evidence-trail-title"><PanelHeading icon={<Link2 className="h-4 w-4" />} title="Vì sao các yếu tố này quan trọng" /></div>
       <p className="mt-2 text-sm leading-6 text-muted">Mỗi yếu tố làm tăng nguy cơ theo mô hình được nối, qua đồ thị tri thức, với đoạn hướng dẫn y khoa đã truy xuất.</p>
       <ul className="mt-4 space-y-3">

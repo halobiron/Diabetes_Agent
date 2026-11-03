@@ -9,7 +9,7 @@ export function ModelStrip({ result }: { result: PredictionResult }) {
   const metrics = selectedModel ? model?.metrics?.[selectedModel]?.test : undefined;
 
   return (
-    <section className="console-panel grid gap-3 rounded-lg p-4 md:grid-cols-4">
+    <section className="console-panel grid gap-3 rounded-xl p-4 md:grid-cols-4">
       <ModelItem label="Mô hình" value={formatModelName(selectedModel)} />
       <ModelItem
         label="Số mẫu dữ liệu"

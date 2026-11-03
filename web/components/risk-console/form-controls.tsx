@@ -1,30 +1,4 @@
-import { ChevronDown } from "lucide-react";
-import { useEffect, useState, type ReactNode } from "react";
-
-export function InputSection({
-  title,
-  icon,
-  children,
-  defaultOpen = true,
-}: {
-  title: string;
-  icon: ReactNode;
-  children: ReactNode;
-  defaultOpen?: boolean;
-}) {
-  return (
-    <details open={defaultOpen} className="group mb-4 rounded-lg border border-borderSoft bg-panel p-4">
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-ink [&::-webkit-details-marker]:hidden">
-        <span className="flex items-center gap-2">
-          <span className="text-info">{icon}</span>
-          {title}
-        </span>
-        <ChevronDown className="h-4 w-4 text-muted transition group-open:rotate-180" />
-      </summary>
-      <div className="mt-4 space-y-3">{children}</div>
-    </details>
-  );
-}
+import { useEffect, useState } from "react";
 
 export function NumberField({
   label,
@@ -45,12 +19,12 @@ export function NumberField({
 }) {
   return (
     <label className="block">
-      <div className="mb-1 flex items-center justify-between gap-2">
+      <div className="mb-1.5 flex items-center justify-between gap-2">
         <span className="field-label">{label}</span>
-        {suffix ? <span className="text-xs text-muted">{suffix}</span> : null}
+        {suffix ? <span className="text-sm text-muted">{suffix}</span> : null}
       </div>
       <input
-        className="field-input"
+        className="field-input tabular-nums"
         type="number"
         min={min}
         max={max}
@@ -75,9 +49,9 @@ export function GlucoseField({
   }, [value]);
 
   return (
-    <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
-      <label className="flex items-center justify-between gap-3 text-sm text-ink">
-        <span className="font-semibold">Có kết quả đường huyết</span>
+    <div className="rounded-lg border border-borderSoft bg-panel p-4">
+      <label className="flex items-center justify-between gap-3 text-base text-ink">
+        <span className="font-semibold">Tôi có kết quả đường huyết</span>
         <input
           type="checkbox"
           checked={hasGlucose}
@@ -85,21 +59,21 @@ export function GlucoseField({
             setHasGlucose(event.target.checked);
             onChange(null);
           }}
-          className="h-4 w-4 accent-info"
+          className="h-5 w-5 accent-info"
         />
       </label>
-      <label className="mt-3 block">
-        <div className="mb-1 flex items-center justify-between gap-2">
+      <label className="mt-4 block">
+        <div className="mb-1.5 flex items-center justify-between gap-2">
           <span className="field-label">Đường huyết</span>
-          <span className="text-xs text-muted">mg/dL</span>
+          <span className="text-sm text-muted">mg/dL</span>
         </div>
         <input
-          className="field-input disabled:cursor-not-allowed disabled:opacity-50"
+          className="field-input tabular-nums"
           type="number"
           min={0}
           max={500}
           value={value ?? ""}
-          placeholder="Chưa có số đo"
+          placeholder={hasGlucose ? "Nhập số đo" : "Chưa có số đo"}
           disabled={!hasGlucose}
           onChange={(event) => onChange(event.target.value === "" ? null : Number(event.target.value))}
         />
@@ -121,7 +95,7 @@ export function SelectField({
 }) {
   return (
     <label className="block">
-      <span className="field-label mb-1 block">{label}</span>
+      <span className="field-label mb-1.5 block">{label}</span>
       <select className="field-input" value={value} onChange={(event) => onChange(event.target.value)}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
@@ -139,20 +113,26 @@ export function SliderField({
   onChange,
   min,
   max,
+  valueLabel,
+  lowLabel,
+  highLabel,
 }: {
   label: string;
   value: number;
   onChange: (value: number) => void;
   min: number;
   max: number;
+  valueLabel?: string;
+  lowLabel?: string;
+  highLabel?: string;
 }) {
   const fillPercent = max > min ? ((value - min) / (max - min)) * 100 : 0;
 
   return (
-    <label className="block rounded-md border border-borderSoft bg-canvas/50 p-3">
-      <div className="mb-2 flex items-center justify-between gap-2">
+    <label className="block rounded-lg border border-borderSoft bg-panel p-4">
+      <div className="mb-3 flex items-center justify-between gap-2">
         <span className="field-label">{label}</span>
-        <span className="text-sm font-semibold text-info">{value}</span>
+        <span className="rounded-md bg-infoSoft px-2 py-0.5 text-sm font-semibold tabular-nums text-info">{valueLabel ?? value}</span>
       </div>
       <input
         className="range-input w-full"
@@ -161,13 +141,13 @@ export function SliderField({
         max={max}
         value={value}
         style={{
-          background: `linear-gradient(to right, #5aa3d9 0%, #5aa3d9 ${fillPercent}%, rgba(255,255,255,0.14) ${fillPercent}%, rgba(255,255,255,0.14) 100%)`,
+          background: `linear-gradient(to right, #0e7468 0%, #0e7468 ${fillPercent}%, rgba(16,52,48,0.16) ${fillPercent}%, rgba(16,52,48,0.16) 100%)`,
         }}
         onChange={(event) => onChange(Number(event.target.value))}
       />
-      <div className="mt-1 flex justify-between text-[11px] text-muted">
-        <span>{min}</span>
-        <span>{max}</span>
+      <div className="mt-2 flex justify-between text-xs text-muted">
+        <span>{lowLabel ?? min}</span>
+        <span>{highLabel ?? max}</span>
       </div>
     </label>
   );
@@ -183,14 +163,14 @@ export function Toggle({
   onChange: (value: boolean) => void;
 }) {
   return (
-    <label className="toggle-row">
+    <label className="toggle-row cursor-pointer justify-between">
+      <span>{label}</span>
       <input
         type="checkbox"
         checked={checked}
         onChange={(event) => onChange(event.target.checked)}
-        className="h-4 w-4 accent-info"
+        className="h-5 w-5 accent-info"
       />
-      <span>{label}</span>
     </label>
   );
 }
@@ -212,28 +192,26 @@ export function TriToggle({
   onChange: (value: boolean | null) => void;
 }) {
   return (
-    <fieldset className="toggle-row flex-wrap justify-between">
+    <fieldset className="flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
       <legend className="sr-only">{label}</legend>
-      <span aria-hidden="true">{label}</span>
-      <div className="flex overflow-hidden rounded-md border border-borderSoft text-xs">
-        {TRI_OPTIONS.map((option) => (
-          <button
-            key={option.label}
-            type="button"
-            aria-pressed={value === option.value}
-            onClick={() => onChange(option.value)}
-            className={`min-h-8 px-2.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-info ${
-              value === option.value ? "bg-info font-semibold text-canvas" : "text-muted hover:bg-panelMuted"
-            }`}
-          >
-            {option.label}
-          </button>
-        ))}
+      <span aria-hidden="true" className="text-base">{label}</span>
+      <div className="grid w-full grid-cols-3 gap-1 rounded-lg bg-panelMuted p-1 text-sm sm:w-56 sm:shrink-0">
+        {TRI_OPTIONS.map((option) => {
+          const active = value === option.value;
+          const tone = option.value === true ? "text-danger" : option.value === false ? "text-success" : "text-ink";
+          return (
+            <button
+              key={option.label}
+              type="button"
+              aria-pressed={active}
+              onClick={() => onChange(option.value)}
+              className={`min-h-9 whitespace-nowrap rounded-md px-1 transition ${active ? `bg-panel font-semibold shadow-console ${tone}` : "text-muted hover:text-ink"}`}
+            >
+              {option.label}
+            </button>
+          );
+        })}
       </div>
     </fieldset>
   );
-}
-
-export function ToggleGrid({ children }: { children: ReactNode }) {
-  return <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">{children}</div>;
 }

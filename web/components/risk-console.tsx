@@ -1,6 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
+import { ChevronDown, Loader2, Stethoscope } from "lucide-react";
 import { useState } from "react";
 
 import { createPrediction } from "@/lib/api";
@@ -9,16 +10,11 @@ import type { PatientInput, PredictionResult } from "@/types/healthcare";
 import { AgentTrace } from "./risk-console/agent-trace";
 import { Assessment } from "./risk-console/assessment";
 import { DEFAULT_INPUT } from "./risk-console/constants";
-import { EmptyState } from "./risk-console/empty-state";
-import { Evidence } from "./risk-console/evidence";
 import { Hero } from "./risk-console/hero";
 import { ModelStrip } from "./risk-console/model-strip";
-import { MeasurementScales } from "./risk-console/measurement-scales";
 import { FollowupChange, NextQuestion } from "./risk-console/next-question";
-import { PatientSidebar } from "./risk-console/sidebar";
-import { Tabs } from "./risk-console/tabs";
-import type { TabKey } from "./risk-console/types";
 import { calculateBmi } from "./risk-console/utils";
+import { Intake } from "./risk-console/intake";
 
 const queryClient = new QueryClient();
 
@@ -32,7 +28,7 @@ export function RiskConsole() {
 
 function RiskConsoleInner() {
   const [form, setForm] = useState<PatientInput>(DEFAULT_INPUT);
-  const [activeTab, setActiveTab] = useState<TabKey>("assessment");
+  const [view, setView] = useState<"form" | "result">("form");
   const [lastResult, setLastResult] = useState<PredictionResult | null>(null);
   const [lastInput, setLastInput] = useState<PatientInput | null>(null);
   const [updatedFrom, setUpdatedFrom] = useState<PredictionResult | null>(null);
@@ -42,7 +38,8 @@ function RiskConsoleInner() {
     onSuccess: (result, input) => {
       setLastResult(result);
       setLastInput(input);
-      setActiveTab("assessment");
+      setView("result");
+      window.scrollTo({ top: 0 });
     },
   });
 
@@ -68,42 +65,75 @@ function RiskConsoleInner() {
   }
 
   return (
-    <main className="min-h-screen bg-canvas text-ink">
-      <div className="grid min-h-screen grid-cols-1 xl:grid-cols-[420px_1fr]">
-        <PatientSidebar
+    <div className="min-h-screen bg-canvas text-ink">
+      <div className="border-b border-borderSoft bg-panel">
+        <div className="mx-auto flex h-14 max-w-6xl items-center justify-between gap-3 px-5">
+          <div className="flex items-center gap-2 font-bold">
+            <Stethoscope aria-hidden="true" className="h-5 w-5 text-info" />
+            Sức khỏe AI
+          </div>
+          <span className="text-sm text-muted">Chạy cục bộ · Nguyên mẫu học tập</span>
+        </div>
+      </div>
+
+      {view === "form" || !result ? (
+        <Intake
           form={form}
           calculatedBmi={calculatedBmi}
           isPending={mutation.isPending}
           error={mutation.error}
+          hasResult={result !== null}
           onSubmit={submit}
           onFieldChange={updateField}
+          onCancel={() => setView("result")}
         />
+      ) : (
+        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8" aria-busy={mutation.isPending}>
+          <Hero result={result} onEdit={() => setView("form")} />
+          {mutation.isPending ? (
+            <p role="status" className="flex items-center gap-2 text-sm text-muted">
+              <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Đang cập nhật kết quả…
+            </p>
+          ) : null}
+          {updatedFrom && updatedFrom !== result ? <FollowupChange before={updatedFrom} after={result} /> : null}
+          {result.followup ? (
+            <NextQuestion
+              key={`${result.request_id ?? "result"}:${result.followup.id}`}
+              question={result.followup}
+              pending={mutation.isPending}
+              error={mutation.error}
+              onAnswer={answerQuestion}
+            />
+          ) : null}
+          {result.patient.glucose_unavailable ? (
+            <p role="status" className="text-sm text-muted">
+              Đã ghi nhận bạn chưa có kết quả đường huyết. Hệ thống không hỏi lại trong hồ sơ này; bạn vẫn có thể bổ sung ở phần chỉnh sửa hồ sơ.
+            </p>
+          ) : null}
+          <Assessment result={result} scales={result.measurement_scales ?? []} />
+          <Fold title="Chi tiết kỹ thuật" hint="Quy trình các agent và thông tin mô hình">
+            <div className="space-y-8">
+              <AgentTrace result={result} />
+              <ModelStrip result={result} />
+            </div>
+          </Fold>
+        </main>
+      )}
+    </div>
+  );
+}
 
-        <section className="min-w-0 px-5 py-6 md:px-8 lg:px-10">
-          <div className="mx-auto flex max-w-7xl flex-col gap-6">
-            <Hero result={result} />
-            {result ? (
-              <>
-                <ModelStrip result={result} />
-                <Tabs activeTab={activeTab} onChange={setActiveTab} />
-                {activeTab === "assessment" ? (
-                  <>
-                    {updatedFrom && updatedFrom !== result ? <FollowupChange before={updatedFrom} after={result} /> : null}
-                    {result.followup ? <NextQuestion key={`${result.request_id ?? "result"}:${result.followup.id}`} question={result.followup} pending={mutation.isPending} error={mutation.error} onAnswer={answerQuestion} /> : null}
-                    {result.patient.glucose_unavailable ? <p role="status" className="text-sm text-muted">Đã ghi nhận bạn chưa có kết quả đường huyết. Hệ thống không hỏi lại trong hồ sơ này; bạn vẫn có thể bổ sung ở phần thông tin bệnh nhân.</p> : null}
-                    <MeasurementScales scales={result.measurement_scales ?? []} />
-                  </>
-                ) : null}
-                {activeTab === "assessment" ? <Assessment result={result} /> : null}
-                {activeTab === "evidence" ? <Evidence result={result} /> : null}
-                {activeTab === "agents" ? <AgentTrace result={result} /> : null}
-              </>
-            ) : (
-              <EmptyState />
-            )}
-          </div>
-        </section>
-      </div>
-    </main>
+function Fold({ title, hint, children }: { title: string; hint: string; children: React.ReactNode }) {
+  return (
+    <details className="group console-panel rounded-xl">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 md:px-6 [&::-webkit-details-marker]:hidden">
+        <span>
+          <span className="block text-lg font-bold">{title}</span>
+          <span className="block text-sm text-muted">{hint}</span>
+        </span>
+        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-muted transition group-open:rotate-180" />
+      </summary>
+      <div className="border-t border-borderSoft p-5 md:p-6">{children}</div>
+    </details>
   );
 }

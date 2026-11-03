@@ -8,7 +8,7 @@ export function MetricTile({
   label,
   value,
   icon,
-  accent = "#5aa3d9",
+  accent = "#0e7468",
 }: {
   label: string;
   value: string;
@@ -16,7 +16,7 @@ export function MetricTile({
   accent?: string;
 }) {
   return (
-    <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
+    <div className="rounded-md border border-borderSoft bg-canvas p-3">
       <div className="flex items-center justify-between gap-2">
         <div className="field-label">{label}</div>
         <span style={{ color: accent }}>{icon}</span>
@@ -27,7 +27,7 @@ export function MetricTile({
 }
 
 export function RiskBadge({ risk, muted = false }: { risk: RiskLevel; muted?: boolean }) {
-  const color = muted ? "#9aa4b2" : RISK_COLORS[risk];
+  const color = muted ? "#6b7f7c" : RISK_COLORS[risk];
 
   return (
     <span
@@ -77,7 +77,7 @@ export function ProbabilityGauge({
 
 export function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-md border border-borderSoft bg-canvas/50 p-3">
+    <div className="rounded-md border border-borderSoft bg-canvas p-3">
       <div className="field-label">{label}</div>
       <div className="mt-1 text-lg font-semibold text-ink">{value}</div>
     </div>
@@ -105,16 +105,16 @@ export function NarrativePanel({
   text: string;
 }) {
   return (
-    <div className="console-panel rounded-lg p-5">
+    <div className="console-panel rounded-xl p-5 md:p-6">
       <PanelHeading icon={icon} title={title} />
-      <p className="mt-4 whitespace-pre-line break-words text-sm leading-7 text-ink/90 [overflow-wrap:anywhere]">{text}</p>
+      <p className="mt-4 whitespace-pre-line break-words text-base leading-7 text-ink [overflow-wrap:anywhere]">{text}</p>
     </div>
   );
 }
 
 export function PanelHeading({ icon, title }: { icon: ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-2 text-lg font-semibold">
+    <div className="flex items-center gap-2 text-xl font-bold">
       <span className="text-info">{icon}</span>
       {title}
     </div>
@@ -151,7 +151,7 @@ export function DataTable({
     <div className={clsx("overflow-hidden rounded-md border border-borderSoft", compact ? "mt-4" : "mt-4")}>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[520px] border-collapse text-left text-sm">
-          <thead className="bg-panelMuted text-xs uppercase tracking-[0.08em] text-muted">
+          <thead className="bg-panelMuted text-xs font-semibold text-muted">
             <tr>
               {columns.map((column) => (
                 <th key={column} className="border-b border-borderSoft px-3 py-2 font-semibold">

@@ -49,9 +49,9 @@ export const ESCALATION_LABELS: Record<string, string> = {
 };
 
 export const RISK_COLORS: Record<string, string> = {
-  Low: "#2f9b6a",
-  Medium: "#d49a35",
-  High: "#d05245",
+  Low: "#1b7a4b",
+  Medium: "#c98a1a",
+  High: "#c4452f",
 };
 
 export const RISK_LABELS: Record<string, string> = {
@@ -67,9 +67,9 @@ export const METHOD_LABELS: Record<string, string> = {
 };
 
 export const ESCALATION_COLORS: Record<string, string> = {
-  routine_followup: "#2f9b6a",
-  prompt_clinician_followup: "#d49a35",
-  urgent_clinician_review: "#d05245",
+  routine_followup: "#1b7a4b",
+  prompt_clinician_followup: "#c98a1a",
+  urgent_clinician_review: "#c4452f",
 };
 
 const GENERAL_HEALTH_LABELS: Record<number, string> = {
