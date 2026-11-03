@@ -1,4 +1,4 @@
-import { AlertTriangle, BarChart3, Brain, CheckCircle2, ShieldCheck } from "lucide-react";
+import { AlertTriangle, BarChart3, Brain, CheckCircle2, Info, ShieldCheck } from "lucide-react";
 import { useMemo } from "react";
 
 import { featureLabel, formatFeatureValue, METHOD_LABELS } from "@/lib/labels";
@@ -11,6 +11,14 @@ import { PanelHeading } from "./shared-ui";
 import { WhatIf } from "./what-if";
 
 const SENTENCE_SPLIT = /(?<=[.!?])\s+(?=[A-ZÀ-Ỹ])/;
+
+const ESCALATION_TITLE = {
+  routine_followup: "Cần lưu ý",
+  prompt_clinician_followup: "Nên đi khám sớm",
+  urgent_clinician_review: "Cần được khám khẩn",
+} as const;
+
+const RULE_SCALE: Record<string, string> = { GLU: "glucose", BP: "bp" };
 
 type EvidenceItem = { text: string; n: number; source?: { title: string; url?: string } };
 
@@ -61,15 +69,38 @@ export function Assessment({ result, scales }: { result: PredictionResult; scale
       <div className="console-panel rounded-2xl p-6 lg:col-span-7 lg:self-start">
         <PanelHeading icon={<CheckCircle2 className="h-5 w-5" />} title="Bạn nên làm gì" />
         {alerts.length > 0 ? (
-          <div role="alert" className="mt-5 rounded-xl bg-danger/10 p-4 text-danger">
-            <div className="mb-2 flex items-center gap-2 font-bold">
-              <AlertTriangle aria-hidden="true" className="h-5 w-5" /> Cần lưu ý trước
+          <div role="alert" className="mt-5 rounded-2xl bg-danger/[0.06] p-5 ring-1 ring-danger/20">
+            <div className="flex items-center gap-3">
+              <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-danger text-onAccent">
+                <AlertTriangle aria-hidden="true" className="h-5 w-5" />
+              </span>
+              <p className="text-xl font-bold leading-7 text-danger">{ESCALATION_TITLE[result.safety.escalation]}</p>
             </div>
-            <ul className="space-y-1 text-base leading-7">
-              {alerts.map((alert) => (
-                <li key={alert} className="[overflow-wrap:anywhere]">{alert}</li>
-              ))}
+            <ul className="mt-4 divide-y divide-danger/15 [overflow-wrap:anywhere]">
+              {result.safety.rules.map((rule) => {
+                const scale = scales.find((s) => s.key === RULE_SCALE[rule.code.split("-")[0]]);
+                return (
+                  <li key={rule.code} className="grid gap-x-5 gap-y-1 py-3 first:pt-0 last:pb-0 sm:grid-cols-[9.5rem_1fr] sm:items-center">
+                    {scale?.value != null ? (
+                      <div>
+                        <p className="text-sm font-medium text-muted">{scale.title}</p>
+                        <p className="tabular-nums text-danger">
+                          <span className="text-3xl font-bold leading-9">{scale.value}</span>
+                          <span className="ml-1 text-sm font-medium">{scale.unit}</span>
+                        </p>
+                      </div>
+                    ) : null}
+                    <p className="text-base leading-7 text-ink sm:col-start-2">{rule.message}</p>
+                  </li>
+                );
+              })}
             </ul>
+            {result.safety.conflicts.length > 0 ? (
+              <p className="mt-4 flex gap-2 border-t border-danger/15 pt-4 text-sm leading-6 text-muted">
+                <Info aria-hidden="true" className="mt-0.5 h-4 w-4 shrink-0" />
+                Điểm nguy cơ tổng thể của hệ thống đang thấp, nhưng hãy tin số đo thực tế của bạn hơn.
+              </p>
+            ) : null}
           </div>
         ) : (
           <p className="mt-5 flex items-center gap-2 rounded-xl bg-infoSoft px-4 py-3 text-sm font-semibold text-info">
