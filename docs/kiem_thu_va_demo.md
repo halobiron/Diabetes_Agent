@@ -3,7 +3,39 @@
 Kết quả ngày 03/11/2026: **96 tests đạt**, coverage `--cov=.` **80,97%**;
 Python lint/format và frontend lint/typecheck/build đều đạt. Demo tích hợp
 **26/26 ca đạt**. Backend đầy đủ chạy trên Linux vì Windows Application Control
-chặn Python/thư viện ChromaDB.
+chặn Python/thư viện ChromaDB. Docker Linux là môi trường chạy được trên máy này;
+việc chặn Python Windows không ngăn demo bằng Docker.
+
+## Xác minh lại với Neo4j thật ngày 03/11/2026
+
+Đã chạy Neo4j `2026.10.1` trong container riêng và nạp KB bằng
+`scripts/load_neo4j_kb.py`: **46 nút, 56 quan hệ** (35 quan hệ nghiệp vụ và 21
+quan hệ bằng chứng → nguồn). Truy vấn được 21 bằng chứng và các liên kết hỗ trợ
+yếu tố nguy cơ có URL nguồn.
+
+Demo `--require-neo4j --with-web` đạt **26/26 ca**, với
+`kb_source=KnowledgeGraph`; chế độ này dừng khi hệ thống rơi về KB file.
+Các ca gồm dự đoán thật, thiếu dữ liệu, cảnh báo, thiếu bằng chứng, lỗi thành phần,
+memory, Next.js → FastAPI và lỗi backend. Bộ kiểm thử backend vừa chạy lại
+trong Docker với mã nguồn hiện tại: **96 passed**, 3 cảnh báo deprecation.
+Coverage 80,97% ở phần trên thuộc lần đo trước, không đo lại trong lượt này.
+
+Kết quả rút gọn được lưu trong [neo4j_verification.json](neo4j_verification.json);
+kết quả đầy đủ tại `logs/neo4j-live-demo.json` (thư mục logs không đưa vào Git).
+Docker image dùng để kiểm tra là `healthcare-step12:vi`, chứa dependencies và
+frontend đã build; mã nguồn backend khi chạy pytest được mount từ workspace.
+
+Với Neo4j đang chạy và đã nạp KB, có thể kiểm tra lại bằng môi trường Python
+Linux/Docker đã cài dependencies, đặt `NEO4J_URI`, `NEO4J_USER`,
+`NEO4J_PASSWORD`, rồi chạy:
+
+```bash
+python scripts/load_neo4j_kb.py
+python scripts/demo_step12.py --require-neo4j --with-web --output logs/neo4j-live-demo.json
+```
+
+Neo4j dùng trong lần xác minh là database riêng phục vụ kiểm tra; không dùng
+database chứa dữ liệu khác để chạy script nạp có prune mặc định.
 
 ## Chạy lại
 
@@ -43,6 +75,8 @@ thích đặc trưng; RetrievalAgent tìm bằng chứng có nguồn; SafetyGuar
 QPolicy chọn bước tiếp theo; ExplanationAgent/RecommendationAgent tạo nội dung;
 MemoryAgent lưu và tìm ca; Orchestrator điều phối và xử lý lỗi.
 
-Demo dùng KB file và text fallback, chưa xác nhận Neo4j/OpenAI thật hoặc thao tác
-trình duyệt tự động. `npm audit` còn 24 cảnh báo, gồm 1 critical ở Next.js;
-báo cáo tại `logs/step12-npm-audit.json`.
+Lần demo ban đầu dùng KB file và text fallback. Lần xác minh bổ sung ở trên đã
+dùng Neo4j thật; cả hai dùng text fallback, chưa gọi OpenAI thật. Demo web kiểm
+tra bằng HTTP, chưa tự động thao tác trình duyệt. Báo cáo dependency audit cũ
+ở `logs/step12-npm-audit.json`; không dùng số cảnh báo của lần đó làm kết luận
+về phiên bản dependencies hiện tại khi chưa chạy audit lại.

@@ -29,6 +29,12 @@ Cập nhật: sửa file JSON rồi chạy lại script. Nạp là idempotent (`
 
 ## Truy vấn từ code
 
+Đã xác minh trên Neo4j thật `2026.10.1` trong Docker ngày 03/11/2026:
+nạp được 46 nút, 56 quan hệ; truy xuất 21 bằng chứng; luồng API + web dùng
+`KnowledgeGraph` đạt 26/26 ca demo. Xem [kết quả xác minh](neo4j_verification.json)
+và [cách kiểm tra lại](kiem_thu_va_demo.md). Đây là kết quả trên phiên bản đã
+chạy; cấu hình Compose vẫn khai báo `neo4j:5-community`.
+
 `tools/neo4j_kb.py` → `KnowledgeGraph`:
 
 - `relations_with_evidence(entity_id)`: mọi quan hệ của một thực thể cùng bằng chứng và nguồn.

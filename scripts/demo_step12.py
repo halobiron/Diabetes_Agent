@@ -274,6 +274,11 @@ def run_web_scenarios(env, work_dir, api_port, web_port):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--with-web", action="store_true")
+    parser.add_argument(
+        "--require-neo4j",
+        action="store_true",
+        help="Use configured Neo4j and fail if retrieval falls back to the KB file (load KB first).",
+    )
     parser.add_argument("--api-port", type=int, default=18000)
     parser.add_argument("--web-port", type=int, default=13000)
     parser.add_argument("--output", type=Path, default=ROOT / "logs/step12-demo.json")
@@ -284,7 +289,7 @@ def main():
             "OPENAI_API_KEY": "",
             "API_TOKEN": "",
             "REQUIRE_API_TOKEN": "false",
-            "NEO4J_PASSWORD": "",
+            "NEO4J_PASSWORD": os.getenv("NEO4J_PASSWORD", "") if args.require_neo4j else "",
             "CHROMA_PATH": str(work_dir / "chroma"),
             "LOG_DIR": str(work_dir / "audit"),
             "MODEL_ARTIFACT_PATH": str(ROOT / "artifacts/risk_model.joblib"),
@@ -293,6 +298,25 @@ def main():
         }
         with patch.dict(os.environ, isolated):
             import api.app as api
+
+            graph_checks = None
+            if args.require_neo4j:
+                from tools.neo4j_kb import KnowledgeGraph
+
+                kb = api.agent.retriever.kb
+                assert isinstance(kb, KnowledgeGraph), (
+                    "Neo4j required; KB file fallback is not accepted"
+                )
+                evidence = kb.all_evidence()
+                links = kb.support_for_risk_factors(["BMI", "HighBP", "glucose"])
+                assert evidence and links, "Load the diabetes KB into Neo4j before this demo"
+                assert all(item["url"] and item["evidence_id"] for item in links)
+                graph_checks = {
+                    "stats": kb.stats(),
+                    "evidence_count": len(evidence),
+                    "support_count": len(links),
+                    "support_sample": links[:3],
+                }
 
             with TestClient(api.app) as client:
                 records = run_api_scenarios(client, api.agent, api.audit_logger.output_file)
@@ -311,6 +335,7 @@ def main():
                 "python": sys.version,
                 "model": api.agent.model.artifact_metadata,
                 "kb_source": api.agent.retriever.kb_source,
+                "graph_checks": graph_checks,
                 "embedding_model": api.agent.retriever.embedding_model.name,
                 "llm": "local fallback (no API key)",
                 "web_included": args.with_web,

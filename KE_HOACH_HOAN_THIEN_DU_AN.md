@@ -71,6 +71,11 @@ Kết quả: MLP đứng thứ 2 theo CV (0,8305) nên được tuning, và đư
 
 Chi tiết tại [Knowledge graph Neo4j](docs/neo4j_kb.md): 20 thực thể, 35 quan hệ, 21 bằng chứng từ 5 nguồn; kiểm thử bằng driver giả, chưa chạy trên server Neo4j thật (máy chưa bật Docker).
 
+Cập nhật 03/11/2026: đã chạy Neo4j thật `2026.10.1` trong Docker, nạp được
+46 nút/56 quan hệ, truy vấn bằng chứng có nguồn và chạy demo API + web
+26/26 ca với `kb_source=KnowledgeGraph`. Kết quả trước đó về việc chưa chạy
+Neo4j thật đã được giải quyết; xem `docs/neo4j_verification.json`.
+
 ### Bước 7 — Hoàn thiện RAG
 
 - [x] Thay embedding băm bằng embedding ngữ nghĩa; kết nối RetrievalAgent với KB Neo4j.

@@ -49,17 +49,17 @@ Short clips:
 - [Risk history and memory records](docs/media/videos/03-history-flow.webm)
 - [Missing glucose safety behavior](docs/media/videos/04-missing-glucose-flow.webm)
 
-## Reference baseline metrics
+## Current model metrics
 
-These checked-in metrics describe the previous baseline run. The evaluation protocol
-will be corrected in Step 3 before generating new results.
+The checked-in artifact is a calibrated MLP, selected on validation after cross-validation
+and tuning. The holdout test is used for final evaluation (train/validation/test: 60/20/20).
 
 | Metric | Value |
 |--------|-------|
-| **Selected model** | Histogram gradient boosting (calibrated) |
-| **Holdout ROC AUC** | 0.827 |
-| **CV ROC AUC** | 0.831 ± 0.002 |
-| **F1 (tuned threshold)** | 0.469 |
+| **Selected model** | MLP (PyTorch training, NumPy inference, calibrated) |
+| **Holdout ROC AUC** | 0.82581 |
+| **CV ROC AUC** | 0.83049 ± 0.00239 |
+| **F1 (validation-selected threshold)** | 0.46543 |
 | **Dataset** | `alexteboul/diabetes-health-indicators-dataset` |
 
 Metrics live in [`artifacts/metrics.json`](artifacts/metrics.json). Local training writes
@@ -75,12 +75,13 @@ FastAPI  ──►  BRFSS risk model (local artifact)
         │
         ▼
 Orchestrator
-   ├── Feature explainability (SHAP or sensitivity)
+   ├── MLP feature explainability (sensitivity; SHAP for linear models)
    ├── Safety guardrails + escalation
-   ├── RAG medical context retrieval
+   ├── KB/RAG (Neo4j or KB file + semantic embeddings + ChromaDB)
    ├── ChromaDB memory (similar cases)
    ├── Explanation (OpenAI optional → rule-based fallback)
-   └── Recommendation (OpenAI optional → rule-based fallback)
+   ├── Recommendation (OpenAI optional → rule-based fallback)
+   └── Q-learning support policy (simulated training; safety rules take precedence)
         │
         ▼
 Structured response → UI tabs (Assessment / Evidence / History)
