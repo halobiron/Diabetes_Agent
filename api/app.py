@@ -4,7 +4,7 @@ from typing import Literal, Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -13,6 +13,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from core.config import get_settings
 from main import agent
 from tools.audit_logger import AuditLogger
+from tools.what_if import ASKABLE_FIELDS
 
 app = FastAPI(title="API hỗ trợ đánh giá nguy cơ sức khỏe")
 settings = get_settings()
@@ -48,6 +49,16 @@ class PatientRequest(BaseModel):
     sex: Optional[str] = Field(None, pattern="^(female|male|0|1|F|M|f|m)$")
     education: Optional[int] = Field(None, ge=1, le=6)
     income: Optional[int] = Field(None, ge=1, le=8)
+    # Optional yes/no inputs the patient declined to answer; the agent will not ask again.
+    skipped_fields: list[str] = Field(default_factory=list, max_length=len(ASKABLE_FIELDS))
+
+    @field_validator("skipped_fields")
+    @classmethod
+    def known_skipped_fields(cls, fields):
+        unknown = sorted(set(fields) - set(ASKABLE_FIELDS))
+        if unknown:
+            raise ValueError(f"Trường không thể bỏ qua: {', '.join(unknown)}.")
+        return fields
 
     @model_validator(mode="after")
     def require_body_measurements(self):
@@ -73,25 +84,33 @@ def health():
     return {"status": "ok"}
 
 
+def _assess(patient):
+    result = agent.run(patient.model_dump())
+    request_id = str(uuid4())
+    audit_logger.log_decision(request_id, result["patient"], result)
+    return request_id, result
+
+
+def _summary(result):
+    safety = result.get("safety", {})
+    return {
+        "risk": result["risk"],
+        "probability": result["probability"],
+        "confidence": safety.get("confidence_label"),
+        "confidence_score": safety.get("confidence_score"),
+        "escalation": safety.get("escalation"),
+        "alerts": safety.get("alerts", []),
+    }
+
+
 @app.post("/predict")
 def predict(patient: PatientRequest, _auth=Depends(_authorize)):
-    result = agent.run(patient.model_dump())
-    audit_logger.log_decision(str(uuid4()), result["patient"], result)
-    return result
+    return _assess(patient)[1]
 
 
 @app.post("/predict/summary")
 def predict_summary(patient: PatientRequest, _auth=Depends(_authorize)):
-    result = agent.run(patient.model_dump())
-    audit_logger.log_decision(str(uuid4()), result["patient"], result)
-    return {
-        "risk": result["risk"],
-        "probability": result["probability"],
-        "confidence": result.get("safety", {}).get("confidence_label"),
-        "confidence_score": result.get("safety", {}).get("confidence_score"),
-        "escalation": result.get("safety", {}).get("escalation"),
-        "alerts": result.get("safety", {}).get("alerts", []),
-    }
+    return _summary(_assess(patient)[1])
 
 
 @app.get("/history")
@@ -110,24 +129,11 @@ def health_v1():
 
 @app.post("/v1/predict")
 def predict_v1(patient: PatientRequest, _auth=Depends(_authorize)):
-    result = agent.run(patient.model_dump())
-    request_id = str(uuid4())
-    audit_logger.log_decision(request_id, result["patient"], result)
-    result["request_id"] = request_id
-    return result
+    request_id, result = _assess(patient)
+    return {**result, "request_id": request_id}
 
 
 @app.post("/v1/predict/summary")
 def predict_summary_v1(patient: PatientRequest, _auth=Depends(_authorize)):
-    result = agent.run(patient.model_dump())
-    request_id = str(uuid4())
-    audit_logger.log_decision(request_id, result["patient"], result)
-    return {
-        "request_id": request_id,
-        "risk": result["risk"],
-        "probability": result["probability"],
-        "confidence": result.get("safety", {}).get("confidence_label"),
-        "confidence_score": result.get("safety", {}).get("confidence_score"),
-        "escalation": result.get("safety", {}).get("escalation"),
-        "alerts": result.get("safety", {}).get("alerts", []),
-    }
+    request_id, result = _assess(patient)
+    return {"request_id": request_id, **_summary(result)}

@@ -134,13 +134,47 @@ def measurement_scales(patient):
     return [bmi, bp, glucose]
 
 
-def build_followup(patient, safety, policy=None):
+RISK_FACTOR_QUESTIONS = {
+    "PhysActivity": "Trong 30 ngày qua, bạn có vận động thể chất ngoài công việc (đi bộ, chạy, thể thao) không?",
+    "Smoker": "Bạn đã từng hút ít nhất 100 điếu thuốc (khoảng 5 bao) trong đời chưa?",
+    "HighChol": "Bác sĩ đã từng cho biết bạn bị cholesterol cao chưa?",
+    "HeartDiseaseorAttack": "Bạn đã từng được chẩn đoán bệnh mạch vành hoặc nhồi máu cơ tim chưa?",
+    "Stroke": "Bạn đã từng bị đột quỵ chưa?",
+    "DiffWalk": "Bạn có gặp khó khăn nghiêm trọng khi đi bộ hoặc leo cầu thang không?",
+    "HvyAlcoholConsump": "Bạn có uống nhiều rượu bia không (nam trên 14 ly, nữ trên 7 ly mỗi tuần)?",
+    "Fruits": "Bạn có ăn trái cây ít nhất một lần mỗi ngày không?",
+    "Veggies": "Bạn có ăn rau ít nhất một lần mỗi ngày không?",
+}
+
+
+def _risk_factor_question(unknown):
+    low, high = sorted((unknown["probability_if_no"], unknown["probability_if_yes"]))
+    return {
+        "id": unknown["field"],
+        "kind": "risk_factor",
+        "source": "model_sensitivity",
+        "field": unknown["field"],
+        "question": RISK_FACTOR_QUESTIONS[unknown["feature"]],
+        "reason": (
+            f"Mục này chưa được cung cấp nên mô hình đang dùng giá trị mặc định. Tùy câu trả lời, xác suất ước tính"
+            f" nằm trong khoảng {low:.1%} đến {high:.1%}; đây là mục còn thiếu có ảnh hưởng lớn nhất."
+            " Bạn có thể bỏ qua; hệ thống sẽ không hỏi lại mục này trong hồ sơ."
+        ),
+        "model_note": "Câu trả lời được đưa vào mô hình và có thể đổi xác suất, cảnh báo và khuyến nghị.",
+    }
+
+
+def build_followup(patient, safety, policy=None, unknown=None):
+    """One next question: glucose first (it drives the safety rules), then the missing model
+    input whose answer could move the estimate most (`unknown`).
+
+    The glucose measurement context is not asked here: the form collects it next to the value.
+    """
     # Never put a data-entry task ahead of a clinician escalation or a failed safety check.
     if safety["escalation"] != "routine_followup":
         return None
-    if not patient.get("glucose_measured", True):
-        if patient.get("glucose_unavailable"):
-            return None
+    measured = patient.get("glucose_measured", True)
+    if not measured and not patient.get("glucose_unavailable"):
         source = "policy" if policy and policy["next_step"] == "request_glucose" else "data_quality"
         return {
             "id": "glucose",
@@ -150,13 +184,4 @@ def build_followup(patient, safety, policy=None):
             "reason": "Số đo này giúp bộ luật kiểm tra cảnh báo và truy xuất bằng chứng phù hợp hơn. Bạn có thể chọn chưa có kết quả; hệ thống sẽ không hỏi lặp trong hồ sơ này.",
             "model_note": "Glucose không tham gia MLP BRFSS hiện tại; bổ sung số đo không trực tiếp đổi xác suất của mô hình.",
         }
-    if patient.get("glucose_context", "unspecified") == "unspecified":
-        return {
-            "id": "glucose_context",
-            "kind": "glucose_context",
-            "source": "measurement_context",
-            "question": "Kết quả đường huyết này được đo lúc nào?",
-            "reason": "Mốc tham khảo phụ thuộc bối cảnh đo. Chọn không nhớ nếu bạn chưa rõ; hệ thống sẽ giữ thang trung tính.",
-            "model_note": "Bối cảnh đo dùng để trình bày thang tham khảo; không đổi các ngưỡng cảnh báo của dự án.",
-        }
-    return None
+    return _risk_factor_question(unknown) if unknown else None

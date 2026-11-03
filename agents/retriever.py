@@ -128,21 +128,15 @@ class RetrievalAgent:
         for evidence_id, score in relevance.items():
             if score < self.min_relevance:
                 continue
-            item = self.evidence[evidence_id]
-            supports = linked.get(evidence_id, [])
+            rows = linked.get(evidence_id, [])
             contexts.append(
                 {
-                    "evidence_id": evidence_id,
-                    "title": f"{item['source_title']} — {item['section']}",
-                    "text": EVIDENCE_TEXTS.get(evidence_id, item["text"]),
-                    "source_id": item["source_id"],
-                    "source_title": item["source_title"],
-                    "publisher": item.get("publisher"),
-                    "year": item.get("year"),
-                    "url": item.get("url"),
+                    **self.citation(evidence_id),
                     "relevance": round(score, 3),
-                    "via": "graph+semantic" if supports else "semantic",
-                    "supports": supports,
+                    "via": "graph+semantic" if rows else "semantic",
+                    "supports": list(dict.fromkeys(row["support_name"] for row in rows)),
+                    # Model features whose graph links lead to this passage.
+                    "factors": sorted({row["factor_key"] for row in rows}),
                 }
             )
 
@@ -150,6 +144,22 @@ class RetrievalAgent:
             key=lambda c: c["relevance"] + (GRAPH_BOOST if c["supports"] else 0.0), reverse=True
         )
         return contexts[:n_results]
+
+    def citation(self, evidence_id):
+        """Display fields of one KB passage (no relevance score); None if the id is unknown."""
+        item = self.evidence.get(evidence_id)
+        if item is None:
+            return None
+        return {
+            "evidence_id": evidence_id,
+            "title": f"{item['source_title']} — {item['section']}",
+            "text": EVIDENCE_TEXTS.get(evidence_id, item["text"]),
+            "source_id": item["source_id"],
+            "source_title": item["source_title"],
+            "publisher": item.get("publisher"),
+            "year": item.get("year"),
+            "url": item.get("url"),
+        }
 
     def _risk_factors(self, patient_data, feature_explanation):
         factors = []
@@ -165,7 +175,7 @@ class RetrievalAgent:
         return factors
 
     def _graph_links(self, factors):
-        """evidence_id -> names of interventions/tests the graph ties to the patient's risk factors."""
+        """evidence_id -> graph rows (risk factor key + intervention/test name) that cite it."""
         if not factors:
             return {}
         try:
@@ -175,9 +185,7 @@ class RetrievalAgent:
             return {}
         linked = {}
         for row in rows:
-            names = linked.setdefault(row["evidence_id"], [])
-            if row["support_name"] not in names:
-                names.append(row["support_name"])
+            linked.setdefault(row["evidence_id"], []).append(row)
         return linked
 
     def _query_text(self, patient_data, risk, factors):

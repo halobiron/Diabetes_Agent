@@ -15,8 +15,10 @@ import {
 import { featureLabel, formatFeatureValue, METHOD_LABELS } from "@/lib/labels";
 import type { PredictionResult } from "@/types/healthcare";
 
+import { EvidenceTrail } from "./evidence-trail";
 import { DataTable, NarrativePanel, PanelHeading } from "./shared-ui";
 import type { ChartFeature } from "./types";
+import { WhatIf } from "./what-if";
 
 export function Assessment({ result }: { result: PredictionResult }) {
   const topFeatures = useMemo(() => {
@@ -41,6 +43,7 @@ export function Assessment({ result }: { result: PredictionResult }) {
           icon={<CheckCircle2 className="h-4 w-4" />}
           text={result.recommendation}
         />
+        {result.what_if ? <WhatIf whatIf={result.what_if} /> : null}
         {result.safety.alerts.length > 0 ? (
           <div className="rounded-lg border border-danger/40 bg-danger/10 p-4 text-sm text-[#ffc1bc]">
             <div className="mb-2 flex items-center gap-2 font-semibold text-ink">
@@ -55,7 +58,10 @@ export function Assessment({ result }: { result: PredictionResult }) {
           </div>
         ) : null}
       </div>
-      <FeatureImpactPanel features={topFeatures} method={result.feature_explanation.method} />
+      <div className="min-w-0 space-y-5">
+        <FeatureImpactPanel features={topFeatures} method={result.feature_explanation.method} />
+        <EvidenceTrail trail={result.evidence_trail ?? []} />
+      </div>
     </section>
   );
 }

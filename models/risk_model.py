@@ -34,7 +34,6 @@ class RiskModel:
         "Education",
         "Income",
     ]
-    FEATURE_NAMES = LEGACY_FEATURE_NAMES
     INPUT_NAMES = ["age", "height_cm", "weight_kg", "bp", "glucose"]
     BINARY_FIELDS = {
         "high_chol": "HighChol",
@@ -49,6 +48,15 @@ class RiskModel:
         "any_healthcare": "AnyHealthcare",
         "no_doc_bc_cost": "NoDocbcCost",
         "diff_walk": "DiffWalk",
+    }
+    # Model feature -> key in the prepared patient (and in the request) for the optional inputs.
+    FEATURE_KEYS = {
+        **{feature: key for key, feature in BINARY_FIELDS.items()},
+        "GenHlth": "gen_hlth",
+        "MentHlth": "ment_hlth",
+        "PhysHlth": "phys_hlth",
+        "Education": "education",
+        "Income": "income",
     }
     # Request input -> model feature(s) that consume it; (feature, years or units per step).
     INPUT_FEATURES = {
@@ -131,8 +139,11 @@ class RiskModel:
         patient = self.prepare_patient(patient_data)
         row = self.feature_frame(patient)
 
-        prob = self.model.predict_proba(row)[0][1]
-        return float(prob), patient
+        return self.probability(row), patient
+
+    def probability(self, row):
+        """Probability for a one-row feature frame (as built by `feature_frame`)."""
+        return float(self.model.predict_proba(row)[0][1])
 
     @property
     def risk_bands(self):
@@ -222,6 +233,7 @@ class RiskModel:
         }
         prepared.update(self._prepare_brfss_fields(patient))
         prepared["defaulted_fields"] = self._defaulted_features(patient)
+        prepared["skipped_fields"] = list(patient.get("skipped_fields") or [])
         prepared["optional_field_count"] = len(self._optional_features())
         return prepared
 
@@ -269,6 +281,9 @@ class RiskModel:
 
     def feature_frame(self, patient):
         row = {feature: self._feature_value(feature, patient) for feature in self.feature_names}
+        return self.row_frame(row)
+
+    def row_frame(self, row):
         return pd.DataFrame([row], columns=self.feature_names)
 
     def _feature_value(self, feature, patient):
@@ -289,8 +304,7 @@ class RiskModel:
         if feature == "Sex":
             return patient["sex"]
 
-        snake_name = self._snake_case(feature)
-        return patient.get(snake_name, self._default_for(feature))
+        return patient.get(self.FEATURE_KEYS.get(feature, feature), self._default_for(feature))
 
     def _prepare_brfss_fields(self, patient):
         prepared = {}
@@ -415,26 +429,3 @@ class RiskModel:
             13: 82,
         }
         return bucket_midpoints.get(int(bucket), 45)
-
-    @staticmethod
-    def _snake_case(feature_name):
-        mapping = {
-            "HighChol": "high_chol",
-            "CholCheck": "chol_check",
-            "Smoker": "smoker",
-            "Stroke": "stroke",
-            "HeartDiseaseorAttack": "heart_disease_or_attack",
-            "PhysActivity": "phys_activity",
-            "Fruits": "fruits",
-            "Veggies": "veggies",
-            "HvyAlcoholConsump": "heavy_alcohol_consump",
-            "AnyHealthcare": "any_healthcare",
-            "NoDocbcCost": "no_doc_bc_cost",
-            "GenHlth": "gen_hlth",
-            "MentHlth": "ment_hlth",
-            "PhysHlth": "phys_hlth",
-            "DiffWalk": "diff_walk",
-            "Education": "education",
-            "Income": "income",
-        }
-        return mapping.get(feature_name, feature_name)

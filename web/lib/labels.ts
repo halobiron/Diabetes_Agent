@@ -58,6 +58,10 @@ export const RISK_LABELS: Record<string, string> = {
   Low: "Thấp", Medium: "Trung bình", High: "Cao", Unknown: "Chưa rõ",
 };
 
+export const EVIDENCE_LABELS: Record<string, string> = {
+  none: "không có", limited: "hạn chế", sufficient: "đầy đủ",
+};
+
 export const METHOD_LABELS: Record<string, string> = {
   shap: "SHAP", sensitivity: "Phân tích độ nhạy", none: "Chưa có",
 };

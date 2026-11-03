@@ -63,6 +63,24 @@ class FakeRetriever:
             raise RuntimeError("embedding service down")
         return self.contexts
 
+    def citation(self, evidence_id):
+        return {"evidence_id": evidence_id, "source_title": "ADA"} if evidence_id != "gone" else None
+
+
+class FakeWhatIf:
+    def scenarios(self, patient):
+        entry = {"key": "weight_loss", "change": -0.1, "evidence_ids": ["ev-1", "gone"]}
+        return {"probability_before": 0.6, "scenarios": [entry], "combined": None}
+
+    def most_informative_unknown(self, patient):
+        return {
+            "feature": "Smoker",
+            "field": "smoker",
+            "probability_if_no": 0.5,
+            "probability_if_yes": 0.7,
+            "swing": 0.2,
+        }
+
 
 class Recorder:
     """Stands in for both text agents and records what the orchestrator handed them."""
@@ -198,3 +216,75 @@ def test_policy_failure_keeps_prediction_and_urgent_safety_result():
     assert result["policy"] is None
     assert components(result) == ["support_policy"]
     assert any("chưa đầy đủ" in text for text in result["safety"]["disclaimers"])
+
+
+def test_counterfactuals_attach_citations_and_drive_the_followup():
+    orchestrator, _ = build()
+    orchestrator.what_if = FakeWhatIf()
+    result = orchestrator.run({"bp": 120})
+
+    scenario = result["what_if"]["scenarios"][0]
+    assert scenario["evidence"] == [{"evidence_id": "ev-1", "source_title": "ADA"}]
+    assert "evidence_ids" not in scenario
+    assert result["followup"]["field"] == "smoker"
+    assert [item["feature"] for item in result["evidence_trail"]] == ["BMI", "HighBP"]
+
+
+def test_clinician_escalation_hides_what_if_and_extra_questions():
+    orchestrator, _ = build()
+    orchestrator.what_if = FakeWhatIf()
+    result = orchestrator.run({"bp": 190})
+
+    assert result["what_if"] is None and result["followup"] is None
+
+
+def test_what_if_failure_degrades_instead_of_failing_the_request():
+    class BrokenWhatIf:
+        def scenarios(self, patient):
+            raise RuntimeError("model unavailable")
+
+    orchestrator, _ = build()
+    orchestrator.what_if = BrokenWhatIf()
+    result = orchestrator.run({"bp": 120})
+
+    assert components(result) == ["what_if"]
+    assert result["what_if"] is None and result["probability"] == 0.6
+
+
+def test_trace_records_every_step_with_timing_and_outcome():
+    orchestrator, _ = build()
+    trace = orchestrator.run({"bp": 120})["trace"]
+
+    assert [step["component"] for step in trace["steps"]] == [
+        "risk_model",
+        "feature_explainer",
+        "memory_search",
+        "retriever",
+        "safety_guard",
+        "recommender",
+        "what_if",
+        "explainer",
+        "memory_store",
+    ]
+    assert all(step["status"] == "ok" and step["ms"] >= 0 for step in trace["steps"])
+    assert trace["evidence_count"] == 2 and trace["evidence_status"] == "sufficient"
+    assert trace["disagreement"] is None
+    assert trace["total_ms"] >= sum(step["ms"] for step in trace["steps"]) * 0.99
+
+
+def test_trace_marks_failed_step_with_its_fallback():
+    orchestrator, _ = build(retriever=FakeRetriever(fail=True))
+    steps = {step["component"]: step for step in orchestrator.run({"bp": 120})["trace"]["steps"]}
+
+    assert steps["retriever"]["status"] == "degraded"
+    assert steps["retriever"]["detail"] == "giữ các đoạn bằng chứng trước đó"
+    assert steps["safety_guard"]["status"] == "ok"
+
+
+def test_trace_reports_when_rules_override_the_model_risk():
+    orchestrator, _ = build()
+    trace = orchestrator.run({"bp": 190})["trace"]
+
+    assert trace["disagreement"]["model_risk"] == "Medium"  # the fake model says 0.6
+    assert trace["disagreement"]["effective_risk"] == "High"  # a measured BP of 190 overrides it
+    assert [rule["code"] for rule in trace["disagreement"]["rules"]][0] == "BP-180"

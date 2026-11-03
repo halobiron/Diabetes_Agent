@@ -12,6 +12,7 @@ from models.risk_model import RiskModel
 from rl.policy import QPolicy
 from tools.explainability import FeatureExplainer
 from tools.safety import SafetyGuard
+from tools.what_if import WhatIfSimulator
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_PATH = BASE_DIR / "data" / "patients.csv"
@@ -52,6 +53,7 @@ def build_agent():
         retrieval_agent=retriever,
         safety_guard=safety_guard,
         support_policy=support_policy,
+        what_if=WhatIfSimulator(model),
     )
 
 

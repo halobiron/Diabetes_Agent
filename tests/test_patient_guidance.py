@@ -57,7 +57,8 @@ def test_followup_distinguishes_policy_from_data_quality():
     missing = patient(glucose_measured=False)
     assert build_followup(missing, safety, {"next_step": "request_glucose"})["source"] == "policy"
     assert build_followup(missing, safety)["source"] == "data_quality"
-    assert build_followup(patient(), safety)["kind"] == "glucose_context"
+    # The measurement context is collected by the form, never asked as a follow-up.
+    assert build_followup(patient(), safety) is None
 
 
 def test_decline_or_known_unknown_prevents_repeated_question():
@@ -69,3 +70,29 @@ def test_decline_or_known_unknown_prevents_repeated_question():
 @pytest.mark.parametrize("escalation", ["prompt_clinician_followup", "urgent_clinician_review"])
 def test_clinician_review_takes_precedence_over_questions(escalation):
     assert build_followup(patient(glucose_measured=False), {"escalation": escalation}) is None
+
+
+UNKNOWN = {
+    "feature": "HighChol",
+    "field": "high_chol",
+    "probability_if_no": 0.06,
+    "probability_if_yes": 0.16,
+    "swing": 0.1,
+}
+
+
+def test_missing_model_input_is_asked_only_after_glucose():
+    safety = {"escalation": "routine_followup"}
+    asked = build_followup(patient(), safety, unknown=UNKNOWN)
+    assert asked["kind"] == "risk_factor" and asked["field"] == "high_chol"
+    assert "6.0% đến 16.0%" in asked["reason"]
+    # Glucose drives the safety rules, so it still comes first when missing...
+    missing = patient(glucose_measured=False)
+    assert build_followup(missing, safety, unknown=UNKNOWN)["kind"] == "glucose"
+    # ...but not once the user has declined to provide it.
+    declined = patient(glucose_measured=False, glucose_unavailable=True)
+    assert build_followup(declined, safety, unknown=UNKNOWN)["kind"] == "risk_factor"
+
+
+def test_clinician_escalation_suppresses_the_model_input_question():
+    assert build_followup(patient(), {"escalation": "urgent_clinician_review"}, unknown=UNKNOWN) is None

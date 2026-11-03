@@ -4,6 +4,7 @@ import { RISK_LABELS } from "@/lib/labels";
 
 import type { PredictionResult } from "@/types/healthcare";
 
+import { CitationLink } from "./citation";
 import { DataTable, PanelHeading } from "./shared-ui";
 
 export function Evidence({ result }: { result: PredictionResult }) {
@@ -16,9 +17,12 @@ export function Evidence({ result }: { result: PredictionResult }) {
         <div className="mt-4 space-y-3">
           {contexts.length > 0 ? (
             contexts.map((context) => (
-              <div key={context.title} className="rounded-md border border-borderSoft bg-canvas/40 p-4">
+              <div key={context.evidence_id} className="rounded-md border border-borderSoft bg-canvas/40 p-4">
                 <div className="font-semibold text-ink">{context.title}</div>
                 <p className="mt-2 text-sm leading-6 text-muted">{context.text}</p>
+                <p className="mt-2 text-xs leading-5 text-muted">
+                  <CitationLink citation={context} /> · độ liên quan {context.relevance.toFixed(2)} · {context.via === "graph+semantic" ? "đồ thị tri thức + ngữ nghĩa" : "ngữ nghĩa"}
+                </p>
               </div>
             ))
           ) : (

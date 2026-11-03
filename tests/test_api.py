@@ -39,7 +39,7 @@ def test_followup_answer_updates_guidance_without_changing_mlp_probability(clien
     assert after["patient"]["glucose_context"] == "fasting"
     assert after["probability"] == before["probability"]
     assert after["measurement_scales"][2]["status"] == "Từ 126: cần xác nhận"
-    assert after["followup"] is None
+    assert after["followup"] is None  # no unknown input could move this low estimate by 2 points
     assert after["safety"]["confidence_score"] > before["safety"]["confidence_score"]
 
 
@@ -151,3 +151,24 @@ def test_predict_returns_probability_label_and_model_version(client):
     assert prediction["label"] in {0, 1, None}  # None: legacy model without a threshold
     assert prediction["risk_level"] in {"Low", "Medium", "High"}
     assert prediction["model_version"]
+
+
+def test_what_if_and_evidence_trail_are_returned_with_citations(client):
+    body = client.post(
+        "/v1/predict",
+        json={"age": 45, "height_cm": 170, "weight_kg": 95, "bp": 145, "glucose": 90, "smoker": True},
+    ).json()
+
+    assert body["what_if"]["scenarios"]
+    assert all(entry["evidence"] for entry in body["what_if"]["scenarios"])
+    assert body["evidence_trail"] and all("evidence" in item for item in body["evidence_trail"])
+
+
+def test_declined_question_is_not_asked_again_and_unknown_fields_are_rejected(client):
+    profile = {"age": 55, "bmi": 32, "bp": 145, "glucose": 90, "glucose_context": "fasting"}
+    first = client.post("/v1/predict", json=profile).json()["followup"]
+    assert first["kind"] == "risk_factor"
+
+    again = client.post("/v1/predict", json={**profile, "skipped_fields": [first["field"]]}).json()
+    assert again["followup"] is None or again["followup"]["field"] != first["field"]
+    assert client.post("/v1/predict", json={**profile, "skipped_fields": ["age"]}).status_code == 422

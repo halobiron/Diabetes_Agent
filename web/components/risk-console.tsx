@@ -1,17 +1,17 @@
 "use client";
 
-import { QueryClient, QueryClientProvider, useMutation, useQuery } from "@tanstack/react-query";
+import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
 
-import { createPrediction, getHistory } from "@/lib/api";
+import { createPrediction } from "@/lib/api";
 import type { PatientInput, PredictionResult } from "@/types/healthcare";
 
+import { AgentTrace } from "./risk-console/agent-trace";
 import { Assessment } from "./risk-console/assessment";
 import { DEFAULT_INPUT } from "./risk-console/constants";
 import { EmptyState } from "./risk-console/empty-state";
 import { Evidence } from "./risk-console/evidence";
 import { Hero } from "./risk-console/hero";
-import { History } from "./risk-console/history";
 import { ModelStrip } from "./risk-console/model-strip";
 import { MeasurementScales } from "./risk-console/measurement-scales";
 import { FollowupChange, NextQuestion } from "./risk-console/next-question";
@@ -43,16 +43,10 @@ function RiskConsoleInner() {
       setLastResult(result);
       setLastInput(input);
       setActiveTab("assessment");
-      void queryClient.invalidateQueries({ queryKey: ["history"] });
     },
   });
 
   const result = lastResult;
-  const historyQuery = useQuery({
-    queryKey: ["history", result?.request_id],
-    queryFn: () => getHistory(25),
-    enabled: Boolean(result),
-  });
   const calculatedBmi = calculateBmi(form.height_cm, form.weight_kg);
 
   function updateField<K extends keyof PatientInput>(key: K, value: PatientInput[K]) {
@@ -66,7 +60,8 @@ function RiskConsoleInner() {
 
   function answerQuestion(answer: Partial<PatientInput>) {
     if (!lastInput || !result || mutation.isPending) return;
-    const input = { ...lastInput, ...answer };
+    const skipped = [...(lastInput.skipped_fields ?? []), ...(answer.skipped_fields ?? [])];
+    const input = { ...lastInput, ...answer, skipped_fields: skipped };
     setUpdatedFrom(result);
     setForm(input);
     mutation.mutate(input);
@@ -101,13 +96,7 @@ function RiskConsoleInner() {
                 ) : null}
                 {activeTab === "assessment" ? <Assessment result={result} /> : null}
                 {activeTab === "evidence" ? <Evidence result={result} /> : null}
-                {activeTab === "history" ? (
-                  <History
-                    result={result}
-                    records={historyQuery.data?.records ?? []}
-                    isLoading={historyQuery.isLoading}
-                  />
-                ) : null}
+                {activeTab === "agents" ? <AgentTrace result={result} /> : null}
               </>
             ) : (
               <EmptyState />

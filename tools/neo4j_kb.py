@@ -198,7 +198,7 @@ class KnowledgeGraph:
             "AND type(r) IN ['ADDRESSES', 'SHOULD_TEST_WITH'] "
             "UNWIND r.evidence_ids AS evidence_id "
             "MATCH (e:Evidence {id: evidence_id})-[:FROM]->(s:Source) "
-            "RETURN f.id AS risk_factor, x.id AS support_id, x.name AS support_name, "
+            "RETURN f.id AS risk_factor, f.key AS factor_key, x.id AS support_id, x.name AS support_name, "
             "labels(x) AS support_labels, type(r) AS relation, e.id AS evidence_id, "
             "e.text AS evidence, s.id AS source_id, s.title AS source_title, s.url AS url "
             "ORDER BY risk_factor, support_name LIMIT $limit",
@@ -259,6 +259,7 @@ class FileKnowledgeBase:
                     rows.append(
                         {
                             "risk_factor": factor_id,
+                            "factor_key": factors[factor_id]["key"],
                             "support_id": support_id,
                             "support_name": support["name"],
                             "support_labels": ["Entity", support["label"]],

@@ -8,6 +8,17 @@ METHOD_NOTES = {
     ),
 }
 
+TRAIL_PASSAGE_FIELDS = (
+    "evidence_id",
+    "text",
+    "source_title",
+    "publisher",
+    "year",
+    "url",
+    "relevance",
+    "supports",
+)
+
 
 class FeatureExplainer:
     def __init__(self, risk_model):
@@ -89,7 +100,7 @@ class FeatureExplainer:
             return None
 
     def _sensitivity_values(self, row):
-        base_probability = self.risk_model.model.predict_proba(row)[0][1]
+        base_probability = self.risk_model.probability(row)
         values = []
         defaults = self.risk_model.default_values
         training_medians = self.risk_model.training_frame.median(numeric_only=True).to_dict()
@@ -100,7 +111,34 @@ class FeatureExplainer:
                 feature, training_medians.get(feature, row.iloc[0][feature])
             )
             baseline_row.loc[:, feature] = baseline_value
-            baseline_probability = self.risk_model.model.predict_proba(baseline_row)[0][1]
+            baseline_probability = self.risk_model.probability(baseline_row)
             values.append(base_probability - baseline_probability)
 
         return np.asarray(values)
+
+
+def evidence_trail(feature_explanation, retrieved_context, limit=4):
+    """For each top risk-raising driver, the retrieved passages the knowledge graph ties to it.
+
+    Drivers the patient did not supply (model defaults) are skipped, and a driver with no
+    linked passage keeps an empty `evidence` list instead of borrowing an unrelated one.
+    """
+    trail = []
+    for item in feature_explanation.get("features", []):
+        if item["impact"] <= 0 or item.get("defaulted"):
+            continue
+        trail.append(
+            {
+                "feature": item["feature"],
+                "value": item.get("value"),
+                "impact": item["impact"],
+                "evidence": [
+                    {key: passage.get(key) for key in TRAIL_PASSAGE_FIELDS}
+                    for passage in retrieved_context
+                    if item["feature"] in passage.get("factors", [])
+                ],
+            }
+        )
+        if len(trail) == limit:
+            break
+    return trail

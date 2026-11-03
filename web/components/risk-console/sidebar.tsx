@@ -17,6 +17,7 @@ import {
   SelectField,
   SliderField,
   Toggle,
+  TriToggle,
   ToggleGrid,
 } from "./form-controls";
 import { MiniStat, Pill } from "./shared-ui";
@@ -114,14 +115,17 @@ export function PatientSidebar({
             onChange={(value) => onFieldChange("glucose_context", value as PatientInput["glucose_context"])}
           />
         ) : null}
+        {form.glucose !== null && (form.glucose_context ?? "unspecified") === "unspecified" ? (
+          <p className="-mt-2 text-xs leading-5 text-muted">Chọn bối cảnh để hiện thang tham khảo phù hợp; nếu không nhớ, chọn &quot;Không nhớ / không rõ&quot; và thang sẽ giữ trung tính.</p>
+        ) : null}
         <MiniStat label="BMI tính từ chiều cao và cân nặng" value={calculatedBmi.toFixed(1)} />
       </InputSection>
 
       <InputSection title="Tiền sử và sức khỏe" icon={<ClipboardList className="h-4 w-4" />} defaultOpen={false}>
         <ToggleGrid>
-          <Toggle
+          <TriToggle
             label="Cholesterol cao"
-            checked={form.high_chol}
+            value={form.high_chol}
             onChange={(value) => onFieldChange("high_chol", value)}
           />
           <Toggle
@@ -129,20 +133,20 @@ export function PatientSidebar({
             checked={form.chol_check}
             onChange={(value) => onFieldChange("chol_check", value)}
           />
-          <Toggle label="Hút thuốc" checked={form.smoker} onChange={(value) => onFieldChange("smoker", value)} />
-          <Toggle
+          <TriToggle label="Hút thuốc" value={form.smoker} onChange={(value) => onFieldChange("smoker", value)} />
+          <TriToggle
             label="Tiền sử đột quỵ"
-            checked={form.stroke}
+            value={form.stroke}
             onChange={(value) => onFieldChange("stroke", value)}
           />
-          <Toggle
+          <TriToggle
             label="Tiền sử bệnh tim"
-            checked={form.heart_disease_or_attack}
+            value={form.heart_disease_or_attack}
             onChange={(value) => onFieldChange("heart_disease_or_attack", value)}
           />
-          <Toggle
+          <TriToggle
             label="Khó khăn khi đi lại"
-            checked={form.diff_walk}
+            value={form.diff_walk}
             onChange={(value) => onFieldChange("diff_walk", value)}
           />
         </ToggleGrid>
@@ -171,24 +175,24 @@ export function PatientSidebar({
 
       <InputSection title="Lối sống và tiếp cận y tế" icon={<Activity className="h-4 w-4" />} defaultOpen={false}>
         <ToggleGrid>
-          <Toggle
+          <TriToggle
             label="Vận động thể chất"
-            checked={form.phys_activity}
+            value={form.phys_activity}
             onChange={(value) => onFieldChange("phys_activity", value)}
           />
-          <Toggle
+          <TriToggle
             label="Ăn trái cây"
-            checked={form.fruits}
+            value={form.fruits}
             onChange={(value) => onFieldChange("fruits", value)}
           />
-          <Toggle
+          <TriToggle
             label="Ăn rau"
-            checked={form.veggies}
+            value={form.veggies}
             onChange={(value) => onFieldChange("veggies", value)}
           />
-          <Toggle
+          <TriToggle
             label="Uống nhiều rượu bia"
-            checked={form.heavy_alcohol_consump}
+            value={form.heavy_alcohol_consump}
             onChange={(value) => onFieldChange("heavy_alcohol_consump", value)}
           />
           <Toggle

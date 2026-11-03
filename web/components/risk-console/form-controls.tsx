@@ -195,6 +195,45 @@ export function Toggle({
   );
 }
 
+const TRI_OPTIONS = [
+  { label: "Chưa rõ", value: null },
+  { label: "Không", value: false },
+  { label: "Có", value: true },
+] as const;
+
+/** Yes / no / unknown: "Chưa rõ" sends nothing, so the agent may ask about it later. */
+export function TriToggle({
+  label,
+  value,
+  onChange,
+}: {
+  label: string;
+  value: boolean | null;
+  onChange: (value: boolean | null) => void;
+}) {
+  return (
+    <fieldset className="toggle-row flex-wrap justify-between">
+      <legend className="sr-only">{label}</legend>
+      <span aria-hidden="true">{label}</span>
+      <div className="flex overflow-hidden rounded-md border border-borderSoft text-xs">
+        {TRI_OPTIONS.map((option) => (
+          <button
+            key={option.label}
+            type="button"
+            aria-pressed={value === option.value}
+            onClick={() => onChange(option.value)}
+            className={`min-h-8 px-2.5 transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-info ${
+              value === option.value ? "bg-info font-semibold text-canvas" : "text-muted hover:bg-panelMuted"
+            }`}
+          >
+            {option.label}
+          </button>
+        ))}
+      </div>
+    </fieldset>
+  );
+}
+
 export function ToggleGrid({ children }: { children: ReactNode }) {
   return <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1 2xl:grid-cols-2">{children}</div>;
 }

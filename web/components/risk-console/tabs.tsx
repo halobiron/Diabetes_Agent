@@ -6,7 +6,7 @@ export function Tabs({ activeTab, onChange }: { activeTab: TabKey; onChange: (ta
   const tabs: Array<{ key: TabKey; label: string }> = [
     { key: "assessment", label: "Đánh giá" },
     { key: "evidence", label: "Bằng chứng" },
-    { key: "history", label: "Lịch sử" },
+    { key: "agents", label: "Quan sát agent" },
   ];
 
   return (
