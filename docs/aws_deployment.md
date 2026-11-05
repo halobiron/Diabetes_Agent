@@ -10,8 +10,8 @@ stack: Docker, ECR, managed HTTPS, health checks, Terraform, and token-protected
 
 ## Deployment Flow
 
-1. Train the model on Kaggle.
-2. Download `risk_model.joblib` into `artifacts/`.
+1. Train locally with `scripts/train_diabetes_model.py`.
+2. Verify `risk_model.joblib` exists in `artifacts/`.
 3. Create the ECR repositories with Terraform.
 4. Build the API and web Docker images.
 5. Push both images to ECR.
@@ -32,7 +32,7 @@ The Next.js container expects:
 - `API_TOKEN=<same-token-used-by-api>`
 
 If the model artifact is not present, the service starts with the local demo CSV model.
-For the portfolio deployment, include the Kaggle artifact in the image before pushing
+For the portfolio deployment, include the locally trained artifact in the image before pushing
 to ECR.
 
 ## API Checks
@@ -53,7 +53,7 @@ to the protected FastAPI `/v1/predict` endpoint.
 
 ## Portfolio Talking Points
 
-- reproducible Kaggle training
+- reproducible local training
 - persisted model artifact with metrics and model card
 - FastAPI inference service
 - Next.js production risk console

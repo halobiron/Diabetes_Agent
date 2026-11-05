@@ -1,0 +1,51 @@
+﻿{
+    "verified_date":  "2026-11-03",
+    "backend_tests_passed":  119,
+    "backend_warnings":  3,
+    "frontend":  {
+                     "build":  "passed",
+                     "typecheck":  "passed",
+                     "lint":  "passed"
+                 },
+    "browser":  {
+                    "value":  [
+                                  {
+                                      "viewport":  {
+                                                       "width":  1440,
+                                                       "height":  1000
+                                                   },
+                                      "contextQuestion":  true,
+                                      "unknownContextNeutral":  true,
+                                      "missingValueNotPlotted":  true,
+                                      "answerReassesses":  true,
+                                      "probabilityUnchanged":  true,
+                                      "errorRetry":  true,
+                                      "declineNotRepeated":  true,
+                                      "noFakeDefault":  true,
+                                      "noOverflow":  true,
+                                      "browserErrors":  [
+
+                                                        ]
+                                  },
+                                  {
+                                      "viewport":  {
+                                                       "width":  390,
+                                                       "height":  844
+                                                   },
+                                      "contextQuestion":  true,
+                                      "unknownContextNeutral":  true,
+                                      "missingValueNotPlotted":  true,
+                                      "answerReassesses":  true,
+                                      "probabilityUnchanged":  true,
+                                      "errorRetry":  true,
+                                      "declineNotRepeated":  true,
+                                      "noFakeDefault":  true,
+                                      "noOverflow":  true,
+                                      "browserErrors":  [
+
+                                                        ]
+                                  }
+                              ],
+                    "Count":  2
+                }
+}

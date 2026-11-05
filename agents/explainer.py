@@ -2,25 +2,39 @@ import os
 
 from openai import OpenAI
 
+from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS, METHOD_LABELS, feature_label
+
 
 class ExplanationAgent:
     def __init__(self, model_name="gpt-4o-mini"):
         self.model_name = model_name
         self.client = OpenAI() if os.getenv("OPENAI_API_KEY") else None
 
-    def explain(self, patient_data, prob, feature_explanation=None, similar_cases=None):
+    def explain(
+        self,
+        patient_data,
+        prob,
+        feature_explanation=None,
+        similar_cases=None,
+        safety=None,
+        evidence_status=None,
+    ):
         if self.client is None:
             return self._fallback_explanation(
-                patient_data, prob, feature_explanation, similar_cases
+                patient_data, prob, feature_explanation, similar_cases, safety, evidence_status
             )
 
         prompt = f"""
         Patient data: {patient_data}
         Risk probability: {prob}
         Feature explanation: {feature_explanation}
-        Similar prior cases: {similar_cases}
+        Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
+        Safety assessment (rules applied to the measurements): {safety}
+        Guideline evidence status: {evidence_status}
 
-        Explain in simple terms why this patient has this risk.
+        Explain in simple terms why this patient has this risk. If the safety assessment
+        raised the risk or an escalation above the model estimate, say so and why.
+        Viết hoàn toàn bằng tiếng Việt, dùng nhãn tiếng Việt cho các mã và đặc trưng.
         """
 
         try:
@@ -28,50 +42,96 @@ class ExplanationAgent:
                 model=self.model_name, messages=[{"role": "user", "content": prompt}]
             )
             return response.choices[0].message.content
-        except Exception as exc:
-            return f"{self._fallback_explanation(patient_data, prob, feature_explanation, similar_cases)} LLM explanation unavailable: {exc}"
+        except Exception:
+            fallback = self._fallback_explanation(
+                patient_data, prob, feature_explanation, similar_cases, safety, evidence_status
+            )
+            return f"{fallback} Không thể tạo giải thích bằng LLM; đang dùng nội dung dự phòng."
 
     def _fallback_explanation(
-        self, patient_data, prob, feature_explanation=None, similar_cases=None
+        self,
+        patient_data,
+        prob,
+        feature_explanation=None,
+        similar_cases=None,
+        safety=None,
+        evidence_status=None,
     ):
-        age = patient_data["age"]
         bmi = patient_data["bmi"]
-        bp = patient_data["bp"]
-        glucose = patient_data["glucose"]
-        factors = []
-
-        if age >= 55:
-            factors.append("older age")
-        if bmi >= 30:
-            factors.append("elevated BMI")
-        if bp >= 140:
-            factors.append("high blood pressure")
-        if glucose >= 140:
-            factors.append("high glucose")
-        if not patient_data.get("glucose_measured", True):
-            factors.append("glucose was not measured, so the estimate is less certain")
-
-        if not factors:
-            factors.append("the measured values are mostly in lower-risk ranges")
-
-        factor_text = ", ".join(factors)
-        top_impacts = self._top_feature_text(feature_explanation)
+        features = (feature_explanation or {}).get("features", [])
+        if features:
+            driver_text = self._driver_text(feature_explanation)
+        else:
+            driver_text = self._threshold_text(patient_data)
         memory_text = ""
         if similar_cases:
             memory_text = (
-                f" I found {len(similar_cases)} similar prior case(s) in memory for comparison."
+                f"Tìm thấy {len(similar_cases)} hồ sơ tương tự đã lưu; đây là các dự đoán"
+                " trước đây của mô hình, chưa phải kết quả bệnh được xác nhận."
             )
 
         return (
-            f"The model estimated a {prob:.1%} risk using a calculated BMI of {bmi:.1f}. "
-            f"Key factors: {factor_text}. {top_impacts}{memory_text}"
+            f"Mô hình ước tính nguy cơ {prob:.1%} với BMI tính được là {bmi:.1f}. "
+            f"{driver_text}{self._glucose_text(patient_data, feature_explanation)}"
+            f"{self._defaults_text(patient_data)}{memory_text}"
+            f"{self._safety_text(safety)}{self._evidence_text(evidence_status)}"
         )
 
-    def _top_feature_text(self, feature_explanation):
-        if not feature_explanation or not feature_explanation.get("features"):
-            return ""
+    def _driver_text(self, feature_explanation):
+        """Describe only what the model used; auto-filled inputs are not claimed as patient facts."""
+        method_key = feature_explanation.get("method", "model")
+        method = METHOD_LABELS.get(method_key, method_key)
+        features = [f for f in feature_explanation["features"] if not f.get("defaulted")]
+        raising = [f["feature"] for f in features if f["direction"] == "raises risk"][:3]
+        lowering = [f["feature"] for f in features if f["direction"] == "lowers risk"][:2]
+        parts = []
+        if raising:
+            parts.append(f"tăng nguy cơ: {', '.join(map(feature_label, raising))}")
+        if lowering:
+            parts.append(f"giảm nguy cơ: {', '.join(map(feature_label, lowering))}")
+        if not parts:
+            return f"Giải thích bằng {method} không tìm thấy đầu vào có tác động đáng kể. "
+        return f"Giải thích bằng {method} cho thấy {'; '.join(parts)}. "
 
-        top_features = feature_explanation["features"][:3]
-        parts = [f"{item['feature']} {item['direction']}" for item in top_features]
-        method = feature_explanation.get("method", "model")
-        return f"The {method.upper()} explanation highlights: {', '.join(parts)}. "
+    def _threshold_text(self, patient_data):
+        """Used only when no model explanation is available: plain range checks, not model output."""
+        notable = []
+        if patient_data["age"] >= 55:
+            notable.append("tuổi cao")
+        if patient_data["bmi"] >= 30:
+            notable.append("BMI cao")
+        if patient_data["bp"] >= 140:
+            notable.append("huyết áp cao")
+        if not notable:
+            return (
+                "Chưa có giải thích từ mô hình; phần lớn số đo nằm trong khoảng nguy cơ thấp hơn. "
+            )
+        return f"Chưa có giải thích từ mô hình; các yếu tố đáng chú ý: {', '.join(notable)}. "
+
+    def _glucose_text(self, patient_data, feature_explanation):
+        not_in_model = (feature_explanation or {}).get("inputs_not_in_model", [])
+        if "glucose" in not_in_model:
+            return (
+                "Đường huyết không phải đầu vào của mô hình này; chỉ số đo thực tế mới được"
+                " kiểm tra bằng các luật an toàn. "
+            )
+        return ""
+
+    def _defaults_text(self, patient_data):
+        defaulted = patient_data.get("defaulted_fields", [])
+        if not defaulted:
+            return ""
+        return f"Có {len(defaulted)} đầu vào tùy chọn chưa được cung cấp và đã được điền bằng giá trị mặc định. "
+
+    def _safety_text(self, safety):
+        if not safety or not safety.get("alerts"):
+            return ""
+        text = f" Luật an toàn: {' '.join(safety['alerts'][:2])}"
+        if safety.get("escalation", "routine_followup") != "routine_followup":
+            text += f" Hướng xử trí: {ESCALATION_LABELS.get(safety['escalation'], safety['escalation'])}."
+        return text
+
+    def _evidence_text(self, evidence_status):
+        if evidence_status in ("none", "limited"):
+            return f" Bằng chứng hướng dẫn cho hồ sơ này: {EVIDENCE_LABELS[evidence_status]}."
+        return ""

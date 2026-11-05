@@ -1,107 +1,200 @@
-import json
-from pathlib import Path
+import hashlib
+import logging
 
 from tools.chroma_client import create_persistent_client
-from tools.local_embeddings import LocalEmbeddingModel
+from tools.neo4j_kb import FileKnowledgeBase, KnowledgeGraph, create_driver, load_kb_file
+from tools.semantic_embeddings import SemanticEmbeddingModel
+from tools.vietnamese import EVIDENCE_TEXTS
+
+logger = logging.getLogger(__name__)
+
+MIN_RELEVANCE = 0.3  # cosine similarity below this is treated as off-topic
+STRONG_RELEVANCE = 0.45
+GRAPH_BOOST = 0.15
+BROAD_N_RESULTS = 5
+BROAD_QUERY = (
+    "Type 2 diabetes screening, diagnosis, prevention and management guidance for adults,"
+    " including blood glucose testing, lifestyle changes and when to see a clinician."
+)
+
+
+def evidence_status(contexts):
+    """none / limited / sufficient, judged from how many passages are relevant and how strongly."""
+    if not contexts:
+        return "none"
+    if len(contexts) < 2 or contexts[0]["relevance"] < STRONG_RELEVANCE:
+        return "limited"
+    return "sufficient"
 
 
 class RetrievalAgent:
-    def __init__(self, knowledge_path, chroma_path):
-        self.knowledge_path = Path(knowledge_path)
-        self.embedding_model = LocalEmbeddingModel()
-        self.client = create_persistent_client(chroma_path)
-        self.collection = self.client.get_or_create_collection("medical_knowledge")
-        self._seed_knowledge()
+    """Semantic search over the diabetes KB evidence, boosted by the graph's risk-factor links.
 
-    def retrieve(self, patient_data, risk, feature_explanation, n_results=3):
-        query = self._query_text(patient_data, risk, feature_explanation)
-        if self.collection.count() == 0:
+    `knowledge_base` is a KnowledgeGraph (Neo4j) or FileKnowledgeBase; if the graph is
+    unreachable at startup we fall back to `fallback_kb` (the same KB read from the JSON file).
+    """
+
+    def __init__(
+        self,
+        knowledge_base,
+        embedding_model,
+        chroma_path,
+        fallback_kb=None,
+        min_relevance=MIN_RELEVANCE,
+    ):
+        self.embedding_model = embedding_model
+        self.min_relevance = min_relevance
+        self.kb = knowledge_base
+        self.kb_source = type(knowledge_base).__name__
+        try:
+            evidence = self.kb.all_evidence()
+        except Exception as exc:
+            if fallback_kb is None:
+                raise
+            logger.warning("Knowledge graph unavailable (%s); using KB file instead", exc)
+            self.kb = fallback_kb
+            self.kb_source = type(fallback_kb).__name__
+            evidence = self.kb.all_evidence()
+
+        self.factor_names = self.kb.risk_factor_names()
+        self.evidence = {item["evidence_id"]: item for item in evidence}
+        self.client = create_persistent_client(chroma_path)
+        self.collection = self._sync_collection(evidence)
+
+    @classmethod
+    def from_settings(cls, settings, chroma_path):
+        """Neo4j when NEO4J_PASSWORD is set, otherwise the KB file; the file is also the fallback."""
+        file_kb = FileKnowledgeBase(load_kb_file(settings.kb_path))
+        kb = file_kb
+        if settings.neo4j_password:
+            kb = KnowledgeGraph(create_driver(settings), settings.neo4j_database)
+        return cls(kb, SemanticEmbeddingModel(), chroma_path, fallback_kb=file_kb)
+
+    def _sync_collection(self, evidence):
+        # The name hashes model + corpus, so changed KB text or a new model builds a fresh index.
+        digest = hashlib.sha1(self.embedding_model.name.encode("utf-8"))
+        for item in evidence:
+            digest.update(f"{item['evidence_id']}\n{item['text']}\n".encode())
+        name = f"kb_evidence_{digest.hexdigest()[:16]}"
+        collection = self.client.get_or_create_collection(name, metadata={"hnsw:space": "cosine"})
+        if collection.count():
+            try:
+                probe = self.embedding_model.embed_text("probe")
+                collection.query(query_embeddings=[probe], n_results=1)
+            except Exception as exc:
+                logger.warning("Evidence index %s unreadable (%s); rebuilding", name, exc)
+                self.client.delete_collection(name)
+                collection = self.client.get_or_create_collection(
+                    name, metadata={"hnsw:space": "cosine"}
+                )
+        if evidence and collection.count() != len(evidence):
+            collection.upsert(
+                ids=[item["evidence_id"] for item in evidence],
+                documents=[item["text"] for item in evidence],
+                embeddings=self.embedding_model.embed_texts(
+                    [f"{item['section'] or ''}. {item['text']}" for item in evidence]
+                ),
+            )
+        return collection
+
+    def retrieve(self, patient_data, risk, feature_explanation, n_results=3, broaden=False):
+        """Top passages above the relevance floor; `broaden` adds a general-guidance query.
+
+        The broadened search keeps each passage's best score over both queries, so it can
+        surface passages the patient-specific query missed (used when evidence is thin).
+        """
+        count = self.collection.count()
+        if count == 0:
             return []
 
-        query_count = min(max(n_results + 2, 5), self.collection.count())
-        results = self.collection.query(
-            query_embeddings=[self.embedding_model.embed_text(query)],
-            n_results=query_count,
-            include=["documents", "metadatas", "distances"],
-        )
-
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        distances = results.get("distances", [[]])[0]
+        factors = self._risk_factors(patient_data, feature_explanation)
+        queries = [self._query_text(patient_data, risk, factors)]
+        if broaden:
+            queries.append(BROAD_QUERY)
+            n_results = max(n_results, BROAD_N_RESULTS)
+        relevance = {}
+        for query in queries:
+            results = self.collection.query(
+                query_embeddings=[self.embedding_model.embed_text(query)],
+                n_results=count,
+                include=["distances"],
+            )
+            for evidence_id, distance in zip(results["ids"][0], results["distances"][0]):
+                score = 1.0 - float(distance)
+                relevance[evidence_id] = max(score, relevance.get(evidence_id, score))
+        linked = self._graph_links(factors)
 
         contexts = []
-        for document, metadata, distance in zip(documents, metadatas, distances):
+        for evidence_id, score in relevance.items():
+            if score < self.min_relevance:
+                continue
+            rows = linked.get(evidence_id, [])
             contexts.append(
                 {
-                    "title": metadata.get("title", "Medical note"),
-                    "text": document,
-                    "distance": float(distance),
+                    **self.citation(evidence_id),
+                    "relevance": round(score, 3),
+                    "via": "graph+semantic" if rows else "semantic",
+                    "supports": list(dict.fromkeys(row["support_name"] for row in rows)),
+                    # Model features whose graph links lead to this passage.
+                    "factors": sorted({row["factor_key"] for row in rows}),
                 }
             )
-        return self._rerank(contexts, patient_data, risk)[:n_results]
 
-    def _seed_knowledge(self):
-        if not self.knowledge_path.exists():
-            return
+        contexts.sort(
+            key=lambda c: c["relevance"] + (GRAPH_BOOST if c["supports"] else 0.0), reverse=True
+        )
+        return contexts[:n_results]
 
-        existing = set(self.collection.get().get("ids", []))
-        ids = []
-        documents = []
-        metadatas = []
-        embeddings = []
+    def citation(self, evidence_id):
+        """Display fields of one KB passage (no relevance score); None if the id is unknown."""
+        item = self.evidence.get(evidence_id)
+        if item is None:
+            return None
+        return {
+            "evidence_id": evidence_id,
+            "title": f"{item['source_title']} — {item['section']}",
+            "text": EVIDENCE_TEXTS.get(evidence_id, item["text"]),
+            "source_id": item["source_id"],
+            "source_title": item["source_title"],
+            "publisher": item.get("publisher"),
+            "year": item.get("year"),
+            "url": item.get("url"),
+        }
 
-        with self.knowledge_path.open("r", encoding="utf-8") as file:
-            for line in file:
-                item = json.loads(line)
-                item_id = item["id"]
-                if item_id in existing:
-                    continue
+    def _risk_factors(self, patient_data, feature_explanation):
+        factors = []
+        for item in feature_explanation.get("features", []):
+            feature = item["feature"]
+            if feature in self.factor_names and item["impact"] > 0 and feature not in factors:
+                factors.append(feature)
+        # Glucose is not a model input, so it is judged from the raw value.
+        if "glucose" not in factors and (
+            not patient_data.get("glucose_measured", True) or patient_data.get("glucose", 0) >= 100
+        ):
+            factors.append("glucose")
+        return factors
 
-                text = item["text"]
-                ids.append(item_id)
-                documents.append(text)
-                metadatas.append({"title": item["title"]})
-                embeddings.append(self.embedding_model.embed_text(f"{item['title']} {text}"))
+    def _graph_links(self, factors):
+        """evidence_id -> graph rows (risk factor key + intervention/test name) that cite it."""
+        if not factors:
+            return {}
+        try:
+            rows = self.kb.support_for_risk_factors(factors)
+        except Exception as exc:
+            logger.warning("Graph lookup failed (%s); using semantic search only", exc)
+            return {}
+        linked = {}
+        for row in rows:
+            linked.setdefault(row["evidence_id"], []).append(row)
+        return linked
 
-        if ids:
-            self.collection.add(
-                ids=ids,
-                documents=documents,
-                metadatas=metadatas,
-                embeddings=embeddings,
+    def _query_text(self, patient_data, risk, factors):
+        parts = [f"Type 2 diabetes risk is {risk.lower()}."]
+        if factors:
+            parts.append(
+                "Risk factors: " + ", ".join(self.factor_names[f].lower() for f in factors) + "."
             )
-
-    def _query_text(self, patient_data, risk, feature_explanation):
-        top_features = ", ".join(
-            f"{item['feature']} {item['direction']}"
-            for item in feature_explanation.get("features", [])[:3]
-        )
-        return (
-            f"patient risk {risk}. age {patient_data.get('age')}, bmi {patient_data.get('bmi')}, "
-            f"blood pressure {patient_data.get('bp')}, glucose {patient_data.get('glucose')}. "
-            f"top features: {top_features}"
-        )
-
-    def _rerank(self, contexts, patient_data, risk):
-        def score(item):
-            title = item["title"]
-            value = -item["distance"]
-
-            if title == "High risk clinical review":
-                value += 2.0 if risk == "High" else -3.0
-            if title == "Glucose testing":
-                if (
-                    not patient_data.get("glucose_measured", True)
-                    or patient_data.get("glucose", 0) >= 140
-                ):
-                    value += 1.5
-            if title == "Blood pressure follow-up" and patient_data.get("bp", 0) >= 130:
-                value += 1.25
-            if title == "BMI context" and patient_data.get("bmi", 0) >= 25:
-                value += 1.0
-            if title == "Lifestyle foundations":
-                value += 0.5
-
-            return value
-
-        return sorted(contexts, key=score, reverse=True)
+        if not patient_data.get("glucose_measured", True):
+            parts.append("Blood glucose has not been measured, so testing is needed.")
+        parts.append("What screening, testing, and lifestyle or clinical steps are recommended?")
+        return " ".join(parts)

@@ -3,7 +3,7 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -12,14 +12,17 @@
 
 html {
   min-height: 100%;
-  background: #080a0d;
+  background: #f2f5fb;
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background: #080a0d;
-  color: #f4f6f8;
+  background: #f2f5fb;
+  color: #1c1a3a;
+  font-family: var(--font-sans), system-ui, sans-serif;
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -28,34 +31,48 @@ select {
   font: inherit;
 }
 
+button {
+  cursor: pointer;
+}
+
+::selection {
+  background: #d9d4f5;
+  color: #1c1a3a;
+}
+
+:focus-visible {
+  outline: 2px solid #4b3fa8;
+  outline-offset: 2px;
+}
+
 input[type="range"] {
-  accent-color: #5aa3d9;
+  accent-color: #4b3fa8;
 }
 
 .range-input {
   height: 0.4rem;
   appearance: none;
   border-radius: 999px;
-  outline: none;
+  outline-offset: 6px;
 }
 
 .range-input::-webkit-slider-thumb {
-  height: 1rem;
-  width: 1rem;
+  height: 1.25rem;
+  width: 1.25rem;
   appearance: none;
-  border: 2px solid #080a0d;
+  border: 3px solid #ffffff;
   border-radius: 999px;
-  background: #5aa3d9;
-  box-shadow: 0 0 0 2px rgba(90, 163, 217, 0.28);
+  background: #4b3fa8;
+  box-shadow: 0 1px 4px rgba(40, 30, 110, 0.4);
 }
 
 .range-input::-moz-range-thumb {
-  height: 1rem;
-  width: 1rem;
-  border: 2px solid #080a0d;
+  height: 1.25rem;
+  width: 1.25rem;
+  border: 3px solid #ffffff;
   border-radius: 999px;
-  background: #5aa3d9;
-  box-shadow: 0 0 0 2px rgba(90, 163, 217, 0.28);
+  background: #4b3fa8;
+  box-shadow: 0 1px 4px rgba(40, 30, 110, 0.4);
 }
 
 ::-webkit-scrollbar {
@@ -64,12 +81,294 @@ input[type="range"] {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.16);
+  background: rgba(40, 30, 110, 0.22);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-track {
   background: transparent;
+}
+
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.rise {
+  animation: rise 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes stamp-down {
+  0% {
+    opacity: 0;
+    transform: scale(1.6) rotate(var(--tilt, -6deg));
+  }
+  60% {
+    opacity: 1;
+    transform: scale(0.94) rotate(var(--tilt, -6deg));
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(var(--tilt, -6deg));
+  }
+}
+
+.stamp-in {
+  animation: stamp-down 0.42s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--delay, 0s);
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+.avatar-working {
+  animation: bob 0.9s ease-in-out infinite;
+}
+
+.paper {
+  background-color: #ffffff;
+  background-image:
+    linear-gradient(rgba(75, 63, 168, 0.07) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(75, 63, 168, 0.07) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+
+/* ---- Nhân vật hoạt hình ---- */
+.avatar * {
+  transform-box: fill-box;
+}
+
+.av-breathe {
+  transform-origin: 50% 100%;
+  animation: breathe 3.4s ease-in-out infinite;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    transform: scaleY(1);
+  }
+  50% {
+    transform: scaleY(1.025);
+  }
+}
+
+.av-eyes {
+  transform-origin: 50% 50%;
+  animation: blink 4.2s infinite;
+}
+
+@keyframes blink {
+  0%,
+  94%,
+  100% {
+    transform: scaleY(1);
+  }
+  97% {
+    transform: scaleY(0.1);
+  }
+}
+
+.av-mouth {
+  transform-origin: 50% 40%;
+  animation: talk 0.28s ease-in-out infinite alternate;
+}
+
+@keyframes talk {
+  from {
+    transform: scaleY(0.35);
+  }
+  to {
+    transform: scaleY(1.15);
+  }
+}
+
+.av-arm {
+  transform-origin: 46px 56px;
+  animation: wave 0.7s ease-in-out infinite alternate;
+}
+
+@keyframes wave {
+  from {
+    transform: rotate(-12deg);
+  }
+  to {
+    transform: rotate(16deg);
+  }
+}
+
+.av-tilt {
+  transform-origin: 50% 100%;
+  transform: rotate(-5deg);
+  transition: transform 0.4s ease;
+}
+
+.av-sweat {
+  animation: sweat 1.6s ease-in infinite;
+}
+
+@keyframes sweat {
+  0% {
+    opacity: 0;
+    transform: translateY(-3px);
+  }
+  30% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+.av-think circle {
+  animation: pop 1.8s ease-in-out infinite;
+}
+
+.av-think circle:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.av-think circle:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+@keyframes pop {
+  0%,
+  100% {
+    opacity: 0.35;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+.avatar-hop {
+  animation: hop 0.6s cubic-bezier(0.16, 1, 0.3, 1) 2;
+}
+
+@keyframes hop {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-9px);
+  }
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: currentColor;
+  animation: caret 0.8s steps(1) infinite;
+}
+
+@keyframes caret {
+  50% {
+    opacity: 0;
+  }
+}
+
+.bubble {
+  animation: bubble-in 0.35s cubic-bezier(0.16, 1, 0.3, 1) both;
+  transform-origin: 0 100%;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: scale(0.85);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Mỗi màn trình diễn trượt vào khi cuộn tới */
+.act {
+  opacity: 0;
+  transform: translateY(28px);
+  transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.act-in {
+  opacity: 1;
+  transform: none;
+}
+
+.step-in {
+  animation: step-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes step-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.choice {
+  transition: transform 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.choice:hover {
+  transform: translateY(-2px);
+}
+
+.choice:active {
+  transform: scale(0.97);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise,
+  .stamp-in,
+  .avatar-working,
+  .avatar-hop,
+  .av-breathe,
+  .av-eyes,
+  .av-mouth,
+  .av-arm,
+  .av-sweat,
+  .av-think circle,
+  .bubble,
+  .step-in,
+  .caret {
+    animation: none;
+  }
+
+  .act {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .choice:hover,
+  .choice:active {
+    transform: none;
+  }
 }
 
 @layer components {
@@ -78,14 +377,22 @@ input[type="range"] {
   }
 
   .field-label {
-    @apply text-xs font-semibold uppercase tracking-[0.08em] text-muted;
+    @apply text-sm font-semibold text-ink;
   }
 
   .field-input {
-    @apply h-10 w-full rounded-md border border-borderSoft bg-canvas px-3 text-sm text-ink outline-none transition focus:border-info focus:ring-1 focus:ring-info/40;
+    @apply h-12 w-full rounded-lg border border-borderSoft bg-panel px-3 text-base text-ink outline-none transition placeholder:text-muted/70 focus:border-info focus:ring-2 focus:ring-info/25 disabled:bg-panelMuted;
   }
 
   .toggle-row {
-    @apply flex items-center gap-3 rounded-md border border-borderSoft bg-canvas/50 px-3 py-2 text-sm text-ink;
+    @apply flex items-center gap-3 rounded-lg border border-borderSoft bg-panel px-3 py-3 text-base text-ink;
+  }
+
+  .btn-primary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg bg-info px-5 text-base font-semibold text-onAccent transition hover:bg-[#3a3190] disabled:cursor-not-allowed disabled:opacity-60;
+  }
+
+  .btn-secondary {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 rounded-lg border border-borderSoft bg-panel px-5 text-base font-semibold text-ink transition hover:bg-panelMuted disabled:cursor-not-allowed disabled:opacity-60;
   }
 }

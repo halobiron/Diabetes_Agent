@@ -4,6 +4,10 @@ import joblib
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
 
+# BRFSS HighBP is a self-reported diagnosis, not a reading. A systolic value
+# >= 130 mmHg (ACC/AHA stage 1) is used as a proxy when only bp is given.
+HIGH_BP_SYSTOLIC_CUTOFF = 130
+
 
 class RiskModel:
     LEGACY_FEATURE_NAMES = ["age", "bmi", "bp", "glucose"]
@@ -30,8 +34,46 @@ class RiskModel:
         "Education",
         "Income",
     ]
-    FEATURE_NAMES = LEGACY_FEATURE_NAMES
     INPUT_NAMES = ["age", "height_cm", "weight_kg", "bp", "glucose"]
+    BINARY_FIELDS = {
+        "high_chol": "HighChol",
+        "chol_check": "CholCheck",
+        "smoker": "Smoker",
+        "stroke": "Stroke",
+        "heart_disease_or_attack": "HeartDiseaseorAttack",
+        "phys_activity": "PhysActivity",
+        "fruits": "Fruits",
+        "veggies": "Veggies",
+        "heavy_alcohol_consump": "HvyAlcoholConsump",
+        "any_healthcare": "AnyHealthcare",
+        "no_doc_bc_cost": "NoDocbcCost",
+        "diff_walk": "DiffWalk",
+    }
+    # Model feature -> key in the prepared patient (and in the request) for the optional inputs.
+    FEATURE_KEYS = {
+        **{feature: key for key, feature in BINARY_FIELDS.items()},
+        "GenHlth": "gen_hlth",
+        "MentHlth": "ment_hlth",
+        "PhysHlth": "phys_hlth",
+        "Education": "education",
+        "Income": "income",
+    }
+    # Request input -> model feature(s) that consume it; (feature, years or units per step).
+    INPUT_FEATURES = {
+        "age": (("age", 1.0), ("Age", 5.0)),  # Age is a 5-year BRFSS bucket
+        "bmi": (("bmi", 1.0), ("BMI", 1.0)),
+        "bp": (("bp", 1.0), ("HighBP", None)),
+        "glucose": (("glucose", 1.0),),
+    }
+    # Optional model inputs outside BINARY_FIELDS: feature name -> accepted request keys.
+    OPTIONAL_FIELD_KEYS = {
+        "GenHlth": ("gen_hlth", "general_health", "GenHlth"),
+        "MentHlth": ("ment_hlth", "mental_health_days", "MentHlth"),
+        "PhysHlth": ("phys_hlth", "physical_health_days", "PhysHlth"),
+        "Education": ("education", "Education"),
+        "Income": ("income", "Income"),
+        "Sex": ("sex", "Sex"),
+    }
 
     def __init__(self):
         self.model = LogisticRegression(max_iter=1000)
@@ -97,8 +139,23 @@ class RiskModel:
         patient = self.prepare_patient(patient_data)
         row = self.feature_frame(patient)
 
-        prob = self.model.predict_proba(row)[0][1]
-        return float(prob), patient
+        return self.probability(row), patient
+
+    def probability(self, row):
+        """Probability for a one-row feature frame (as built by `feature_frame`)."""
+        return float(self.model.predict_proba(row)[0][1])
+
+    @property
+    def risk_bands(self):
+        return self.artifact_metadata.get("risk_bands")
+
+    @property
+    def decision_threshold(self):
+        return self.artifact_metadata.get("selected_threshold")
+
+    @property
+    def model_version(self):
+        return self.artifact_metadata.get("model_version", "legacy-unversioned")
 
     def predict(self, patient_data):
         prob, _patient = self.assess(patient_data)
@@ -149,7 +206,7 @@ class RiskModel:
         bp = self._get(patient, "bp", "blood_pressure")
         high_bp = self._get(patient, "high_bp", "HighBP")
         if high_bp is None and bp is not None:
-            high_bp = 1 if float(bp) >= 130 else 0
+            high_bp = 1 if float(bp) >= HIGH_BP_SYSTOLIC_CUTOFF else 0
 
         sex = self._coerce_sex(self._get(patient, "sex", "Sex"), self._default_for("Sex"))
 
@@ -165,15 +222,68 @@ class RiskModel:
             "bp": int(bp) if bp is not None else int(self._default_for("bp", 0)),
             "glucose": glucose,
             "glucose_measured": glucose_measured,
+            "glucose_context": patient.get("glucose_context", "unspecified")
+            if glucose_measured
+            else "unspecified",
+            "glucose_unavailable": bool(patient.get("glucose_unavailable", False))
+            and not glucose_measured,
             "high_bp": self._coerce_binary(high_bp, self._default_for("HighBP")),
             "age_bucket": int(age_bucket),
             "sex": sex,
         }
         prepared.update(self._prepare_brfss_fields(patient))
+        prepared["defaulted_fields"] = self._defaulted_features(patient)
+        prepared["skipped_fields"] = list(patient.get("skipped_fields") or [])
+        prepared["optional_field_count"] = len(self._optional_features())
         return prepared
+
+    def _optional_features(self):
+        names = list(self.BINARY_FIELDS.values()) + list(self.OPTIONAL_FIELD_KEYS)
+        return [name for name in names if self._uses_feature(name)]
+
+    def inputs_not_in_model(self, patient):
+        """Measured request inputs that no model feature consumes (glucose for the BRFSS model)."""
+        unused = []
+        for name, consumers in self.INPUT_FEATURES.items():
+            measured = patient.get(f"{name}_measured", patient.get(name) is not None)
+            if measured and not any(self._uses_feature(feature) for feature, _ in consumers):
+                unused.append(name)
+        return unused
+
+    def input_spreads(self):
+        """Standard deviation of age (years), BMI and other continuous inputs in the training data.
+
+        Inputs the model was not trained on (e.g. blood pressure in mmHg, glucose) are absent.
+        """
+        spreads = {}
+        if self.training_frame is None:
+            return spreads
+        for name, consumers in self.INPUT_FEATURES.items():
+            for feature, step in consumers:
+                if step is not None and feature in self.training_frame:
+                    spread = float(self.training_frame[feature].std()) * step
+                    if spread > 0:
+                        spreads[name] = spread
+                    break
+        return spreads
+
+    def _defaulted_features(self, patient):
+        """Model inputs the caller left out, so the model saw a default instead of a real value."""
+        accepted = {
+            feature: (snake_name, feature) for snake_name, feature in self.BINARY_FIELDS.items()
+        }
+        accepted.update(self.OPTIONAL_FIELD_KEYS)
+        return [
+            feature
+            for feature, keys in accepted.items()
+            if self._uses_feature(feature) and self._get(patient, *keys) is None
+        ]
 
     def feature_frame(self, patient):
         row = {feature: self._feature_value(feature, patient) for feature in self.feature_names}
+        return self.row_frame(row)
+
+    def row_frame(self, row):
         return pd.DataFrame([row], columns=self.feature_names)
 
     def _feature_value(self, feature, patient):
@@ -194,26 +304,11 @@ class RiskModel:
         if feature == "Sex":
             return patient["sex"]
 
-        snake_name = self._snake_case(feature)
-        return patient.get(snake_name, self._default_for(feature))
+        return patient.get(self.FEATURE_KEYS.get(feature, feature), self._default_for(feature))
 
     def _prepare_brfss_fields(self, patient):
-        binary_fields = {
-            "high_chol": "HighChol",
-            "chol_check": "CholCheck",
-            "smoker": "Smoker",
-            "stroke": "Stroke",
-            "heart_disease_or_attack": "HeartDiseaseorAttack",
-            "phys_activity": "PhysActivity",
-            "fruits": "Fruits",
-            "veggies": "Veggies",
-            "heavy_alcohol_consump": "HvyAlcoholConsump",
-            "any_healthcare": "AnyHealthcare",
-            "no_doc_bc_cost": "NoDocbcCost",
-            "diff_walk": "DiffWalk",
-        }
         prepared = {}
-        for snake_name, feature_name in binary_fields.items():
+        for snake_name, feature_name in self.BINARY_FIELDS.items():
             prepared[snake_name] = self._coerce_binary(
                 self._get(patient, snake_name, feature_name),
                 self._default_for(feature_name),
@@ -334,26 +429,3 @@ class RiskModel:
             13: 82,
         }
         return bucket_midpoints.get(int(bucket), 45)
-
-    @staticmethod
-    def _snake_case(feature_name):
-        mapping = {
-            "HighChol": "high_chol",
-            "CholCheck": "chol_check",
-            "Smoker": "smoker",
-            "Stroke": "stroke",
-            "HeartDiseaseorAttack": "heart_disease_or_attack",
-            "PhysActivity": "phys_activity",
-            "Fruits": "fruits",
-            "Veggies": "veggies",
-            "HvyAlcoholConsump": "heavy_alcohol_consump",
-            "AnyHealthcare": "any_healthcare",
-            "NoDocbcCost": "no_doc_bc_cost",
-            "GenHlth": "gen_hlth",
-            "MentHlth": "ment_hlth",
-            "PhysHlth": "phys_hlth",
-            "DiffWalk": "diff_walk",
-            "Education": "education",
-            "Income": "income",
-        }
-        return mapping.get(feature_name, feature_name)

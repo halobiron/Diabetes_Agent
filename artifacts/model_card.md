@@ -14,17 +14,19 @@ healthcare AI prototype. It is not a diagnostic medical device.
 
 ## Training
 
-- Selection: 5-fold_cv_then_holdout_test
-- Hyperparameter tuning: hist_gradient_boosting, lightgbm
+- Selection: 5-fold_cv_tuning_then_validation_selection_then_holdout_test
+- Hyperparameter tuning: hist_gradient_boosting, mlp
 - Probability calibration: isotonic_cv3
 - LightGBM included: True
 
 ## Selected Model
 
-- Model: `hist_gradient_boosting`
-- CV ROC AUC: 0.83059 (+/- 0.00232)
-- Holdout ROC AUC: 0.82698
-- Average precision: 0.42299
-- Brier score: 0.09739
-- Tuned F1: 0.46904
-- Tuned threshold: 0.22379
+- Model: `mlp`
+- CV ROC AUC: 0.83049 (+/- 0.00239)
+- Validation ROC AUC (selection): 0.82828
+- Holdout test ROC AUC: 0.82581
+- Average precision: 0.41441
+- Brier score: 0.09783
+- Threshold (chosen on validation): 0.23906
+- Test F1 at that threshold: 0.46543
+- Test precision / recall: 0.37906 / 0.60277

@@ -1,6 +1,6 @@
 import type { FeatureImpact, PatientInput } from "@/types/healthcare";
 
-export type TabKey = "assessment" | "evidence" | "history";
+export type TabKey = "assessment";
 
 export type ChartFeature = FeatureImpact & {
   label: string;

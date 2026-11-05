@@ -11,8 +11,8 @@ export async function GET() {
     });
     const payload = await response.json();
     return NextResponse.json(payload, { status: response.status });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to reach inference API.";
+  } catch {
+    const message = "Không kết nối được dịch vụ phân tích. Vui lòng kiểm tra backend và thử lại.";
     return NextResponse.json({ detail: message }, { status: 502 });
   }
 }

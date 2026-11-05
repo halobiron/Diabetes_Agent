@@ -20,8 +20,8 @@ export async function GET(request: Request) {
     });
     const payload = await response.json();
     return NextResponse.json(payload, { status: response.status });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Unable to reach memory API.";
+  } catch {
+    const message = "Không kết nối được dịch vụ lưu trữ. Vui lòng kiểm tra backend và thử lại.";
     return NextResponse.json({ detail: message }, { status: 502 });
   }
 }
