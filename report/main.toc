@@ -1,0 +1,40 @@
+\babel@toc {vietnamese}{}\relax 
+\contentsline {chapter}{DANH MỤC TỪ VIẾT TẮT}{iv}{chapter*.1}%
+\contentsline {chapter}{\numberline {1}GIỚI THIỆU}{1}{chapter.1}%
+\contentsline {section}{\numberline {1.1}Bài toán và động lực}{1}{section.1.1}%
+\contentsline {section}{\numberline {1.2}Mục tiêu và phạm vi}{1}{section.1.2}%
+\contentsline {section}{\numberline {1.3}Đóng góp và cấu trúc báo cáo}{2}{section.1.3}%
+\contentsline {chapter}{\numberline {2}HỆ ĐA AGENT}{3}{chapter.2}%
+\contentsline {section}{\numberline {2.1}Agent}{3}{section.2.1}%
+\contentsline {section}{\numberline {2.2}Hệ đa agent}{3}{section.2.2}%
+\contentsline {section}{\numberline {2.3}Giao tiếp giữa các thành phần}{4}{section.2.3}%
+\contentsline {chapter}{\numberline {3}KIẾN TRÚC TỔNG QUAN}{5}{chapter.3}%
+\contentsline {section}{\numberline {3.1}Sơ đồ của đề bài và hiện thực}{5}{section.3.1}%
+\contentsline {section}{\numberline {3.2}Vai trò của các thành phần}{7}{section.3.2}%
+\contentsline {section}{\numberline {3.3}Luồng một lượt đánh giá}{7}{section.3.3}%
+\contentsline {section}{\numberline {3.4}Công nghệ và lưu trữ}{9}{section.3.4}%
+\contentsline {chapter}{\numberline {4}CÁC THÀNH PHẦN CỦA HỆ THỐNG}{10}{chapter.4}%
+\contentsline {section}{\numberline {4.1}Deep Learning $\Rightarrow $ Agent}{10}{section.4.1}%
+\contentsline {subsection}{\numberline {4.1.1}Dữ liệu và bài toán}{10}{subsection.4.1.1}%
+\contentsline {subsection}{\numberline {4.1.2}Mô hình và huấn luyện}{11}{subsection.4.1.2}%
+\contentsline {subsection}{\numberline {4.1.3}Hiệu chuẩn, ngưỡng và phân tầng nguy cơ}{14}{subsection.4.1.3}%
+\contentsline {subsection}{\numberline {4.1.4}Từ mô hình thành thành phần của hệ thống}{16}{subsection.4.1.4}%
+\contentsline {section}{\numberline {4.2}Knowledge Base và RAG}{16}{section.4.2}%
+\contentsline {subsection}{\numberline {4.2.1}Nguồn tri thức và đồ thị Neo4j}{16}{subsection.4.2.1}%
+\contentsline {subsection}{\numberline {4.2.2}Truy xuất: ngữ nghĩa kết hợp đồ thị}{18}{subsection.4.2.2}%
+\contentsline {section}{\numberline {4.3}Bộ luật và Reinforcement Learning}{19}{section.4.3}%
+\contentsline {subsection}{\numberline {4.3.1}Bộ luật an toàn và xử lý xung đột}{19}{subsection.4.3.1}%
+\contentsline {subsection}{\numberline {4.3.2}Agent chọn bước hỗ trợ bằng Q-learning}{20}{subsection.4.3.2}%
+\contentsline {subsection}{\numberline {4.3.3}Luật ràng buộc chính sách học được}{22}{subsection.4.3.3}%
+\contentsline {section}{\numberline {4.4}Tư vấn, trợ giúp và cô lập lỗi}{22}{section.4.4}%
+\contentsline {chapter}{\numberline {5}CODE VÀ DEMO}{23}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Cấu trúc mã nguồn}{23}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Các hàm chính}{24}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Cách chạy}{24}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Demo: giao diện web}{25}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Ví dụ ba lượt đánh giá}{29}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Kiểm thử}{30}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Đánh giá}{31}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Hạn chế và hướng phát triển}{31}{section.5.8}%
+\contentsline {chapter}{KẾT LUẬN}{33}{chapter*.29}%
+\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{34}{chapter*.30}%

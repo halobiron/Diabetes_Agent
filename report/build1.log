@@ -1,0 +1,479 @@
+This is XeTeX, Version 3.141592653-2.6-0.999997 (MiKTeX 25.12) (preloaded format=xelatex.fmt)
+ restricted \write18 enabled.
+entering extended mode
+(main.tex
+LaTeX2e <2025-11-01>
+L3 programming layer <2025-12-24>
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/base\report.cls
+Document Class: report 2025/01/22 v1.4n Standard LaTeX document class
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/base\size12.clo))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/l3packages/xparse\xpars
+e.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/l3kernel\expl3.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/l3backend\l3backend-xet
+ex.def)))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec-xetex
+.sty (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/base\fontenc.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/fontspec\fontspec.cfg))
+) (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/babel\babel.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/babel\xebabel.def)
+*************************************
+* Local config file bblopts.cfg used
+*
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/arabi\bblopts.cfg)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/babel/locale/vi\babel
+-vietnamese.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/babel-vietnamese\vietna
+mese.ldf
+
+Package babel Warning: No hyphenation patterns were preloaded for
+(babel)                the language 'Vietnamese' into the format.
+(babel)                Please, configure your TeX system to add them and
+(babel)                rebuild the format. Now I will use the patterns
+(babel)                preloaded for \language=0 instead on input line 36.
+
+))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics\keyval.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/iftex\ifvtex.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/iftex\iftex.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/geometry\geometry.cfg))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphicx.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics\graphics.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics\trig.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\graphics.c
+fg)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics-def\xetex.def)
+))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/booktabs\booktabs.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/tools\array.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/tools\tabularx.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/tools\longtable.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/xcolor\xcolor.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics-cfg\color.cfg)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/graphics\mathcolor.ltx)
+) (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsmath.sty
+For additional information on amsmath, use the `?' option.
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amstext.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsgen.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsbsy.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/amsmath\amsopn.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/enumitem\enumitem.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/float\float.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/fancyhdr\fancyhdr.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/setspace\setspace.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/titlesec\titlesec.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/tocloft\tocloft.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/etoolbox\etoolbox.sty))
+ (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/caption\caption3.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/caption\ltcaption.sty))
+ (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstpatch.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/listings\lstmisc.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/listings\listings.cfg))
+==> First Aid for listings.sty no longer applied!
+    Expected:
+        2024/09/23 1.10c (Carsten Heinz)
+    but found:
+        2025/11/14 1.11b (Carsten Heinz)
+    so I'm assuming it got fixed.
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/fvextra\fvextra.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/fancyvrb\fancyvrb.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/upquote\upquote.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/base\textcomp.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/lineno\lineno.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/kvoptions\kvoptions.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/ltxcmds\ltxcmds.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/kvsetkeys\kvsetkeys.sty
+))))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/frontendlayer\tikz.
+sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgf.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfrcs.st
+y
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-common.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfutil
+-latex.def)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfrcs.
+code.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf\pgf.revision.tex)
+))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/basiclayer\pgfcore.
+sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/systemlayer\pgfsys.
+sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s.code.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+libraryfiltered.code.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgf.c
+fg)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-xetex.def
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-dvipdfmx.def
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+s-common-pdf.def))))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+ssoftpath.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/systemlayer\pgfsy
+sprotocol.code.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+e.code.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
+.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathutil.
+code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathparse
+r.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.basic.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.trigonometric.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.random.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.comparison.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.base.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.round.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.misc.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfunct
+ions.integerarithmetics.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathcalc.
+code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmathfloat
+.code.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfint.code.
+tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epoints.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathconstruct.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathusage.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+escopes.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+egraphicstate.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+etransformations.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+equick.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eobjects.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epathprocessing.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+earrows.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eshade.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eimage.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+eexternal.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+elayers.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+etransparency.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+epatterns.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/basiclayer\pgfcor
+erdf.code.tex)))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+shapes.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+plot.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
+mp-version-0-65.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/compatibility\pgfco
+mp-version-1-18.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgffor.st
+y
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/utilities\pgfkeys.s
+ty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgfkeys
+.code.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/pgf/math\pgfmath.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/math\pgfmath.code
+.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/utilities\pgffor.
+code.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z\tikz.code.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
+aryplothandlers.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/modules\pgfmodule
+matrix.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarytopaths.code.tex)))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarypositioning.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries\pgflibr
+aryarrows.meta.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibraryshapes.geometric.code.tex
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/libraries/shapes\
+pgflibraryshapes.geometric.code.tex))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibraryfit.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pgf/frontendlayer/tik
+z/libraries\tikzlibrarycalc.code.tex)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/xurl\xurl.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/url\url.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hyperref.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/kvdefinekeys\kvdefine
+keys.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pdfescape\pdfescape.s
+ty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/pdftexcmds\pdftexcmds
+.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/infwarerr\infwarerr.s
+ty)))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/hycolor\hycolor.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\nameref.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/refcount\refcount.sty)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/gettitlestring\gettit
+lestring.sty))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/stringenc\stringenc.s
+ty) (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\pd1enc.def
+) (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/intcalc\intcalc.sty
+) (C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\puenc.def)
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/bitset\bitset.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/bigintcalc\bigintcalc
+.sty)))
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/hyperref\hxetex.def
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/latex/rerunfilecheck\rerunfil
+echeck.sty
+(C:\Users\tranh\AppData\Local\Programs\MiKTeX\tex/generic/uniquecounter\uniquec
+ounter.sty))) (cells/numbers.tex)
+No file main.aux.
+*geometry* driver: auto-detecting
+*geometry* detected driver: xetex
+
+Package hyperref Warning: Rerun to get /PageLabels entry.
+
+[1]
+No file main.toc.
+[2] [3]
+No file main.lof.
+[4]
+No file main.lot.
+[5]
+Chương 1.
+
+LaTeX Warning: Citation `ada2025' on page 1 undefined on input line 130.
+
+
+LaTeX Warning: Citation `dpp2002' on page 1 undefined on input line 130.
+
+
+LaTeX Warning: Reference `fig:arch' on page 1 undefined on input line 135.
+
+[1] [2]
+Chương 2.
+
+LaTeX Warning: Citation `wooldridge2009' on page 3 undefined on input line 161.
+
+
+
+LaTeX Warning: Citation `jennings1998' on page 3 undefined on input line 161.
+
+
+LaTeX Warning: Citation `russell2021' on page 3 undefined on input line 163.
+
+
+LaTeX Warning: Reference `tab:agenttypes' on page 3 undefined on input line 163
+.
+
+
+LaTeX Warning: Reference `tab:single-vs-multi' on page 3 undefined on input lin
+e 183.
+
+[3]
+
+LaTeX Warning: Citation `fipa2002' on page 4 undefined on input line 204.
+
+[4]
+Chương 3.
+
+LaTeX Warning: Reference `fig:arch' on page 5 undefined on input line 214.
+
+
+LaTeX Warning: Reference `tab:map' on page 5 undefined on input line 247.
+
+
+Underfull \hbox (badness 1558) in paragraph at lines 263--263
+[]|\TU/TeXGyreTermes(0)/m/n/12 Q-learning dạng bảng trên môi trường mô
+[5] [6]
+
+LaTeX Warning: Reference `fig:flow' on page 7 undefined on input line 289.
+
+[7]
+
+LaTeX Warning: Citation `neo4j' on page 8 undefined on input line 336.
+
+
+LaTeX Warning: Citation `chroma' on page 8 undefined on input line 336.
+
+
+LaTeX Warning: Citation `reimers2019' on page 8 undefined on input line 336.
+
+[8]
+Chương 4.
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 342.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `\Rightarrow' on input line 342.
+
+
+Package hyperref Warning: Token not allowed in a PDF string (Unicode):
+(hyperref)                removing `math shift' on input line 342.
+
+
+LaTeX Warning: Citation `uci891' on page 9 undefined on input line 344.
+
+[9]
+
+LaTeX Warning: Reference `fig:split' on page 10 undefined on input line 354.
+
+
+LaTeX Warning: Reference `fig:split' on page 10 undefined on input line 358.
+
+
+LaTeX Warning: Citation `adamw' on page 10 undefined on input line 362.
+
+[10] (tables/tab_models.tex)
+
+LaTeX Warning: Reference `fig:compare' on page 11 undefined on input line 378.
+
+
+LaTeX Warning: Reference `tab:models' on page 11 undefined on input line 378.
+
+[11]
+
+LaTeX Warning: Reference `fig:rocpr' on page 12 undefined on input line 388.
+
+
+LaTeX Warning: Reference `fig:calib' on page 12 undefined on input line 392.
+
+[12]
+
+LaTeX Warning: Reference `fig:conf' on page 13 undefined on input line 397.
+
+
+LaTeX Warning: Reference `fig:calib' on page 13 undefined on input line 410.
+
+
+LaTeX Warning: Reference `fig:conf' on page 13 undefined on input line 411.
+
+[13] (tables/tab_bands.tex)
+
+LaTeX Warning: Reference `fig:bands' on page 14 undefined on input line 425.
+
+
+LaTeX Warning: Reference `tab:bands' on page 14 undefined on input line 425.
+
+[14]
+
+LaTeX Warning: Citation `ada2025' on page 15 undefined on input line 439.
+
+
+LaTeX Warning: Citation `who2024' on page 15 undefined on input line 439.
+
+
+LaTeX Warning: Citation `cdc' on page 15 undefined on input line 439.
+
+
+LaTeX Warning: Citation `niddk' on page 15 undefined on input line 439.
+
+
+LaTeX Warning: Citation `dpp2002' on page 15 undefined on input line 439.
+
+[15]
+
+LaTeX Warning: Reference `fig:kg' on page 16 undefined on input line 443.
+
+
+LaTeX Warning: Reference `tab:kb' on page 16 undefined on input line 443.
+
+(tables/tab_kb.tex) [16]
+
+LaTeX Warning: Reference `fig:kg' on page 17 undefined on input line 455.
+
+
+LaTeX Warning: Reference `tab:kb' on page 17 undefined on input line 455.
+
+
+LaTeX Warning: Citation `lewis2020' on page 17 undefined on input line 458.
+
+[17]
+
+LaTeX Warning: Citation `whelton2018' on page 18 undefined on input line 488.
+
+[18]
+
+LaTeX Warning: Citation `watkins1992' on page 19 undefined on input line 514.
+
+
+LaTeX Warning: Citation `sutton2018' on page 19 undefined on input line 514.
+
+[19] (tables/tab_rl.tex)
+
+LaTeX Warning: Reference `fig:rl' on page 20 undefined on input line 533.
+
+
+LaTeX Warning: Reference `tab:rl' on page 20 undefined on input line 533.
+
+[20] [21]
+Chương 5.
+[22] [23]
+
+LaTeX Warning: Reference `fig:ui1' on page 24 undefined on input line 626.
+
+
+LaTeX Warning: Reference `fig:ui2a' on page 24 undefined on input line 626.
+
+
+LaTeX Warning: Reference `fig:ui2d' on page 24 undefined on input line 626.
+
+[24] [25] [26] [27] [28] [29]
+
+LaTeX Warning: Reference `tab:models' on page 30 undefined on input line 703.
+
+
+LaTeX Warning: Reference `tab:rl' on page 30 undefined on input line 705.
+
+
+LaTeX Warning: Reference `tab:cases' on page 30 undefined on input line 709.
+
+[30] [31] [32] [33] [34] (main.aux)miktex-dvipdfmx: major issue: So far, you have not checked for MiKTeX updates.
+
+
+LaTeX Warning: There were undefined references.
+
+
+LaTeX Warning: Label(s) may have changed. Rerun to get cross-references right.
+
+
+Package rerunfilecheck Warning: File `main.out' has changed.
+(rerunfilecheck)                Rerun to get outlines right
+(rerunfilecheck)                or use package `bookmark'.
+
+ )
+(see the transcript file for additional information)
+Output written on main.pdf (39 pages).
+Transcript written on main.log.
+xelatex: major issue: So far, you have not checked for MiKTeX updates.

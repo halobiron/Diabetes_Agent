@@ -1,0 +1,19 @@
+\babel@toc {vietnamese}{}\relax 
+\addvspace {10\p@ }
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {2.1}{\ignorespaces Các loại agent và hiện thực trong dự án}}{3}{table.caption.2}%
+\contentsline {table}{\numberline {2.2}{\ignorespaces Một khối làm tất cả so với hệ nhiều thành phần của dự án}}{4}{table.caption.3}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {3.1}{\ignorespaces Ánh xạ khối trên sơ đồ sang thành phần của hệ thống}}{6}{table.caption.5}%
+\contentsline {table}{\numberline {3.2}{\ignorespaces Các thành phần, đầu vào và kỹ thuật bên trong}}{7}{table.caption.6}%
+\contentsline {table}{\numberline {3.3}{\ignorespaces Công nghệ sử dụng}}{9}{table.caption.8}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {4.1}{\ignorespaces Kết quả năm mô hình (ROC-AUC của CV là trung bình $\pm $ độ lệch chuẩn)}}{12}{table.caption.11}%
+\contentsline {table}{\numberline {4.2}{\ignorespaces Tỉ lệ nhãn 1 trên tập kiểm tra theo mức nguy cơ}}{15}{table.caption.15}%
+\contentsline {table}{\numberline {4.3}{\ignorespaces Thống kê nút và quan hệ của KB}}{18}{table.caption.17}%
+\contentsline {table}{\numberline {4.4}{\ignorespaces Các luật hiện có trong \texttt {tools/rules.py}}}{20}{table.caption.18}%
+\contentsline {table}{\numberline {4.5}{\ignorespaces So sánh chiến lược trên 20.000 tập mô phỏng}}{21}{table.caption.19}%
+\addvspace {10\p@ }
+\contentsline {table}{\numberline {5.1}{\ignorespaces Các hàm và lớp chính}}{24}{table.caption.21}%
+\contentsline {table}{\numberline {5.2}{\ignorespaces Ba hồ sơ chạy thật qua API}}{30}{table.caption.27}%
+\contentsline {table}{\numberline {5.3}{\ignorespaces Bộ kiểm thử tự động}}{31}{table.caption.28}%
