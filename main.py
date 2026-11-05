@@ -57,9 +57,6 @@ def build_agent():
     )
 
 
-agent = build_agent()
-
-
 if __name__ == "__main__":
     patient = {
         "age": 45,
@@ -68,5 +65,5 @@ if __name__ == "__main__":
         "bp": 130,
         "glucose": 180,
     }
-    result = agent.run(patient)
+    result = build_agent().run(patient)
     print(json.dumps(result, indent=2))

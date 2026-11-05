@@ -9,7 +9,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from main import agent
+from main import build_agent
 from models.risk_model import RiskModel
 from tools.vietnamese import (
     ESCALATION_LABELS,
@@ -28,6 +28,8 @@ st.set_page_config(
 
 
 FEATURE_LABELS = {key: value[0].upper() + value[1:] for key, value in VI_FEATURE_LABELS.items()}
+
+agent = build_agent()
 
 BINARY_FEATURES = {
     "HighBP",

@@ -1,5 +1,8 @@
 import sys
+import logging
+from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
+from threading import Lock
 from typing import Literal, Optional
 from uuid import uuid4
 
@@ -11,13 +14,52 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.config import get_settings
-from main import agent
+from main import build_agent
 from tools.audit_logger import AuditLogger
 from tools.what_if import ASKABLE_FIELDS
 
 app = FastAPI(title="API hỗ trợ đánh giá nguy cơ sức khỏe")
 settings = get_settings()
 audit_logger = AuditLogger(settings.log_dir)
+logger = logging.getLogger(__name__)
+_agent_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent-init")
+_agent_future: Future | None = None
+_agent_lock = Lock()
+
+
+def _start_agent_initialization():
+    """Initialize the model and retrieval index outside the server startup path."""
+    global _agent_future
+    with _agent_lock:
+        if _agent_future is None:
+            _agent_future = _agent_executor.submit(build_agent)
+            _agent_future.add_done_callback(_log_agent_initialization_failure)
+        return _agent_future
+
+
+def _log_agent_initialization_failure(future):
+    try:
+        future.result()
+    except Exception:
+        logger.exception("Agent initialization failed")
+
+
+@app.on_event("startup")
+def initialize_agent_in_background():
+    # Let Uvicorn bind Render's port immediately. Model download/index creation can
+    # take a while on a fresh, ephemeral free instance.
+    _start_agent_initialization()
+
+
+def _get_agent():
+    future = _start_agent_initialization()
+    try:
+        return future.result()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Dịch vụ phân tích chưa khởi tạo được: {exc}",
+        ) from exc
 
 
 class PatientRequest(BaseModel):
@@ -85,7 +127,7 @@ def health():
 
 
 def _assess(patient):
-    result = agent.run(patient.model_dump())
+    result = _get_agent().run(patient.model_dump())
     request_id = str(uuid4())
     audit_logger.log_decision(request_id, result["patient"], result)
     return request_id, result
@@ -115,7 +157,7 @@ def predict_summary(patient: PatientRequest, _auth=Depends(_authorize)):
 
 @app.get("/history")
 def history(limit: int = 25, _auth=Depends(_authorize)):
-    return {"records": agent.memory.get_all(limit=limit)}
+    return {"records": _get_agent().memory.get_all(limit=limit)}
 
 
 @app.get("/v1/health")
