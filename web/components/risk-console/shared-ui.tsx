@@ -8,7 +8,7 @@ export function MetricTile({
   label,
   value,
   icon,
-  accent = "#0e7468",
+  accent = "#4b3fa8",
 }: {
   label: string;
   value: string;
@@ -27,7 +27,7 @@ export function MetricTile({
 }
 
 export function RiskBadge({ risk, muted = false }: { risk: RiskLevel; muted?: boolean }) {
-  const color = muted ? "#6b7f7c" : RISK_COLORS[risk];
+  const color = muted ? "#6f6c8f" : RISK_COLORS[risk];
 
   return (
     <span

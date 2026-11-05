@@ -107,6 +107,12 @@ export type SafetyResult = {
   confidence_score: number;
   confidence_label: "Low" | "Medium" | "High";
   confidence_note?: string;
+  confidence_reasons?: {
+    code: "defaulted_inputs" | "bp_outside_check_range" | "bmi_outside_check_range";
+    fields: string[];
+    penalty: number;
+    message: string;
+  }[];
   defaulted_fields?: string[];
   disclaimers: string[];
 };
@@ -201,6 +207,7 @@ export type ModelMetrics = {
 };
 
 export type ModelMetadata = {
+  risk_bands?: { low_max: number; high_min: number };
   selected_model?: string;
   rows_total?: number;
   calibration?: string;

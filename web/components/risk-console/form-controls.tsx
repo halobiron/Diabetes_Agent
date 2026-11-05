@@ -141,7 +141,7 @@ export function SliderField({
         max={max}
         value={value}
         style={{
-          background: `linear-gradient(to right, #0e7468 0%, #0e7468 ${fillPercent}%, rgba(16,52,48,0.16) ${fillPercent}%, rgba(16,52,48,0.16) 100%)`,
+          background: `linear-gradient(to right, #4b3fa8 0%, #4b3fa8 ${fillPercent}%, rgba(40,30,110,0.16) ${fillPercent}%, rgba(40,30,110,0.16) 100%)`,
         }}
         onChange={(event) => onChange(Number(event.target.value))}
       />

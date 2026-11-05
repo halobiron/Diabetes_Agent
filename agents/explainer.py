@@ -115,8 +115,6 @@ class ExplanationAgent:
                 "Đường huyết không phải đầu vào của mô hình này; chỉ số đo thực tế mới được"
                 " kiểm tra bằng các luật an toàn. "
             )
-        if not patient_data.get("glucose_measured", True):
-            return "Chưa đo đường huyết nên chưa thể áp dụng các luật đường huyết. "
         return ""
 
     def _defaults_text(self, patient_data):

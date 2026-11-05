@@ -62,8 +62,6 @@ class RecommendationAgent:
         feature_explanation=None,
     ):
         glucose_note = ""
-        if not patient_data.get("glucose_measured", True):
-            glucose_note = " Do chưa đo đường huyết, cần xét nghiệm A1C hoặc đường huyết lúc đói trước khi đưa ra quyết định lâm sàng."
 
         if risk == "High":
             recommendation = "Nên sớm khám bác sĩ, đo lại các chỉ số và xét nghiệm; lập kế hoạch chăm sóc tập trung vào huyết áp, đường huyết, dinh dưỡng, vận động và tuân thủ dùng thuốc."

@@ -3,7 +3,7 @@ import { Activity, ExternalLink } from "lucide-react";
 import type { MeasurementBand, MeasurementScale } from "@/types/healthcare";
 
 const tones: Record<MeasurementBand["tone"], string> = {
-  neutral: "#6b7f7c", success: "#1b7a4b", warning: "#c98a1a", danger: "#c4452f",
+  neutral: "#6f6c8f", success: "#1b7a4b", warning: "#c98a1a", danger: "#c4452f",
 };
 
 function position(value: number, scale: MeasurementScale) {
@@ -13,13 +13,13 @@ function position(value: number, scale: MeasurementScale) {
 export function MeasurementScales({ scales }: { scales: MeasurementScale[] }) {
   if (!scales.length) return null;
   return (
-    <section aria-labelledby="measurement-heading" className="console-panel min-w-0 rounded-2xl p-6">
+    <section aria-labelledby="measurement-heading" className="min-w-0 rounded-2xl border-2 border-borderSoft p-5 md:p-6">
       <h2 id="measurement-heading" className="flex items-center gap-2 text-sm font-semibold">
         <Activity aria-hidden="true" className="h-4 w-4 text-info" /> Chỉ số của bạn trên thang tham khảo
       </h2>
       <p className="mt-2 text-sm leading-6 text-muted">Vị trí của số đo hiện tại, tách biệt với xác suất mô hình. Chọn một vùng để xem mốc cụ thể.</p>
-      <div className="mt-5 grid min-w-0 gap-6 lg:grid-cols-3">
-        {scales.map((scale) => <Scale key={scale.key} scale={scale} />)}
+      <div className="mt-5 grid min-w-0 gap-6 lg:grid-cols-2">
+        {scales.filter((scale) => scale.key !== "glucose").map((scale) => <Scale key={scale.key} scale={scale} />)}
       </div>
     </section>
   );

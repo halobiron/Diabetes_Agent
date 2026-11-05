@@ -12,8 +12,8 @@ export function WhatIf({ whatIf }: { whatIf: WhatIfResult }) {
   const rows = [...whatIf.scenarios, ...(whatIf.combined ? [whatIf.combined] : [])];
 
   return (
-    <section aria-labelledby="what-if-title" className="console-panel min-w-0 rounded-2xl p-6">
-      <div id="what-if-title"><PanelHeading icon={<FlaskConical className="h-4 w-4" />} title="Nếu thay đổi thì sao?" /></div>
+    <section aria-labelledby="what-if-title" className="min-w-0 rounded-2xl border-2 border-borderSoft p-5 md:p-6">
+      <div id="what-if-title"><PanelHeading icon={<FlaskConical className="h-4 w-4" />} title="Bạn Gợi thử giúp bạn: nếu thay đổi thì sao?" /></div>
       <p className="mt-2 text-sm leading-6 text-muted">Mô hình tính lại nguy cơ khi chỉ đổi yếu tố được nêu, giữ nguyên các thông tin còn lại. Hiện tại: <span className="tabular-nums text-ink">{percent(whatIf.probability_before)}</span>.</p>
       {rows.length > 0 ? (
         <ul className="mt-4 space-y-3">

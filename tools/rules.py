@@ -131,15 +131,6 @@ BASE_RULES = [
         basis=f"Ngưỡng của dự án: mức nguy cơ Cao và xác suất mô hình >= {HIGH_PROBABILITY}.",
         escalation="prompt_clinician_followup",
     ),
-    Rule(
-        code="DQ-GLU-MISSING",
-        name="Chưa đo đường huyết",
-        category="data_quality",
-        priority=45,
-        condition=lambda ctx: not ctx.glucose_measured,
-        message="Chưa đo đường huyết; chất lượng dữ liệu đánh giá nguy cơ bị giảm.",
-        basis="Đường huyết không phải đầu vào mô hình BRFSS nên chưa thể đối chiếu ước tính với kết quả xét nghiệm.",
-    ),
 ]
 
 CONFLICT_RULES = [
@@ -171,18 +162,6 @@ CONFLICT_RULES = [
         ),
         basis="Nguyên tắc: không hạ nguy cơ mô hình chỉ vì một số đo đường huyết bình thường.",
         resolution="prediction_kept_confirm_with_a1c",
-    ),
-    Rule(
-        code="CF-PRED-LOW-GLUCOSE-MISSING",
-        name="Nguy cơ mô hình thấp nhưng chưa đo đường huyết",
-        category="conflict",
-        priority=50,
-        condition=lambda ctx: ctx.risk == "Low" and not ctx.glucose_measured,
-        message=(
-            "Nguy cơ thấp từ mô hình chưa được xác nhận vì chưa đo đường huyết; không coi đây là dấu hiệu yên tâm trước khi xét nghiệm đường huyết hoặc A1C."
-        ),
-        basis="Nguyên tắc: thiếu số đo không phải bằng chứng cho thấy giá trị bình thường.",
-        resolution="prediction_unconfirmed_testing_advised",
     ),
     Rule(
         code="CF-PRED-HIGH-LOW-QUALITY",

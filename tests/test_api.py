@@ -40,7 +40,9 @@ def test_followup_answer_updates_guidance_without_changing_mlp_probability(clien
     assert after["probability"] == before["probability"]
     assert after["measurement_scales"][2]["status"] == "Từ 126: cần xác nhận"
     assert after["followup"] is None  # no unknown input could move this low estimate by 2 points
-    assert after["safety"]["confidence_score"] > before["safety"]["confidence_score"]
+    # Glucose changes clinical guidance, but is not a deduction in the input-quality score.
+    assert after["safety"]["confidence_score"] == before["safety"]["confidence_score"]
+    assert after["safety"]["confidence_reasons"] == before["safety"]["confidence_reasons"]
 
 
 def test_unavailable_answer_suppresses_question_and_policy_reask(client):
@@ -172,3 +174,23 @@ def test_declined_question_is_not_asked_again_and_unknown_fields_are_rejected(cl
     again = client.post("/v1/predict", json={**profile, "skipped_fields": [first["field"]]}).json()
     assert again["followup"] is None or again["followup"]["field"] != first["field"]
     assert client.post("/v1/predict", json={**profile, "skipped_fields": ["age"]}).status_code == 422
+
+
+def test_grouped_followup_accepts_multiple_answers_and_skips_remaining_in_one_request(client):
+    from tools.what_if import ASKABLE_FIELDS
+
+    profile = {"age": 45, "bmi": 28.5, "bp": 130, "glucose_unavailable": True}
+    before = client.post("/v1/predict", json=profile).json()
+    skipped = [field for field in ASKABLE_FIELDS if field not in {"high_chol", "smoker"}]
+    response = client.post(
+        "/v1/predict",
+        json={**profile, "high_chol": True, "smoker": False, "skipped_fields": skipped},
+    )
+    assert response.status_code == 200
+    after = response.json()
+    assert after["patient"]["high_chol"] == 1
+    assert after["patient"]["smoker"] == 0
+    assert "HighChol" not in after["safety"]["defaulted_fields"]
+    assert "Smoker" not in after["safety"]["defaulted_fields"]
+    assert after["safety"]["confidence_score"] > before["safety"]["confidence_score"]
+    assert after["followup"] is None

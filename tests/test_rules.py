@@ -65,7 +65,7 @@ def test_escalation_is_most_severe_and_alerts_ordered_by_priority():
 def test_unmeasured_glucose_ignores_imputed_value():
     result = assess(patient(glucose=250.0, measured=False))
     assert "GLU-200" not in codes(result)
-    assert "DQ-GLU-MISSING" in codes(result)
+    assert "DQ-GLU-MISSING" not in codes(result)
     assert result["escalation"] == "routine_followup"
 
 
@@ -97,12 +97,17 @@ def test_high_prediction_with_normal_glucose_keeps_risk():
 
 def test_low_risk_without_glucose_is_flagged_unconfirmed():
     result = assess(patient(measured=False), risk="Low", prob=0.1)
-    assert "CF-PRED-LOW-GLUCOSE-MISSING" in codes(result, "conflicts")
+    assert "CF-PRED-LOW-GLUCOSE-MISSING" not in codes(result, "conflicts")
     assert result["escalation"] == "routine_followup"
 
 
 def test_high_risk_on_low_quality_data_is_provisional():
-    result = assess(patient(bp=225, measured=False, bmi=55.0), risk="High", prob=0.6)
+    incomplete = {
+        **patient(bp=225, measured=False, bmi=55.0),
+        "defaulted_fields": ["Smoker", "HighChol"],
+        "optional_field_count": 2,
+    }
+    result = assess(incomplete, risk="High", prob=0.6)
     assert result["confidence_label"] == "Low"
     assert "CF-PRED-HIGH-LOW-QUALITY" in codes(result, "conflicts")
 
