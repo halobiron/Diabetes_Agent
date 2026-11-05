@@ -95,7 +95,13 @@ export function Hero({ result }: { result: PredictionResult }) {
               {hasAlerts ? <AlertTriangle aria-hidden="true" className="h-4 w-4 shrink-0" /> : <Check aria-hidden="true" className="h-4 w-4 shrink-0" />}
               {hasAlerts ? `${result.safety.alerts.length} cảnh báo cần xem` : "Không có cảnh báo từ luật an toàn"}
             </p>
-            {hasAlerts ? <p className="mt-2 text-sm leading-relaxed text-muted">{result.safety.alerts[0]}</p> : null}
+            {hasAlerts ? (
+              <ul aria-label="Các cảnh báo an toàn" className="mt-2 list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted [overflow-wrap:anywhere]">
+                {result.safety.alerts.map((alert, index) => (
+                  <li key={`${index}-${alert}`}>{alert}</li>
+                ))}
+              </ul>
+            ) : null}
           </div>
         </section>
       </div>

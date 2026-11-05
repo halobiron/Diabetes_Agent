@@ -27,14 +27,14 @@
 \contentsline {subsection}{\numberline {4.3.2}Agent chọn bước hỗ trợ bằng Q-learning}{20}{subsection.4.3.2}%
 \contentsline {subsection}{\numberline {4.3.3}Luật ràng buộc chính sách học được}{22}{subsection.4.3.3}%
 \contentsline {section}{\numberline {4.4}Tư vấn, trợ giúp và cô lập lỗi}{22}{section.4.4}%
-\contentsline {chapter}{\numberline {5}CODE VÀ DEMO}{23}{chapter.5}%
-\contentsline {section}{\numberline {5.1}Cấu trúc mã nguồn}{23}{section.5.1}%
-\contentsline {section}{\numberline {5.2}Các hàm chính}{24}{section.5.2}%
-\contentsline {section}{\numberline {5.3}Cách chạy}{24}{section.5.3}%
-\contentsline {section}{\numberline {5.4}Demo: giao diện web}{25}{section.5.4}%
-\contentsline {section}{\numberline {5.5}Ví dụ ba lượt đánh giá}{29}{section.5.5}%
-\contentsline {section}{\numberline {5.6}Kiểm thử}{30}{section.5.6}%
-\contentsline {section}{\numberline {5.7}Đánh giá}{31}{section.5.7}%
-\contentsline {section}{\numberline {5.8}Hạn chế và hướng phát triển}{31}{section.5.8}%
-\contentsline {chapter}{KẾT LUẬN}{33}{chapter*.29}%
-\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{34}{chapter*.30}%
+\contentsline {chapter}{\numberline {5}CODE VÀ DEMO}{24}{chapter.5}%
+\contentsline {section}{\numberline {5.1}Cấu trúc mã nguồn}{24}{section.5.1}%
+\contentsline {section}{\numberline {5.2}Các hàm chính}{25}{section.5.2}%
+\contentsline {section}{\numberline {5.3}Cách chạy}{26}{section.5.3}%
+\contentsline {section}{\numberline {5.4}Demo: giao diện web}{26}{section.5.4}%
+\contentsline {section}{\numberline {5.5}Ví dụ ba lượt đánh giá}{30}{section.5.5}%
+\contentsline {section}{\numberline {5.6}Kiểm thử}{31}{section.5.6}%
+\contentsline {section}{\numberline {5.7}Đánh giá}{32}{section.5.7}%
+\contentsline {section}{\numberline {5.8}Hạn chế và hướng phát triển}{33}{section.5.8}%
+\contentsline {chapter}{KẾT LUẬN}{34}{chapter*.30}%
+\contentsline {chapter}{TÀI LIỆU THAM KHẢO}{35}{chapter*.31}%

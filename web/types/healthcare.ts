@@ -148,8 +148,21 @@ export type TraceStep = {
   detail: string;
 };
 
+export type AgentMessage = {
+  sender: string;
+  receiver: string;
+  performative: "challenge" | "accept" | "propose" | "inform";
+  content: string;
+  rule: string | null;
+  /** Việc Orchestrator thực hiện theo đề xuất này (chỉ có ở `propose`). */
+  action: string | null;
+  /** Số bước đã ghi trong `trace.steps` lúc thông điệp được gửi; dùng để xen vào đúng chỗ. */
+  after_step?: number | null;
+};
+
 export type AgentTrace = {
   steps: TraceStep[];
+  dialogue?: AgentMessage[];
   total_ms: number;
   evidence_count: number;
   evidence_status: "none" | "limited" | "sufficient";

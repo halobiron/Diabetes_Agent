@@ -190,7 +190,7 @@ Hệ đa agent (Multi-Agent System, MAS) gồm nhiều agent tương tác để 
 \textbf{Tiêu chí} & \textbf{Một khối} & \textbf{Nhiều thành phần (dự án)}\\
 \midrule
 Độ phức tạp & Cao, trộn nhiều kỹ thuật & Mỗi thành phần một kỹ thuật\\
-Kiểm thử & Khó tách lỗi & Kiểm thử riêng từng thành phần (14 tệp kiểm thử)\\
+Kiểm thử & Khó tách lỗi & Kiểm thử riêng từng thành phần (15 tệp kiểm thử)\\
 An toàn & Luật nằm lẫn trong mô hình & Bộ luật độc lập, luôn ưu tiên hơn dự đoán và policy RL\\
 Chịu lỗi & Một lỗi làm hỏng cả yêu cầu & Lỗi được ghi vào \code{degraded}, dùng nội dung dự phòng\\
 Chi phí phối hợp & Không có & Cần Orchestrator và định dạng dữ liệu trao đổi thống nhất\\
@@ -201,9 +201,13 @@ Chi phí phối hợp & Không có & Cần Orchestrator và định dạng dữ 
 \textbf{Mô hình tổ chức.} Dự án dùng kiểu \emph{supervisor}: Orchestrator gọi các thành phần theo thứ tự, truyền kết quả giữa chúng và tổng hợp đầu ra. Không có agent nào gọi trực tiếp agent khác.
 
 \section{Giao tiếp giữa các thành phần}
-FIPA-ACL \cite{fipa2002} chuẩn hóa thông điệp giữa các agent bằng \emph{performative}. Dự án \textbf{không} hiện thực FIPA-ACL hay bus thông điệp: các thành phần được Orchestrator gọi như hàm Python và trao đổi các cấu trúc dữ liệu (từ điển JSON) có trường rõ ràng, ví dụ \code{prediction}, \code{feature_explanation}, \code{retrieved_context}, \code{safety}, \code{policy}. Lựa chọn này đơn giản hơn nhưng đủ cho một quy trình tuần tự, và dễ kiểm thử.
+FIPA-ACL \cite{fipa2002} chuẩn hóa thông điệp giữa các agent bằng \emph{performative}. Dự án \textbf{không} hiện thực đầy đủ FIPA-ACL và không có bus thông điệp bất đồng bộ. Giao tiếp gồm hai tầng:
+\begin{itemize}[nosep]
+\item \textbf{Dữ liệu có cấu trúc}: các thành phần được Orchestrator gọi như hàm Python và trao đổi từ điển JSON có trường rõ ràng, ví dụ \code{prediction}, \code{feature_explanation}, \code{retrieved_context}, \code{safety}, \code{policy}. Đủ cho một quy trình tuần tự và dễ kiểm thử.
+\item \textbf{Thông điệp có kiểu khi các kết luận bất đồng}: một tập con nhỏ của FIPA-ACL (\code{agents/dialogue.py}) gồm bốn performative \code{challenge}, \code{accept}, \code{propose}, \code{inform}. Khi một luật xung đột kích hoạt, \code{SafetyGuard} gửi \code{challenge} tới thành phần bị luật bác bỏ; thành phần đó trả lời bằng hàm phản hồi riêng của mình. Một loại đề xuất, \code{propose} kèm \code{action}, được Orchestrator thực hiện thật và kết quả được báo lại bằng \code{inform} (Mục~4.4).
+\end{itemize}
 
-Để vẫn truy vết được ``ai đã làm gì'', lớp \code{RunLog} ghi lại mỗi bước (tên thành phần, trạng thái \code{ok}/\code{degraded}, thời gian xử lý bằng mili-giây, mô tả ngắn). Trường \code{trace} trong kết quả API chứa toàn bộ các bước này và được giao diện hiển thị ở mục ``Cả đội đã làm việc thế nào''.
+Để vẫn truy vết được ``ai đã làm gì'', lớp \code{RunLog} ghi lại mỗi bước (tên thành phần, trạng thái \code{ok}/\code{degraded}, thời gian xử lý bằng mili-giây, mô tả ngắn). Trường \code{trace} trong kết quả API chứa toàn bộ các bước này, cùng danh sách thông điệp \code{trace.dialogue} giữa các thành phần, và được giao diện hiển thị ở mục ``Cả đội đã làm việc thế nào''.
 
 \textbf{Hướng lai LLM.} Các mô hình ngôn ngữ lớn thường được dùng làm ``bộ não'' của agent, kéo theo rủi ro ảo giác lan truyền và chi phí gọi nhiều lần. Dự án chọn hướng lai: mọi quyết định lâm sàng do mô hình đã đánh giá và luật tường minh đảm nhận; LLM (OpenAI, mặc định \code{gpt-4o-mini}) chỉ \emph{diễn đạt} giải thích và khuyến nghị khi có \code{OPENAI_API_KEY}. Thiếu khóa hoặc gọi lỗi thì dùng mẫu câu dự phòng và nói rõ điều đó. Nhờ vậy toàn bộ hệ thống chạy được không cần LLM và cho kết quả tái lập.
 
@@ -271,7 +275,7 @@ Tư vấn, trợ giúp & \code{ExplanationAgent}, \code{RecommendationAgent}, \c
 \toprule
 \textbf{Thành phần} & \textbf{Nhận} & \textbf{Vai trò và kỹ thuật}\\
 \midrule
-\code{Orchestrator} & Hồ sơ đã kiểm tra từ API & Gọi lần lượt các thành phần, truyền kết quả, ghi \code{trace}, xử lý lỗi, chạy vòng policy (tối đa 3 bước)\\
+\code{Orchestrator} & Hồ sơ đã kiểm tra từ API & Gọi lần lượt các thành phần, truyền kết quả, ghi \code{trace}, xử lý lỗi, thương lượng giữa các thành phần (\code{_negotiate}), chạy vòng policy (tối đa 3 bước)\\
 \code{RiskModel} & Hồ sơ (tuổi, giới, chiều cao, cân nặng, huyết áp, các mục tùy chọn) & Chuẩn hóa về 21 đặc trưng BRFSS, dự đoán xác suất bằng MLP hiệu chuẩn, ghi nhận trường tự điền\\
 \code{FeatureExplainer} & Hồ sơ & Giải thích bằng phân tích độ nhạy (SHAP chỉ cho mô hình tuyến tính)\\
 \code{RetrievalAgent} & Hồ sơ, mức nguy cơ, giải thích đặc trưng & Tìm tối đa 3 đoạn bằng chứng (5 khi mở rộng), trả nguồn, URL, độ liên quan, \code{evidence_status}\\
@@ -292,7 +296,8 @@ Mỗi yêu cầu \code{POST /v1/predict} đi qua các bước sau (Hình~\ref{fi
 \item \code{RiskModel} dự đoán; xác định nhãn nhị phân và mức nguy cơ theo ngưỡng trong artifact.
 \item Tính độ nhạy đặc trưng, tìm hồ sơ tương tự, truy xuất bằng chứng.
 \item Đánh giá \code{evidence_status}, chạy bộ luật, soạn khuyến nghị.
-\item Nếu có policy: dựng trạng thái, hỏi policy; nếu chọn ``tìm thêm bằng chứng'' thì chạy lại truy xuất mở rộng, luật và khuyến nghị (tối đa 3 bước).
+\item \emph{Thương lượng}: nếu có luật xung đột, các thành phần trao đổi thông điệp (Mục~4.4); đề xuất ``tìm mở rộng bằng chứng'' của \code{RetrievalAgent} được thực hiện ngay (chạy lại truy xuất, luật và khuyến nghị), tối đa một lần.
+\item Nếu có policy: dựng trạng thái (đã tính việc tìm mở rộng ở bước trước), hỏi policy; nếu chọn ``tìm thêm bằng chứng'' thì chạy lại truy xuất mở rộng, luật và khuyến nghị (tối đa 3 bước).
 \item Mô phỏng ``nếu thay đổi'' (chỉ khi mức chuyển tuyến là theo dõi định kỳ), giải thích cuối, lưu bộ nhớ, ghi audit.
 \end{enumerate}
 
@@ -307,10 +312,11 @@ Mỗi yêu cầu \code{POST /v1/predict} đi qua các bước sau (Hình~\ref{fi
 \node[b,below=of b1] (b2) {Giải thích đặc trưng · hồ sơ tương tự · truy xuất bằng chứng};
 \node[r,below=of b2] (c) {\code{SafetyGuard}: luật cơ sở, luật xung đột, mức chuyển tuyến};
 \node[s,below=of c] (d) {\code{RecommendationAgent}: khuyến nghị có trích dẫn};
-\node[b,below=of d] (e) {\code{QPolicy}: bước tiếp theo (≤ 3 bước; ``tìm thêm'' quay lại truy xuất)};
+\node[r,below=of d] (n) {Thương lượng: \code{challenge}/\code{propose}; đề xuất ``tìm mở rộng'' được thực hiện};
+\node[b,below=of n] (e) {\code{QPolicy}: bước tiếp theo (≤ 3 bước; ``tìm thêm'' quay lại truy xuất)};
 \node[s,below=of e] (f) {\emph{What-if} · câu hỏi bổ sung · \code{ExplanationAgent}};
 \node[g,below=of f] (g) {Lưu bộ nhớ · audit · trả kết quả + \code{trace}};
-\foreach \x/\y in {a/b1,b1/b2,b2/c,c/d,d/e,e/f,f/g} \draw[arr] (\x)--(\y);
+\foreach \x/\y in {a/b1,b1/b2,b2/c,c/d,d/n,n/e,e/f,f/g} \draw[arr] (\x)--(\y);
 \draw[arr] (e.east) -- ++(1.9cm,0) |- node[pos=0.25,right,font=\scriptsize]{tìm thêm} (b2.east);
 \end{tikzpicture}
 \caption{Luồng xử lý một yêu cầu đánh giá}\label{fig:flow}
@@ -544,6 +550,33 @@ Orchestrator dựng trạng thái sau lượt xử lý đầu và hỏi policy t
 
 \textbf{Mô phỏng ``nếu thay đổi''} (\code{WhatIfSimulator}) tính lại xác suất khi giảm 5\% cân nặng (nếu BMI $\ge25$), vận động đều, bỏ thuốc lá, hoặc đưa huyết áp tâm thu xuống dưới 130 mmHg, chỉ với yếu tố mà người dùng \emph{thực sự khai} và có thể thay đổi, và gắn bằng chứng cho từng kịch bản. Chỉ chạy khi mức chuyển tuyến là theo dõi định kỳ.
 
+\textbf{Trao đổi giữa các thành phần.} Khi các kết luận bất đồng, hệ thống ghi lại một đoạn hội thoại có kiểu (\code{agents/dialogue.py}, trường \code{trace.dialogue}). Mỗi thông điệp có người gửi, người nhận, performative, nội dung và vị trí trong luồng (\code{after_step}: số bước đã chạy khi thông điệp được gửi), nên giao diện xen hội thoại đúng chỗ trong dòng thời gian các bước thay vì tách thành một khối riêng; \code{SafetyGuard} gửi \code{challenge} tới thành phần mà một luật xung đột (hoặc việc ghi đè policy) làm mất hiệu lực, và người nhận trả lời bằng hàm phản hồi của chính nó (Bảng~\ref{tab:dialogue}). Mô hình \emph{chấp nhận} khi số đo thực tế thắng, nhưng \emph{giữ nguyên và đề xuất} xét nghiệm A1C khi glucose bình thường mà dự đoán vẫn cao, vì glucose không phải đặc trưng của mô hình. \code{RetrievalAgent} \emph{đề xuất} tìm mở rộng bằng chứng; đây là đề xuất duy nhất mà Orchestrator \textbf{thực hiện thật}: nó chạy lại truy xuất mở rộng, bộ luật và khuyến nghị (tối đa một lần, trước khi policy chạy), rồi \code{RetrievalAgent} báo kết quả bằng \code{inform} (số đoạn bằng chứng, trạng thái bằng chứng, hoặc lỗi nếu tìm thất bại và giữ nguyên các đoạn cũ).
+
+\begin{table}[H]
+\centering
+\caption{Các cuộc trao đổi giữa thành phần (\texttt{agents/dialogue.py})}\label{tab:dialogue}
+\begin{tabularx}{\textwidth}{@{}L{4.2cm}L{3.3cm}X@{}}
+\toprule
+\textbf{Nguyên nhân} & \textbf{Người bị thách thức} & \textbf{Phản hồi}\\
+\midrule
+\code{CF-PRED-LOW-MEASURED-HIGH} & \code{RiskModel} & \code{accept}: nâng nguy cơ hiệu lực lên Cao theo số đo\\
+\code{CF-PRED-HIGH-GLUCOSE-NORMAL} & \code{RiskModel} & \code{propose}: giữ mức Cao, đề nghị xét nghiệm A1C\\
+\code{CF-PRED-HIGH-LOW-QUALITY} & \code{RiskModel} & \code{accept}: đánh dấu dự đoán là tạm thời\\
+\code{CF-ESCALATION-NO-EVIDENCE} & \code{RetrievalAgent} & \code{propose} tìm mở rộng (\textbf{được thực hiện}); sau đó \code{inform} kết quả\\
+Luật ghi đè bước của policy & \code{QPolicy} & \code{accept}: chấp nhận bị ghi đè, chuyển bác sĩ\\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Cần nói thẳng về phạm vi của cơ chế này:
+\begin{itemize}[nosep]
+\item Các hàm phản hồi là \emph{tất định} và được viết sẵn, không có LLM và không có nhiều vòng thương lượng.
+\item Chỉ một loại thông điệp \textbf{có tác động}: đề xuất tìm mở rộng. Nó đổi tập bằng chứng, trạng thái bằng chứng, khuyến nghị và trích dẫn, và có thể làm luật \code{CF-ESCALATION-NO-EVIDENCE} hết kích hoạt. Nó \emph{không} thể hạ mức chuyển tuyến, vì mức này do các luật cơ sở quyết định và các luật cơ sở không đọc bằng chứng.
+\item Các thông điệp còn lại (phản hồi của \code{RiskModel} và \code{QPolicy}) chỉ \textbf{ghi lại lý do luật thắng}: mức nguy cơ hiệu lực và việc ghi đè policy do bộ luật quyết định, không phải do cuộc trao đổi.
+\item Với KB hiện tại (21 đoạn bằng chứng), các hồ sơ thử đều có bằng chứng đủ, nên đề xuất tìm mở rộng \textbf{chưa kích hoạt trên dữ liệu thật}; hành vi này mới được kiểm chứng bằng kiểm thử với retriever giả cho kết quả yếu ở lần tìm đầu (\code{tests/test_dialogue.py}).
+\end{itemize}
+Đây là bản tối thiểu của giao tiếp agent--agent, đủ để truy vết ``ai phản biện ai, vì sao, và việc gì đã được làm theo'', chưa phải một giao thức thương lượng đầy đủ.
+
 \textbf{Cô lập lỗi.} Mỗi bước tùy chọn chạy trong \code{RunLog.guard}; lỗi được ghi vào \code{degraded}, bước đó dùng nội dung dự phòng, và lời cảnh báo ``kết quả chưa đầy đủ'' được thêm vào \code{disclaimers}. Riêng bộ luật: nếu lỗi, kết quả nghiêng về \code{prompt_clinician_followup} với độ tin cậy Thấp, \emph{không} coi là an toàn. Lỗi mô hình trả HTTP 500, không tạo xác suất giả.
 
 % ================= CHƯƠNG 5 =================
@@ -554,7 +587,7 @@ Orchestrator dựng trạng thái sau lượt xử lý đầu và hỏi policy t
 healthcare-agent-system/
 |-- main.py              build_agent(): nap model, KB, memory, policy
 |-- api/app.py           FastAPI: /v1/predict, /history, /health, xac thuc Bearer
-|-- agents/              orchestrator, retriever, explainer, recommender
+|-- agents/              orchestrator, dialogue, retriever, explainer, recommender
 |-- models/              risk_model.py, mlp.py (PyTorch->NumPy), training_pipeline.py
 |-- rl/                  environment.py (mo phong), policy.py (Q-learning)
 |-- tools/               rules.py, safety.py, neo4j_kb.py, explainability.py,
@@ -566,7 +599,7 @@ healthcare-agent-system/
 |                        train_support_policy, load_neo4j_kb, demo_step12
 |-- web/                 Next.js: app/, components/risk-console/, lib/
 |-- ui/app.py            ban Streamlit
-|-- tests/               142 kiem thu tu dong
+|-- tests/               154 kiem thu tu dong
 |-- docs/, infra/aws/    tai lieu, Terraform App Runner
 \end{lstlisting}
 
@@ -580,6 +613,8 @@ healthcare-agent-system/
 \midrule
 \code{Orchestrator.run} & Điều phối một lượt đánh giá, ghi \code{trace}, trả kết quả có cấu trúc\\
 \code{Orchestrator._choose_next_step} & Vòng policy tối đa 3 bước; áp quyền ưu tiên của luật\\
+\code{Orchestrator._negotiate} & Gửi \code{challenge} theo luật xung đột, thực hiện đề xuất tìm mở rộng của retriever (một lần), ghi kết quả bằng \code{inform}\\
+\code{conflict_exchanges}, \code{override_exchange} & Dựng các thông điệp \code{challenge}/\code{accept}/\code{propose}/\code{inform} giữa các thành phần bất đồng\\
 \code{RunLog.guard} & Bọc một bước tùy chọn: lỗi thành \code{degraded} và nội dung dự phòng\\
 \code{RiskModel.assess} & Chuẩn hóa hồ sơ, ghi trường tự điền, trả xác suất đã hiệu chuẩn\\
 \code{train_production_model} & CV, tuning, hiệu chuẩn, chọn mô hình và ngưỡng trên kiểm định\\
@@ -623,7 +658,7 @@ cd web; npm ci; npm run dev                                      # http://localh
 Biến môi trường chính: \code{NEO4J_PASSWORD} (đặt thì dùng Neo4j, không thì đọc KB từ tệp), \code{OPENAI_API_KEY} (tùy chọn), \code{REQUIRE_API_TOKEN} và \code{API_TOKEN} (xác thực Bearer).
 
 \section{Demo: giao diện web}
-Giao diện web (Next.js) dẫn người dùng qua các câu hỏi ngắn rồi trình bày kết quả. Mỗi nhóm thành phần phía API được thể hiện bằng một ``nhân vật'' để người xem biết \emph{ai làm gì}: \textbf{Bé Tiếp} (tiếp đón, hỏi hồ sơ), \textbf{Ông Mô} (mô hình dự đoán, giải thích), \textbf{Bà Nhớ} (bộ nhớ hồ sơ tương tự), \textbf{Cô Chứng} (truy xuất bằng chứng), \textbf{Chú Luật} (luật an toàn) và \textbf{Bạn Gợi} (khuyến nghị, \emph{what-if}, policy). Phần cuối trang hiển thị \code{trace} của lượt xử lý. Hình~\ref{fig:ui1} là màn nhập hồ sơ, Hình~\ref{fig:ui2a}--\ref{fig:ui2d} là trang kết quả của hồ sơ mẫu (nữ 45 tuổi, 170 cm, 82,4 kg, huyết áp tâm thu 130 mmHg).
+Giao diện web (Next.js) dẫn người dùng qua các câu hỏi ngắn rồi trình bày kết quả. Mỗi nhóm thành phần phía API được thể hiện bằng một ``nhân vật'' để người xem biết \emph{ai làm gì}: \textbf{Bé Tiếp} (tiếp đón, hỏi hồ sơ), \textbf{Ông Mô} (mô hình dự đoán, giải thích), \textbf{Bà Nhớ} (bộ nhớ hồ sơ tương tự), \textbf{Cô Chứng} (truy xuất bằng chứng), \textbf{Chú Luật} (luật an toàn) và \textbf{Bạn Gợi} (khuyến nghị, \emph{what-if}, policy). Phần cuối trang hiển thị \code{trace} của lượt xử lý dưới dạng dòng thời gian các bước; khi các thành phần bất đồng, cuộc trao đổi giữa các nhân vật xen vào ngay sau bước sinh ra nó (ảnh chụp dưới đây là bản giao diện trước khi thêm phần hội thoại). Hình~\ref{fig:ui1} là màn nhập hồ sơ, Hình~\ref{fig:ui2a}--\ref{fig:ui2d} là trang kết quả của hồ sơ mẫu (nữ 45 tuổi, 170 cm, 82,4 kg, huyết áp tâm thu 130 mmHg).
 
 \begin{figure}[H]
 \centering
@@ -675,10 +710,10 @@ Tổng thời gian & 352 ms & 279 ms & 142 ms\\
 \end{tabularx}
 \end{table}
 
-Hồ sơ C minh họa nguyên tắc quan trọng nhất: mô hình chỉ thấy các yếu tố lối sống và cho xác suất 3,9\% (Thấp), nhưng huyết áp 185 mmHg và glucose 320 mg/dL kích hoạt hai luật khẩn cấp, luật xung đột \code{CF-PRED-LOW-MEASURED-HIGH} nâng \code{effective_risk} lên Cao, và policy không được phép hạ mức chuyển tuyến. Hồ sơ B cho thấy hệ thống không coi ``chưa đo glucose'' là dấu hiệu yên tâm mà hỏi bổ sung. Với hồ sơ A, ba đoạn bằng chứng truy xuất gồm hai đoạn ADA (tiến triển từ tiền ĐTĐ, tuổi bắt đầu sàng lọc) và một đoạn WHO, hai trong ba đoạn được đồ thị gắn với yếu tố nguy cơ của bệnh nhân (\code{graph+semantic}). Thời gian chủ yếu nằm ở giải thích độ nhạy (khoảng 110--130 ms) và mô phỏng \emph{what-if} (khoảng 120 ms); các bước còn lại dưới 50 ms.
+Hồ sơ C minh họa nguyên tắc quan trọng nhất: mô hình chỉ thấy các yếu tố lối sống và cho xác suất 3,9\% (Thấp), nhưng huyết áp 185 mmHg và glucose 320 mg/dL kích hoạt hai luật khẩn cấp, luật xung đột \code{CF-PRED-LOW-MEASURED-HIGH} nâng \code{effective_risk} lên Cao, và policy không được phép hạ mức chuyển tuyến. Lượt chạy này cũng sinh một cuộc trao đổi hai thông điệp trong \code{trace.dialogue}: \code{SafetyGuard} $\rightarrow$ \code{RiskModel}, \code{challenge} (``mô hình dự đoán nguy cơ thấp nhưng số đo nằm trong khoảng nguy hiểm; ưu tiên số đo thực tế hơn dự đoán''), và \code{RiskModel} $\rightarrow$ \code{SafetyGuard}, \code{accept} (chấp nhận nâng nguy cơ hiệu lực lên Cao); hồ sơ A và B không có bất đồng nên \code{dialogue} rỗng. Hồ sơ B cho thấy hệ thống không coi ``chưa đo glucose'' là dấu hiệu yên tâm mà hỏi bổ sung. Với hồ sơ A, ba đoạn bằng chứng truy xuất gồm hai đoạn ADA (tiến triển từ tiền ĐTĐ, tuổi bắt đầu sàng lọc) và một đoạn WHO, hai trong ba đoạn được đồ thị gắn với yếu tố nguy cơ của bệnh nhân (\code{graph+semantic}). Thời gian chủ yếu nằm ở giải thích độ nhạy (khoảng 110--130 ms) và mô phỏng \emph{what-if} (khoảng 120 ms); các bước còn lại dưới 50 ms.
 
 \section{Kiểm thử}
-Bộ kiểm thử gồm \textbf{142 kiểm thử}, đều đạt trong lần chạy cuối (3 cảnh báo deprecation của SciPy), độ phủ \textbf{83\%} (\code{pytest --cov=.}).
+Bộ kiểm thử gồm \textbf{154 kiểm thử}, đều đạt trong lần chạy cuối (3 cảnh báo deprecation của SciPy), độ phủ \textbf{84\%} (\code{pytest --cov=.}).
 
 \begin{table}[H]
 \centering
@@ -694,6 +729,7 @@ Bộ kiểm thử gồm \textbf{142 kiểm thử}, đều đạt trong lần ch�
 \code{test_risk_model.py}, \code{test_risk_bands.py}, \code{test_mlp.py} & Ánh xạ huyết áp sang \code{HighBP}, mức nguy cơ theo artifact (cờ dương tính không bao giờ ở mức Thấp), MLP dự đoán được sau khi nạp mà không cần torch và hiệu chuẩn như các ứng viên khác\\
 \code{test_retriever.py}, \code{test_neo4j_kb.py} & Truy xuất, trạng thái bằng chứng, nạp và truy vấn KB, dự phòng\\
 \code{test_rl.py} & Môi trường, Q-learning, luật ghi đè policy\\
+\code{test_dialogue.py} & Thông điệp giữa các thành phần: không bất đồng thì rỗng, \code{challenge} rồi \code{accept}/\code{propose}/\code{inform} đúng người nhận; đề xuất tìm mở rộng được thực hiện đúng một lần, đổi bằng chứng và khuyến nghị nhưng không hạ mức chuyển tuyến; tìm mở rộng lỗi thì giữ bằng chứng cũ và báo lỗi\\
 \code{test_step11.py}, \code{test_patient_guidance.py}, \code{test_what_if.py}, \code{test_step12.py} & Giải thích không gán nhầm đặc trưng tự điền, điểm chất lượng theo tỉ lệ mục tự điền, hồ sơ tương tự theo khoảng cách số, thang chỉ số, câu hỏi bổ sung, mô phỏng \emph{what-if}, kịch bản chấp nhận trên artifact thật\\
 \bottomrule
 \end{tabularx}
@@ -715,16 +751,16 @@ Bộ kiểm thử gồm \textbf{142 kiểm thử}, đều đạt trong lần ch�
 \item \textbf{KB/RAG}: chỉ 21 đoạn bằng chứng từ 5 nguồn, chưa thẩm định chuyên môn; chưa có bộ đánh giá truy xuất; embedding MiniLM chủ yếu cho tiếng Anh. Hướng sửa: embedding đa ngôn ngữ, mở rộng KB, xây bộ câu hỏi có đáp án.
 \item \textbf{Luật}: ngưỡng là của dự án, chưa được bác sĩ thẩm định.
 \item \textbf{RL}: môi trường và phần thưởng tự đặt, chưa học từ phản hồi thật; không chứng minh hơn bảng kiểm cố định.
-\item \textbf{Không có giao tiếp agent--agent}: các thành phần chỉ được Orchestrator gọi tuần tự; chưa có tranh biện hay chất vấn giữa các agent.
+\item \textbf{Giao tiếp agent--agent còn tối thiểu}: các thành phần vẫn do Orchestrator gọi tuần tự. Phần phản biện (\code{challenge}/\code{accept}/\code{propose}/\code{inform}) dùng hàm phản hồi tất định; chỉ đề xuất tìm mở rộng bằng chứng của retriever được thực hiện thật, còn lại chỉ ghi lại bất đồng do luật xác định. Chưa có thương lượng nhiều vòng, chưa có agent nào tự khởi xướng hay thay đổi quyết định lâm sàng cuối, và đề xuất tìm mở rộng chưa kích hoạt trên hồ sơ thật vì bằng chứng của KB hiện tại luôn đủ. Lần chạy demo 26/26 thực hiện trước khi thêm phần này và chưa được chạy lại.
 \item \textbf{Chưa có thử nghiệm với người dùng thật.} Mọi kết quả chỉ nhằm mục đích học tập, không thay thế tư vấn y khoa.
 \end{itemize}
 
 % ================= KẾT LUẬN =================
 \chapter*{KẾT LUẬN}
 \addcontentsline{toc}{chapter}{KẾT LUẬN}
-Dự án đã hiện thực hóa sơ đồ hệ đa agent cho bệnh tiểu đường thành một hệ thống chạy được đầu--cuối. Dữ liệu BRFSS 2015 (253.680 hồ sơ) đi qua Deep Learning để dự đoán và phân loại nguy cơ: MLP PyTorch hiệu chuẩn đạt ROC-AUC 0,826 trên tập kiểm tra tách riêng, ngang các mô hình boosting, với ngưỡng và ba mức nguy cơ chọn trên tập kiểm định. Tri thức từ ADA, WHO, CDC, NIDDK và thử nghiệm DPP được tổ chức thành đồ thị Neo4j (20 thực thể, 35 quan hệ, 21 đoạn bằng chứng) và truy xuất bằng RAG kết hợp liên kết đồ thị, để khuyến nghị luôn kèm nguồn. Bộ luật 9 luật bảo đảm số đo thực tế thắng dự đoán thống kê, và policy Q-learning chọn bước tiếp theo luôn nằm dưới quyền ưu tiên của luật. Hệ thống được kiểm thử bằng 142 kiểm thử tự động (độ phủ 83\%) và demo tích hợp 26/26 kịch bản trên Neo4j thật.
+Dự án đã hiện thực hóa sơ đồ hệ đa agent cho bệnh tiểu đường thành một hệ thống chạy được đầu--cuối. Dữ liệu BRFSS 2015 (253.680 hồ sơ) đi qua Deep Learning để dự đoán và phân loại nguy cơ: MLP PyTorch hiệu chuẩn đạt ROC-AUC 0,826 trên tập kiểm tra tách riêng, ngang các mô hình boosting, với ngưỡng và ba mức nguy cơ chọn trên tập kiểm định. Tri thức từ ADA, WHO, CDC, NIDDK và thử nghiệm DPP được tổ chức thành đồ thị Neo4j (20 thực thể, 35 quan hệ, 21 đoạn bằng chứng) và truy xuất bằng RAG kết hợp liên kết đồ thị, để khuyến nghị luôn kèm nguồn. Bộ luật 9 luật bảo đảm số đo thực tế thắng dự đoán thống kê, và policy Q-learning chọn bước tiếp theo luôn nằm dưới quyền ưu tiên của luật. Khi các thành phần bất đồng, chúng trao đổi thông điệp có kiểu (phản biện, chấp nhận, đề xuất, thông báo) được ghi vào \code{trace}. Hệ thống được kiểm thử bằng 154 kiểm thử tự động (độ phủ 84\%) và demo tích hợp 26/26 kịch bản trên Neo4j thật.
 
-Bài học lớn nhất của dự án là trong bài toán y tế, giá trị của kiến trúc nhiều thành phần nằm ở chỗ mô hình thống kê, bằng chứng có nguồn và luật tường minh \emph{kiểm tra chéo} nhau, mọi kết quả truy vết được tới một bước cụ thể (\code{trace}), và phần học luôn đặt dưới sự giám sát của tri thức tường minh. Đồng thời, báo cáo nêu rõ các giới hạn: dữ liệu và nhãn của Hoa Kỳ, MLP không vượt trội, RL chỉ trên môi trường mô phỏng, chưa có benchmark truy xuất và chưa thẩm định chuyên môn. Hướng phát triển tiếp theo gồm: hiệu chỉnh mô hình trên dữ liệu người Việt, dùng embedding đa ngôn ngữ và xây bộ đánh giá truy xuất, nhờ chuyên gia y khoa thẩm định KB và ngưỡng luật, và bổ sung giao tiếp qua lại giữa các agent.
+Bài học lớn nhất của dự án là trong bài toán y tế, giá trị của kiến trúc nhiều thành phần nằm ở chỗ mô hình thống kê, bằng chứng có nguồn và luật tường minh \emph{kiểm tra chéo} nhau, mọi kết quả truy vết được tới một bước cụ thể (\code{trace}), và phần học luôn đặt dưới sự giám sát của tri thức tường minh. Đồng thời, báo cáo nêu rõ các giới hạn: dữ liệu và nhãn của Hoa Kỳ, MLP không vượt trội, RL chỉ trên môi trường mô phỏng, chưa có benchmark truy xuất và chưa thẩm định chuyên môn. Hướng phát triển tiếp theo gồm: hiệu chỉnh mô hình trên dữ liệu người Việt, dùng embedding đa ngôn ngữ và xây bộ đánh giá truy xuất, nhờ chuyên gia y khoa thẩm định KB và ngưỡng luật, và mở rộng giao tiếp giữa các agent từ ghi nhận bất đồng sang thương lượng nhiều vòng.
 
 % ================= TÀI LIỆU THAM KHẢO =================
 \begin{thebibliography}{99}
