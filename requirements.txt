@@ -4,7 +4,7 @@ joblib
 lightgbm
 streamlit
 fastapi
-pydantic>=2,<3
+pydantic>=2.14.2,<3
 httpx
 uvicorn
 python-dotenv
