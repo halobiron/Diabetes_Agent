@@ -1,0 +1,115 @@
+{
+  "description": "Danh sách nguồn tài liệu y khoa về đái tháo đường dùng cho demo (tập nhỏ). Thêm/bớt nguồn ở đây rồi chạy: python scripts/collect_corpus.py",
+  "sources": [
+    {
+      "id": "moh-qt-2017",
+      "title": "Quy trình lâm sàng chẩn đoán và điều trị đái tháo đường típ 2 (QĐ 3798/QĐ-BYT, 2017)",
+      "publisher": "Bộ Y tế Việt Nam",
+      "year": 2017,
+      "type": "pdf",
+      "lang": "vi",
+      "url": "https://files01.duytan.edu.vn/svruploads/kdieuduong-duytan/upload/2024/3/31/Quy trình lâm sàng chẩn đoán và điều trị Đái tháo đường típ 2.pdf",
+      "note": "Văn bản Bộ Y tế, bản lưu trên trang Đại học Duy Tân. Đã được thay bằng QĐ 5481/QĐ-BYT (2020) - nên đối chiếu ngưỡng chẩn đoán/mục tiêu điều trị trước khi trích dẫn."
+    },
+    {
+      "id": "who-diabetes",
+      "title": "Diabetes fact sheet",
+      "publisher": "World Health Organization",
+      "year": 2024,
+      "type": "web",
+      "lang": "en",
+      "url": "https://www.who.int/news-room/fact-sheets/detail/diabetes",
+      "selector": "div.sf-detail-body-wrapper"
+    },
+    {
+      "id": "vinmec-chan-doan-dieu-tri",
+      "title": "Chẩn đoán và điều trị đái tháo đường tuýp 2",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/chan-doan-va-dieu-tri-dai-thao-duong-tuyp-2-vi"
+    },
+    {
+      "id": "vinmec-chan-doan",
+      "title": "Chẩn đoán đái tháo đường type 2",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/chan-doan-dai-thao-duong-type-2-vi"
+    },
+    {
+      "id": "vinmec-trieu-chung-som",
+      "title": "Triệu chứng sớm của đái tháo đường type 2",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/dau-hieu-som-cua-tieu-duong-type-2-vi"
+    },
+    {
+      "id": "vinmec-phan-biet-type1-2",
+      "title": "Phân biệt chi tiết tiểu đường type 1 và type 2 theo hướng dẫn của Bộ Y tế",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/phan-biet-chi-tiet-tieu-duong-type-1-va-type-2-theo-huong-dan-cua-bo-y-te-vi"
+    },
+    {
+      "id": "vinmec-hieu-biet-t2-p1",
+      "title": "Hiểu biết về đái tháo đường type 2 - Phần 1",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/hieu-biet-ve-dai-thao-duong-type-2-phan-1-vi"
+    },
+    {
+      "id": "vinmec-tam-soat",
+      "title": "Tầm soát đái tháo đường là gì và vì sao phải tầm soát đái tháo đường?",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/tam-soat-dai-thao-duong-la-gi-va-vi-sao-phai-tam-soat-dai-thao-duong-vi"
+    },
+    {
+      "id": "vinmec-phong-ngua-tien-dtd",
+      "title": "Phát hiện và phòng ngừa tiền đái tháo đường",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/phat-hien-va-phong-ngua-tien-dai-thao-duong-vi"
+    },
+    {
+      "id": "vinmec-tien-dtd-tien-trien",
+      "title": "Tiền đái tháo đường và các tác nhân gây tiến triển thành bệnh đái tháo đường 2",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/tien-dai-thao-duong-va-cac-tac-nhan-gay-tien-trien-thanh-benh-dai-thao-duong-2-vi"
+    },
+    {
+      "id": "vinmec-tien-dtd-an-gi",
+      "title": "Tiền đái tháo đường nên ăn gì cho phù hợp",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vie/bai-viet/nguoi-bi-tien-tieu-duong-nen-gi-vi"
+    },
+    {
+      "id": "vinmec-theo-doi-tien-trien",
+      "title": "Hướng dẫn theo dõi tiến triển bệnh đái tháo đường typ 2",
+      "publisher": "Vinmec",
+      "year": 2024,
+      "type": "web",
+      "lang": "vi",
+      "url": "https://www.vinmec.com/vi/tin-tuc/thong-tin-suc-khoe/suc-khoe-tong-quat/huong-dan-theo-doi-tien-trien-benh-dai-thao-duong-typ-2"
+    }
+  ]
+}

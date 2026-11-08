@@ -4,7 +4,7 @@ import logging
 from tools.chroma_client import create_persistent_client
 from tools.neo4j_kb import FileKnowledgeBase, KnowledgeGraph, create_driver, load_kb_file
 from tools.semantic_embeddings import SemanticEmbeddingModel
-from tools.vietnamese import EVIDENCE_TEXTS
+from tools.vietnamese import RISK_LABELS
 
 logger = logging.getLogger(__name__)
 
@@ -13,8 +13,8 @@ STRONG_RELEVANCE = 0.45
 GRAPH_BOOST = 0.15
 BROAD_N_RESULTS = 5
 BROAD_QUERY = (
-    "Type 2 diabetes screening, diagnosis, prevention and management guidance for adults,"
-    " including blood glucose testing, lifestyle changes and when to see a clinician."
+    "Hướng dẫn tầm soát, chẩn đoán, phòng ngừa và điều trị đái tháo đường típ 2 ở người lớn,"
+    " gồm xét nghiệm đường huyết, thay đổi lối sống và khi nào cần đi khám bác sĩ."
 )
 
 
@@ -153,7 +153,7 @@ class RetrievalAgent:
         return {
             "evidence_id": evidence_id,
             "title": f"{item['source_title']} — {item['section']}",
-            "text": EVIDENCE_TEXTS.get(evidence_id, item["text"]),
+            "text": item["text"],
             "source_id": item["source_id"],
             "source_title": item["source_title"],
             "publisher": item.get("publisher"),
@@ -189,12 +189,12 @@ class RetrievalAgent:
         return linked
 
     def _query_text(self, patient_data, risk, factors):
-        parts = [f"Type 2 diabetes risk is {risk.lower()}."]
+        parts = [f"Nguy cơ đái tháo đường típ 2 ở mức {RISK_LABELS.get(risk, risk).lower()}."]
         if factors:
             parts.append(
-                "Risk factors: " + ", ".join(self.factor_names[f].lower() for f in factors) + "."
+                "Yếu tố nguy cơ: " + ", ".join(self.factor_names[f].lower() for f in factors) + "."
             )
         if not patient_data.get("glucose_measured", True):
-            parts.append("Blood glucose has not been measured, so testing is needed.")
-        parts.append("What screening, testing, and lifestyle or clinical steps are recommended?")
+            parts.append("Chưa đo đường huyết nên cần xét nghiệm.")
+        parts.append("Nên tầm soát, xét nghiệm, thay đổi lối sống hoặc can thiệp y khoa nào?")
         return " ".join(parts)

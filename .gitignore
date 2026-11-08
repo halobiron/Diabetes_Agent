@@ -27,3 +27,7 @@ AGENTS.md
 .repomixignore
 repomix.config.json
 graphify-out/
+
+# corpus download cache
+data/corpus/.cache/
+data/kb/*.bak

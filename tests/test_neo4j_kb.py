@@ -95,3 +95,28 @@ def test_support_query_uses_feature_keys():
     driver = FakeDriver()
     KnowledgeGraph(driver).support_for_risk_factors(["BMI", "HighBP"])
     assert driver.calls[0][1]["keys"] == ["BMI", "HighBP"]
+
+
+def test_cypher_literals_escape_quotes_backslashes_and_newlines():
+    from tools.neo4j_kb import _cy
+
+    bs = chr(92)  # one backslash, spelled out to avoid escaping confusion
+    assert _cy("it's") == "'it" + bs + "'s'"
+    assert _cy("a" + bs + "b") == "'a" + bs + bs + "b'"
+    assert _cy("dòng 1" + chr(10) + "dòng 2") == "'dòng 1 dòng 2'"
+    assert _cy(None) == "null" and _cy(2017) == "2017"
+    assert _cy(["a", "b'c"]) == "['a', 'b" + bs + "'c']"
+
+
+def test_to_cypher_covers_every_kb_item_and_is_idempotent_merge():
+    from tools.neo4j_kb import load_kb_file, to_cypher
+
+    kb = load_kb_file("data/kb/diabetes_kb.json")
+    script = to_cypher(kb)
+    statements = [line for line in script.splitlines() if line.endswith(";")]
+    assert sum(line.startswith("CREATE CONSTRAINT") for line in statements) == 3
+    assert sum(line.startswith("MERGE (s:Source") for line in statements) == len(kb["sources"])
+    assert sum(line.startswith("MERGE (n:Entity") for line in statements) == len(kb["entities"])
+    assert sum(line.startswith("MERGE (e:Evidence") for line in statements) == len(kb["evidence"])
+    assert sum(line.startswith("MATCH (a:Entity") for line in statements) == len(kb["relations"])
+    assert not any(line.startswith("CREATE (") for line in statements)

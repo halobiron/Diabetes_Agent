@@ -16,7 +16,7 @@ from tools.risk_classifier import classify_risk
 
 MIN_CHANGE = 0.001  # smaller than 0.1 percentage points is noise, not a scenario
 MIN_SWING = 0.02  # an unknown input must be able to move the estimate by 2 points to be asked
-WEIGHT_LOSS_FRACTION = 0.05  # ADA: 5% or more of body weight
+WEIGHT_LOSS_FRACTION = 0.05  # giảm từ 5% cân nặng trở lên (Vinmec, WHO)
 
 # Yes/no inputs a patient can reasonably be asked about, by model feature.
 ASKABLE_FEATURES = (
@@ -74,7 +74,7 @@ def _set(feature, value):
 def _lower_bp(row):
     _set("HighBP", 0)(row)
     if "bp" in row:
-        row["bp"] = min(row["bp"], 129)
+        row["bp"] = min(row["bp"], 139)
 
 
 def _weight_label(patient):
@@ -87,7 +87,7 @@ SCENARIOS = (
     Scenario(
         "weight_loss",
         _weight_label,
-        ("ev-ada-weight", "ev-dpp-weight"),
+        ("ev-vinmec-chan-doan-dieu-tri-009", "ev-vinmec-tien-dtd-tien-trien-009"),
         lambda patient, sim: patient["bmi"] >= 25
         and any(name in sim.model.feature_names for name in ("BMI", "bmi")),
         _lose_weight,
@@ -95,21 +95,21 @@ SCENARIOS = (
     Scenario(
         "physical_activity",
         lambda patient: "Vận động thể chất đều đặn (khoảng 150 phút mỗi tuần)",
-        ("ev-ada-activity", "ev-dpp-weight"),
+        ("ev-who-diabetes-009", "ev-vinmec-tien-dtd-tien-trien-009"),
         _supplied_equals("PhysActivity", 0),
         _set("PhysActivity", 1),
     ),
     Scenario(
         "smoking_cessation",
         lambda patient: "Bỏ thuốc lá",
-        ("ev-ada-smoking", "ev-cdc-smoking"),
+        ("ev-vinmec-tien-dtd-an-gi-008", "ev-vinmec-tien-dtd-tien-trien-009"),
         _supplied_equals("Smoker", 1),
         _set("Smoker", 0),
     ),
     Scenario(
         "blood_pressure",
-        lambda patient: "Đưa huyết áp tâm thu xuống dưới 130 mmHg",
-        ("ev-ada-bp-target",),
+        lambda patient: "Đưa huyết áp tâm thu xuống dưới 140 mmHg (mục tiêu của Bộ Y tế)",
+        ("ev-moh-qt-2017-005",),
         lambda patient, sim: patient.get("high_bp") == 1
         and any(name in sim.model.feature_names for name in ("HighBP", "bp")),
         _lower_bp,

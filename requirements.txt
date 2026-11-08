@@ -18,3 +18,8 @@ pytest
 pytest-cov
 ruff
 pre-commit
+
+beautifulsoup4
+lxml
+pypdf
+requests

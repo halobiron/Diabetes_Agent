@@ -47,7 +47,7 @@ flowchart TD
 | Dữ liệu và huấn luyện | 253.680 mẫu, 21 đặc trưng BRFSS; chia train/validation/test 60/20/20; `models/training_pipeline.py`, `models/mlp.py`. Chọn mô hình và ngưỡng bằng validation, đánh giá cuối trên test. |
 | RiskModel | `models/risk_model.py` nạp `artifacts/risk_model.joblib`. Artifact hiện tại là MLP đã hiệu chuẩn; trả xác suất, nhãn theo ngưỡng 0,23906 và mức rủi ro. Glucose không thuộc đầu vào mô hình BRFSS. |
 | Orchestrator | `agents/orchestrator.py` điều phối, truyền bằng chứng, giải thích đặc trưng và kết quả luật; ghi nhận lỗi thành phần trong `degraded`. |
-| RetrievalAgent | `agents/retriever.py` dùng `all-MiniLM-L6-v2`, chỉ mục ChromaDB và liên kết KB để xếp hạng bằng chứng; trả nguồn, URL, độ liên quan và trạng thái none/limited/sufficient. |
+| RetrievalAgent | `agents/retriever.py` dùng `paraphrase-multilingual-MiniLM-L12-v2` (đa ngôn ngữ, phù hợp KB tiếng Việt), chỉ mục ChromaDB và liên kết KB để xếp hạng bằng chứng; trả nguồn, URL, độ liên quan và trạng thái none/limited/sufficient. |
 | KB | `tools/neo4j_kb.py`: KnowledgeGraph truy vấn Neo4j; FileKnowledgeBase đọc JSON khi chưa cấu hình hoặc không kết nối được đồ thị lúc khởi tạo. KB có 20 thực thể, 35 quan hệ nghiệp vụ, 21 bằng chứng và 5 nguồn. |
 | SafetyGuard và luật | `tools/safety.py`, `tools/rules.py`: cảnh báo, mức chuyển tuyến, xử lý xung đột và điểm chất lượng dữ liệu. Luật có quyền ưu tiên so với dự đoán và policy RL. |
 | QPolicy | `rl/policy.py`, `rl/environment.py`: Q-learning lưu tại `artifacts/support_policy.json`; chọn hỏi glucose, truy xuất thêm, khuyến nghị hoặc chuyển bác sĩ. Huấn luyện bằng phản hồi mô phỏng. |
