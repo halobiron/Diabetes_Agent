@@ -168,3 +168,16 @@ def test_dosing_passages_are_never_returned_to_users(retriever):
     answer = retriever.ask("Liều insulin khởi đầu là bao nhiêu?", n_results=50)
     assert not {c["evidence_id"] for c in answer["citations"]} & retriever.withheld
     assert answer["trace"]["withheld_dosing_passages"] == len(retriever.withheld)
+
+
+def test_chat_uses_its_own_relevance_floor(file_kb, tmp_path):
+    lenient = RetrievalAgent(file_kb, WordEmbeddings(), tmp_path / "a", min_relevance=0.1)
+    strict = RetrievalAgent(
+        file_kb, WordEmbeddings(), tmp_path / "b", min_relevance=0.1, ask_min_relevance=0.99
+    )
+    question = "HbA1c bao nhiêu thì chẩn đoán đái tháo đường?"
+
+    assert lenient.ask(question)["citations"]
+    refused = strict.ask(question)
+    assert refused["citations"] == [] and refused["trace"]["min_relevance"] == 0.99
+    assert strict.retrieve({}, "Low", {"features": []})  # the patient flow keeps its own floor

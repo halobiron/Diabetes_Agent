@@ -6,6 +6,8 @@ Python lint/format và frontend lint/typecheck/build đều đạt. Demo tích h
 chặn Python/thư viện ChromaDB. Docker Linux là môi trường chạy được trên máy này;
 việc chặn Python Windows không ngăn demo bằng Docker.
 
+> **Cập nhật 09/11/2026:** KB hiện tại (146 đoạn) đã được nạp lại và demo `--require-neo4j` đạt 16/16 ca (178 nút, 181 quan hệ); xem [neo4j_verification.json](neo4j_verification.json) và [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md). Phần dưới là lần xác minh ngày 03/11 trên bản KB cũ.
+
 ## Xác minh lại với Neo4j thật ngày 03/11/2026
 
 Đã chạy Neo4j `2026.10.1` trong container riêng và nạp KB bằng

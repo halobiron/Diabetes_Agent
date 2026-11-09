@@ -1,0 +1,133 @@
+{
+  "description": "Bộ câu hỏi đánh giá truy xuất RAG. Một đoạn KB được coi là liên quan khi văn bản của nó khớp biểu thức chính quy `relevant_if` (kiểm tra trên chính nội dung kho tri thức, không do mô hình quyết định). Câu hỏi `out_of_scope` không có đáp án trong KB nên hệ thống phải từ chối. Câu hỏi `dosing` hỏi về liều thuốc nên không được trả đoạn nào có liều.",
+  "in_scope": [
+    {
+      "id": "q01",
+      "question": "Từ bao nhiêu tuổi thì nên bắt đầu tầm soát đái tháo đường?",
+      "relevant_if": "tầm soát.{0,120}\\d+\\s*tuổi|\\d+\\s*tuổi.{0,120}tầm soát|bắt đầu.{0,30}tuổi\\s*\\d+"
+    },
+    {
+      "id": "q02",
+      "question": "HbA1c bao nhiêu thì được chẩn đoán là đái tháo đường?",
+      "relevant_if": "HbA1c.{0,40}6,5"
+    },
+    {
+      "id": "q03",
+      "question": "Đường huyết lúc đói bao nhiêu là mắc bệnh tiểu đường?",
+      "relevant_if": "^(?=.*126\\s*mg)(?=.*(lúc đói|FPG|fasting))"
+    },
+    {
+      "id": "q04",
+      "question": "Tiền đái tháo đường được xác định khi đường huyết đói ở mức nào?",
+      "relevant_if": "100\\s*(-|–|đến)\\s*125"
+    },
+    {
+      "id": "q05",
+      "question": "Những dấu hiệu sớm của bệnh tiểu đường típ 2 là gì?",
+      "relevant_if": "khát nhiều|uống nhiều|tiểu nhiều|đi tiểu nhiều|very thirsty|urinate more"
+    },
+    {
+      "id": "q06",
+      "question": "Tiểu đường type 1 khác type 2 như thế nào?",
+      "relevant_if": "(type|típ|tuýp)\\s*1.{0,200}(type|típ|tuýp)\\s*2|(type|típ|tuýp)\\s*2.{0,200}(type|típ|tuýp)\\s*1",
+      "relevant_source": [
+        "vinmec-phan-biet-type1-2"
+      ]
+    },
+    {
+      "id": "q07",
+      "question": "Cần giảm bao nhiêu phần trăm cân nặng để ngừa tiến triển thành đái tháo đường?",
+      "relevant_if": "(giảm|sụt).{0,80}\\d+\\s*%.{0,80}(cân nặng|trọng lượng)|(cân nặng|trọng lượng).{0,80}(giảm|sụt).{0,40}\\d+\\s*%"
+    },
+    {
+      "id": "q08",
+      "question": "Mỗi tuần nên vận động thể lực bao nhiêu phút?",
+      "relevant_if": "150\\s*phút|150 minutes|phút mỗi ngày|phút.{0,40}(tất cả các ngày|trong tuần)"
+    },
+    {
+      "id": "q09",
+      "question": "Huyết áp mục tiêu của người bị đái tháo đường là bao nhiêu?",
+      "relevant_if": "Huyết áp.{0,80}<\\s*140"
+    },
+    {
+      "id": "q10",
+      "question": "Đái tháo đường có thể gây tổn thương mắt không?",
+      "relevant_if": "võng mạc|đáy mắt|retinopathy|blindness"
+    },
+    {
+      "id": "q11",
+      "question": "Đái tháo đường gây ra những biến chứng gì ở thận?",
+      "relevant_if": "suy thận|bệnh thận|kidney (failure|disease)|biến chứng.{0,60}thận"
+    },
+    {
+      "id": "q12",
+      "question": "Cơn hạ đường huyết có biểu hiện như thế nào?",
+      "relevant_if": "vã mồ hôi|run chân tay"
+    },
+    {
+      "id": "q13",
+      "question": "Người tiền đái tháo đường nên ăn những gì?",
+      "relevant_if": "chất xơ|rau xanh|tinh bột"
+    },
+    {
+      "id": "q14",
+      "question": "Hút thuốc lá có làm tăng nguy cơ bị tiểu đường không?",
+      "relevant_if": "hút thuốc|thuốc lá|tobacco|smok"
+    },
+    {
+      "id": "q15",
+      "question": "Thừa cân béo phì liên quan thế nào đến bệnh đái tháo đường?",
+      "relevant_if": "thừa cân|béo phì|overweight|obes"
+    },
+    {
+      "id": "q16",
+      "question": "Mục tiêu HbA1c khi điều trị cho người trưởng thành là bao nhiêu?",
+      "relevant_if": "HbA1c\\s*<\\s*7|HbA1c dưới 7"
+    },
+    {
+      "id": "q17",
+      "question": "Nghiệm pháp dung nạp glucose đường uống được làm như thế nào?",
+      "relevant_if": "OGTT"
+    },
+    {
+      "id": "q18",
+      "question": "Chỉ số LDL cholesterol nên đạt mức nào ở người đái tháo đường?",
+      "relevant_if": "LDL"
+    },
+    {
+      "id": "q19",
+      "question": "Người đái tháo đường cần chăm sóc bàn chân ra sao?",
+      "relevant_if": "bàn chân"
+    },
+    {
+      "id": "q20",
+      "question": "Tổ chức Y tế Thế giới nói gì về số người mắc đái tháo đường?",
+      "relevant_if": "triệu người|\\d+ million"
+    },
+    {
+      "id": "q21",
+      "question": "Ai nên đi tầm soát đái tháo đường?",
+      "relevant_if": "yếu tố nguy cơ.{0,150}tầm soát|tầm soát.{0,150}yếu tố nguy cơ"
+    },
+    {
+      "id": "q22",
+      "question": "Tiền đái tháo đường có tiến triển thành đái tháo đường được không?",
+      "relevant_if": "tiến triển|progressing to"
+    }
+  ],
+  "out_of_scope": [
+    "Thủ đô của nước Pháp là thành phố nào?",
+    "Hướng dẫn nấu phở bò ngon tại nhà",
+    "Giá vàng hôm nay là bao nhiêu?",
+    "Cách cài đặt Python trên Windows",
+    "Kết quả trận bóng đá tối qua thế nào?",
+    "Làm sao để học tiếng Anh nhanh?",
+    "Triệu chứng của bệnh cúm mùa là gì?",
+    "Cách điều trị ung thư phổi giai đoạn đầu"
+  ],
+  "dosing": [
+    "Liều insulin khởi đầu là bao nhiêu đơn vị mỗi ngày?",
+    "Nên uống metformin liều bao nhiêu mg?",
+    "Cách điều chỉnh liều insulin nền hằng tuần"
+  ]
+}

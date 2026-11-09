@@ -62,7 +62,7 @@ Trên giao diện Next.js, ngay ở màn nhập hồ sơ, kéo xuống và mở 
 | Béo phì có làm tăng nguy cơ tiểu đường không? | Đồ thị nhận ra yếu tố BMI, đoạn "BMI ≥ 23" của Bộ Y tế được cộng điểm |
 | Chẩn đoán đái tháo đường bằng xét nghiệm nào? | Thuần ngữ nghĩa, không có yếu tố đồ thị, vẫn trích đúng đoạn về glucose lúc đói và A1C |
 | Hút thuốc lá ảnh hưởng thế nào đến bệnh tiểu đường? | Đoạn "ngừng hút thuốc" lên đầu (điểm 0,91) |
-| Cách nấu phở bò ngon | Hệ thống từ chối vì không đoạn nào đạt ngưỡng 0,3 |
+| Cách nấu phở bò ngon | Hệ thống từ chối vì không đoạn nào đạt ngưỡng 0,4 của chat (điểm cao nhất 0,304) |
 
 Sau mỗi câu, mở mục **"Cách hệ thống truy xuất (vết RAG)"** và đọc 4 bước: nhúng câu hỏi → so cosine với 146 đoạn → đồ thị cộng 0,15 điểm cho đoạn liên kết → xếp hạng và trích dẫn. Giải thích đầy đủ ở [rag_giai_thich.md](rag_giai_thich.md).
 

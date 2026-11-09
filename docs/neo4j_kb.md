@@ -59,7 +59,7 @@ nạp được 46 nút, 56 quan hệ; truy xuất 21 bằng chứng; luồng API
 và [cách kiểm tra lại](kiem_thu_va_demo.md). Đây là kết quả trên phiên bản đã
 chạy; cấu hình Compose vẫn khai báo `neo4j:5-community`.
 
-**Lưu ý số liệu:** lần xác minh ngày 03/11/2026 (46 nút, 56 quan hệ, 21 bằng chứng) được thực hiện trên bản KB cũ. Bản KB hiện tại (`data/kb/diabetes_kb.json`, version 17) có 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng và 12 nguồn, nên các con số trên không còn đúng với KB hiện tại. Cần chạy lại `scripts/load_neo4j_kb.py` và demo để cập nhật `neo4j_verification.json` trước khi trình bày số liệu Neo4j mới.
+**Lưu ý số liệu:** lần xác minh ngày 03/11/2026 (46 nút, 56 quan hệ, 21 bằng chứng) được thực hiện trên bản KB cũ. Bản KB hiện tại (`data/kb/diabetes_kb.json`, version 17) có 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng và 12 nguồn, nên các con số trên không còn đúng với KB hiện tại. Ngày 09/11/2026 KB hiện tại đã được nạp lại vào Neo4j 5.26.32: **178 nút, 181 quan hệ, 146 đoạn bằng chứng**; demo `--require-neo4j` (không gồm web) đạt 16/16 ca. Xem [neo4j_verification.json](neo4j_verification.json) và [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md).
 
 `tools/neo4j_kb.py` → `KnowledgeGraph`:
 

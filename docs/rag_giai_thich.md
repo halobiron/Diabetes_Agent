@@ -39,7 +39,7 @@ Chroma: độ tương đồng cosine với 146 đoạn
 6. ghép câu trả lời từ 3 đoạn đầu, đánh số [1] [2] [3] kèm nguồn
 ```
 
-Nếu không có đoạn nào đạt ngưỡng 0.3, hệ thống từ chối trả lời thay vì bịa. Ví dụ "Cách nấu phở bò ngon" có điểm cao nhất chỉ 0.24 nên bị từ chối.
+Nếu không có đoạn nào đạt ngưỡng, hệ thống từ chối trả lời thay vì bịa. Chat dùng ngưỡng **0.4** (luồng đánh giá bệnh nhân dùng 0.3). Ví dụ "Cách nấu phở bò ngon" có điểm cao nhất 0.304 nên bị từ chối ở 0.4 nhưng vẫn lọt qua ở 0.3; ngưỡng được chọn bằng bộ câu hỏi có nhãn, xem [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md).
 
 ## 3. Ví dụ đã chạy thật
 

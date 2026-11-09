@@ -1,170 +1,135 @@
-﻿{
-    "timestamp":  "2026-11-03T09:05:57.197031+00:00",
-    "runtime":  "Docker Linux; healthcare-step12:vi; Neo4j 2026.10.1 isolated container",
-    "kb_source":  "KnowledgeGraph",
-    "graph_checks":  {
-                         "stats":  {
-                                       "nodes":  46,
-                                       "relationships":  56
-                                   },
-                         "evidence_count":  21,
-                         "support_count":  14,
-                         "support_sample":  [
-                                                {
-                                                    "risk_factor":  "high_bmi",
-                                                    "support_id":  "a1c_test",
-                                                    "support_name":  "A1C test",
-                                                    "support_labels":  [
-                                                                           "Entity",
-                                                                           "Test"
-                                                                       ],
-                                                    "relation":  "SHOULD_TEST_WITH",
-                                                    "evidence_id":  "ev-ada-screen-age",
-                                                    "evidence":  "Screening for prediabetes and type 2 diabetes should begin at age 35 for all adults, and earlier in adults with overweight or obesity who have one or more additional risk factors.",
-                                                    "source_id":  "ada-2025",
-                                                    "source_title":  "Standards of Care in Diabetes-2025",
-                                                    "url":  "https://diabetesjournals.org/care/issue/48/Supplement_1"
-                                                },
-                                                {
-                                                    "risk_factor":  "high_bmi",
-                                                    "support_id":  "a1c_test",
-                                                    "support_name":  "A1C test",
-                                                    "support_labels":  [
-                                                                           "Entity",
-                                                                           "Test"
-                                                                       ],
-                                                    "relation":  "SHOULD_TEST_WITH",
-                                                    "evidence_id":  "ev-ada-bmi-asian",
-                                                    "evidence":  "In Asian American individuals, testing is considered at a lower BMI threshold of 23 kg/m2.",
-                                                    "source_id":  "ada-2025",
-                                                    "source_title":  "Standards of Care in Diabetes-2025",
-                                                    "url":  "https://diabetesjournals.org/care/issue/48/Supplement_1"
-                                                },
-                                                {
-                                                    "risk_factor":  "high_bmi",
-                                                    "support_id":  "weight_loss",
-                                                    "support_name":  "Modest weight loss",
-                                                    "support_labels":  [
-                                                                           "Entity",
-                                                                           "Intervention"
-                                                                       ],
-                                                    "relation":  "ADDRESSES",
-                                                    "evidence_id":  "ev-ada-weight",
-                                                    "evidence":  "A weight loss of 5% or more of body weight can improve glycemia and cardiometabolic risk factors.",
-                                                    "source_id":  "ada-2025",
-                                                    "source_title":  "Standards of Care in Diabetes-2025",
-                                                    "url":  "https://diabetesjournals.org/care/issue/48/Supplement_1"
-                                                }
-                                            ]
-                     },
-    "embedding_model":  "sentence-transformers/all-MiniLM-L6-v2",
-    "llm":  "local fallback (no API key)",
-    "web_included":  true,
-    "passed":  26,
-    "scenarios":  [
-                      {
-                          "scenario":  "complete_profile",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "missing_optional_data",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "measurement_alerts",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "no_evidence",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "limited_evidence",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_retriever",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_memory_search",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_memory_store",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_feature_explainer",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_explainer",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_recommender",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_safety_guard",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "failure_support_policy",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "missing_required_data",
-                          "status":  422
-                      },
-                      {
-                          "scenario":  "repeat_profile_memory",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "history",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_page",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_health",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_complete",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_missing",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_warning",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_validation",
-                          "status":  422
-                      },
-                      {
-                          "scenario":  "web_history",
-                          "status":  200
-                      },
-                      {
-                          "scenario":  "web_backend_down_health",
-                          "status":  502
-                      },
-                      {
-                          "scenario":  "web_backend_down_history",
-                          "status":  502
-                      },
-                      {
-                          "scenario":  "web_backend_down_predict",
-                          "status":  502
-                      }
-                  ]
+{
+  "timestamp": "2026-11-09T05:07:04.278536+00:00",
+  "runtime": "Windows local; Python 3.11 (.venv); Neo4j 5.26.32 (Docker neo4j:5-community)",
+  "kb_version": "corpus-2026-11-08",
+  "kb_source": "KnowledgeGraph",
+  "graph_checks": {
+    "stats": {
+      "nodes": 178,
+      "relationships": 181
+    },
+    "evidence_count": 146,
+    "support_count": 16,
+    "support_sample": [
+      {
+        "risk_factor": "high_bmi",
+        "factor_key": "BMI",
+        "support_id": "lifestyle_program",
+        "support_name": "Chương trình thay đổi lối sống",
+        "support_labels": [
+          "Entity",
+          "Intervention"
+        ],
+        "relation": "ADDRESSES",
+        "evidence_id": "ev-who-diabetes-009",
+        "evidence": "Lifestyle changes are the best way to prevent or delay the onset of type 2 diabetes. To help prevent type 2 diabetes and its complications, people should: reach and keep a health body weight; stay physically active with at least 150 minutes of moderate exercise each week; eat a healthy diet and avoid sugar and saturated fat; not smoke tobacco.",
+        "source_id": "who-diabetes",
+        "source_title": "Diabetes fact sheet",
+        "url": "https://www.who.int/news-room/fact-sheets/detail/diabetes"
+      },
+      {
+        "risk_factor": "high_bmi",
+        "factor_key": "BMI",
+        "support_id": "lifestyle_program",
+        "support_name": "Chương trình thay đổi lối sống",
+        "support_labels": [
+          "Entity",
+          "Intervention"
+        ],
+        "relation": "ADDRESSES",
+        "evidence_id": "ev-vinmec-chan-doan-dieu-tri-008",
+        "evidence": "Quản lý bệnh tiểu đường type 2 bao gồm: Giảm cân; Ăn uống lành mạnh; Tập thể dục thường xuyên; Có thể sử dụng thuốc trị tiểu đường hoặc liệu pháp insulin; Theo dõi lượng đường trong máu. Những bước này sẽ giúp giữ cho lượng đường trong máu của bạn gần với mức bình thường, có thể trì hoãn hoặc ngăn ngừa các biến chứng.",
+        "source_id": "vinmec-chan-doan-dieu-tri",
+        "source_title": "Chẩn đoán và điều trị đái tháo đường tuýp 2",
+        "url": "https://www.vinmec.com/vie/bai-viet/chan-doan-va-dieu-tri-dai-thao-duong-tuyp-2-vi"
+      },
+      {
+        "risk_factor": "high_bmi",
+        "factor_key": "BMI",
+        "support_id": "weight_loss",
+        "support_name": "Giảm cân vừa phải",
+        "support_labels": [
+          "Entity",
+          "Intervention"
+        ],
+        "relation": "ADDRESSES",
+        "evidence_id": "ev-vinmec-chan-doan-dieu-tri-009",
+        "evidence": "Giảm cân có thể làm giảm lượng đường trong máu của bạn. Giảm chỉ 5 đến 10% trọng lượng cơ thể của bạn có thể tạo ra sự khác biệt, mặc dù giảm cân bền vững từ 7% trở lên so với trọng lượng ban đầu của bạn là lý tưởng nhất. Điều đó có nghĩa là một người nặng 180 pound (82 kg) thì sẽ cần giảm ít nhất 13 pound (5,9 kg) thì mới có đủ để tác động lên lượng đường trong máu. Kiểm soát khẩu phần và ăn các thực phẩm lành mạnh là cách đơn giản để bắt đầu giảm cân.",
+        "source_id": "vinmec-chan-doan-dieu-tri",
+        "source_title": "Chẩn đoán và điều trị đái tháo đường tuýp 2",
+        "url": "https://www.vinmec.com/vie/bai-viet/chan-doan-va-dieu-tri-dai-thao-duong-tuyp-2-vi"
+      }
+    ],
+    "evidence_expected": 146
+  },
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "llm": "local fallback (no API key)",
+  "web_included": false,
+  "passed": 16,
+  "scenarios": [
+    {
+      "scenario": "complete_profile",
+      "status": 200
+    },
+    {
+      "scenario": "missing_optional_data",
+      "status": 200
+    },
+    {
+      "scenario": "measurement_alerts",
+      "status": 200
+    },
+    {
+      "scenario": "no_evidence",
+      "status": 200
+    },
+    {
+      "scenario": "limited_evidence",
+      "status": 200
+    },
+    {
+      "scenario": "failure_retriever",
+      "status": 200
+    },
+    {
+      "scenario": "failure_memory_search",
+      "status": 200
+    },
+    {
+      "scenario": "failure_memory_store",
+      "status": 200
+    },
+    {
+      "scenario": "failure_feature_explainer",
+      "status": 200
+    },
+    {
+      "scenario": "failure_explainer",
+      "status": 200
+    },
+    {
+      "scenario": "failure_recommender",
+      "status": 200
+    },
+    {
+      "scenario": "failure_safety_guard",
+      "status": 200
+    },
+    {
+      "scenario": "failure_support_policy",
+      "status": 200
+    },
+    {
+      "scenario": "missing_required_data",
+      "status": 422
+    },
+    {
+      "scenario": "repeat_profile_memory",
+      "status": 200
+    },
+    {
+      "scenario": "history",
+      "status": 200
+    }
+  ]
 }

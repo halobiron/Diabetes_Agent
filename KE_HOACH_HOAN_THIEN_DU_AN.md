@@ -71,7 +71,7 @@ Kết quả: MLP đứng thứ 2 theo CV (0,8305) nên được tuning, và đư
 
 Chi tiết tại [Knowledge graph Neo4j](docs/neo4j_kb.md): 20 thực thể, 35 quan hệ, 21 bằng chứng từ 5 nguồn; kiểm thử bằng driver giả, chưa chạy trên server Neo4j thật (máy chưa bật Docker).
 
-Cập nhật 03/11/2026 (trên bản KB cũ 21 đoạn; KB hiện tại có 146 đoạn, 12 nguồn và chưa được nạp/xác minh lại trên Neo4j thật): đã chạy Neo4j thật `2026.10.1` trong Docker, nạp được
+Cập nhật 03/11/2026 (trên bản KB cũ 21 đoạn; đã nạp và xác minh lại bản KB 146 đoạn ngày 09/11/2026, xem Bước 13): đã chạy Neo4j thật `2026.10.1` trong Docker, nạp được
 46 nút/56 quan hệ, truy vấn bằng chứng có nguồn và chạy demo API + web
 26/26 ca với `kb_source=KnowledgeGraph`. Kết quả trước đó về việc chưa chạy
 Neo4j thật đã được giải quyết; xem `docs/neo4j_verification.json`.
@@ -123,7 +123,10 @@ Kết quả: 96 tests đạt, coverage 80,97%; frontend lint/typecheck/build đ�
 - [x] Đối chiếu từng agent với `docs/pdf/project_architecture_multiagent_diabet_v1.pdf`; ghi bảng ánh xạ và phần chưa là agent riêng tại [Kiến trúc](docs/architecture.md).
 - [x] Thêm `request_id` và `version` vào từng bước trace; audit log ghi thêm `model_version`, thời gian, `degraded`, `evidence_status`.
 - [x] Chặn các đoạn chứa liều thuốc không bao giờ đến người dùng (PDF mục 10); 5 test mới, toàn bộ 177 tests đạt.
-- [ ] Chưa làm: nạp lại KB 146 đoạn vào Neo4j thật và cập nhật `neo4j_verification.json`; hiệu chỉnh ngưỡng liên quan 0,3 và đo chất lượng truy xuất (precision@k) trên tập câu hỏi có nhãn; đo và báo cáo độ trễ; để bác sĩ thẩm định bộ luật.
+- [x] Nạp lại KB 146 đoạn vào Neo4j thật (178 nút, 181 quan hệ), demo `--require-neo4j` đạt 16/16 ca; cập nhật `neo4j_verification.json`.
+- [x] Bộ 33 câu hỏi có nhãn ([data/eval/retrieval_questions.json](data/eval/retrieval_questions.json)), script `scripts/evaluate_retrieval.py`; hiệu chỉnh ngưỡng chat 0,3 → 0,4 (hit@3 = 0,727; ngưỡng cũ để lọt câu "nấu phở bò" với điểm 0,304).
+- [x] Đo độ trễ bằng `scripts/measure_latency.py`: `/v1/predict` trung bình 248 ms (p95 290 ms), `/v1/chat` 22 ms, khởi động lần đầu 12,8 s. Chi tiết và hạn chế: [Đánh giá truy xuất và độ trễ](docs/danh_gia_truy_xuat_va_do_tre.md).
+- [ ] Chưa làm: để bác sĩ thẩm định bộ luật và bộ câu hỏi đánh giá; cải thiện hit@3 (chia đoạn nhỏ hơn hoặc xếp hạng lại); chặn câu hỏi gần chủ đề y khoa nhưng KB không có (cúm, ung thư phổi); đo độ trễ khi gọi LLM.
 
 ### Bước 13 — Hoàn thiện báo cáo
 

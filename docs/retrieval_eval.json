@@ -1,0 +1,143 @@
+{
+  "kb_source": "KnowledgeGraph",
+  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "passages": 146,
+  "passages_withheld_dosing": 17,
+  "in_scope_questions": 22,
+  "out_of_scope_questions": 8,
+  "relevant_passages_per_question": {
+    "q01": 3,
+    "q02": 4,
+    "q03": 7,
+    "q04": 4,
+    "q05": 9,
+    "q06": 8,
+    "q07": 1,
+    "q08": 5,
+    "q09": 2,
+    "q10": 7,
+    "q11": 11,
+    "q12": 1,
+    "q13": 6,
+    "q14": 11,
+    "q15": 21,
+    "q16": 2,
+    "q17": 3,
+    "q18": 3,
+    "q19": 6,
+    "q20": 3,
+    "q21": 2,
+    "q22": 19
+  },
+  "by_threshold": [
+    {
+      "threshold": 0.2,
+      "hit@3": 0.727,
+      "precision@3": 0.348,
+      "recall@3": 0.394,
+      "mrr": 0.576,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.375
+    },
+    {
+      "threshold": 0.25,
+      "hit@3": 0.727,
+      "precision@3": 0.348,
+      "recall@3": 0.394,
+      "mrr": 0.576,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.375
+    },
+    {
+      "threshold": 0.3,
+      "hit@3": 0.727,
+      "precision@3": 0.348,
+      "recall@3": 0.394,
+      "mrr": 0.576,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.375
+    },
+    {
+      "threshold": 0.35,
+      "hit@3": 0.727,
+      "precision@3": 0.348,
+      "recall@3": 0.394,
+      "mrr": 0.576,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.25
+    },
+    {
+      "threshold": 0.4,
+      "hit@3": 0.727,
+      "precision@3": 0.348,
+      "recall@3": 0.394,
+      "mrr": 0.576,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.25
+    },
+    {
+      "threshold": 0.45,
+      "hit@3": 0.682,
+      "precision@3": 0.303,
+      "recall@3": 0.348,
+      "mrr": 0.53,
+      "answered_in_scope": 0.955,
+      "wrongly_answered_out_of_scope": 0.25
+    },
+    {
+      "threshold": 0.5,
+      "hit@3": 0.682,
+      "precision@3": 0.303,
+      "recall@3": 0.348,
+      "mrr": 0.53,
+      "answered_in_scope": 0.955,
+      "wrongly_answered_out_of_scope": 0.0
+    },
+    {
+      "threshold": 0.55,
+      "hit@3": 0.682,
+      "precision@3": 0.303,
+      "recall@3": 0.348,
+      "mrr": 0.53,
+      "answered_in_scope": 0.864,
+      "wrongly_answered_out_of_scope": 0.0
+    }
+  ],
+  "best_score_out_of_scope": {
+    "Thủ đô của nước Pháp là thành phố nào?": 0.097,
+    "Hướng dẫn nấu phở bò ngon tại nhà": 0.304,
+    "Giá vàng hôm nay là bao nhiêu?": 0.159,
+    "Cách cài đặt Python trên Windows": 0.091,
+    "Kết quả trận bóng đá tối qua thế nào?": 0.157,
+    "Làm sao để học tiếng Anh nhanh?": 0.163,
+    "Triệu chứng của bệnh cúm mùa là gì?": 0.472,
+    "Cách điều trị ung thư phổi giai đoạn đầu": 0.463
+  },
+  "best_score_in_scope": {
+    "q01": 0.786,
+    "q02": 0.816,
+    "q03": 0.791,
+    "q04": 0.825,
+    "q05": 0.847,
+    "q06": 0.445,
+    "q07": 0.843,
+    "q08": 0.706,
+    "q09": 0.675,
+    "q10": 0.532,
+    "q11": 0.757,
+    "q12": 0.615,
+    "q13": 0.749,
+    "q14": 0.799,
+    "q15": 0.819,
+    "q16": 0.813,
+    "q17": 0.743,
+    "q18": 0.676,
+    "q19": 0.533,
+    "q20": 0.724,
+    "q21": 0.703,
+    "q22": 0.645
+  },
+  "dosing_questions": 3,
+  "dosing_passages_returned": [],
+  "top_k": 3
+}

@@ -11,6 +11,10 @@ logger = logging.getLogger(__name__)
 
 MIN_RELEVANCE = 0.3  # cosine similarity below this is treated as off-topic
 STRONG_RELEVANCE = 0.45
+# Chat questions are free text, so unrelated ones must be refused; this floor was chosen on
+# data/eval/retrieval_questions.json (see docs/danh_gia_truy_xuat_va_do_tre.md). Questions
+# built from a patient profile score >= 0.6, so the 0.3 floor above is not what limits them.
+CHAT_MIN_RELEVANCE = 0.4
 GRAPH_BOOST = 0.15
 BROAD_N_RESULTS = 5
 BROAD_QUERY = (
@@ -84,9 +88,11 @@ class RetrievalAgent:
         chroma_path,
         fallback_kb=None,
         min_relevance=MIN_RELEVANCE,
+        ask_min_relevance=None,
     ):
         self.embedding_model = embedding_model
         self.min_relevance = min_relevance
+        self.ask_min_relevance = min_relevance if ask_min_relevance is None else ask_min_relevance
         self.kb = knowledge_base
         self.kb_source = type(knowledge_base).__name__
         try:
@@ -112,7 +118,13 @@ class RetrievalAgent:
         kb = file_kb
         if settings.neo4j_password:
             kb = KnowledgeGraph(create_driver(settings), settings.neo4j_database)
-        return cls(kb, SemanticEmbeddingModel(), chroma_path, fallback_kb=file_kb)
+        return cls(
+            kb,
+            SemanticEmbeddingModel(),
+            chroma_path,
+            fallback_kb=file_kb,
+            ask_min_relevance=CHAT_MIN_RELEVANCE,
+        )
 
     def _sync_collection(self, evidence):
         # The name hashes model + corpus, so changed KB text or a new model builds a fresh index.
@@ -203,7 +215,7 @@ class RetrievalAgent:
             "embedding_model": self.embedding_model.name,
             "kb_source": self.kb_source,
             "passages_in_index": self.collection.count(),
-            "min_relevance": self.min_relevance,
+            "min_relevance": self.ask_min_relevance,
             "graph_factors": factors,
             "graph_boost": GRAPH_BOOST,
             "withheld_dosing_passages": len(self.withheld),
@@ -225,7 +237,7 @@ class RetrievalAgent:
 
         ranked = []
         for evidence_id, score in semantic.items():
-            if score < self.min_relevance or evidence_id in self.withheld:
+            if score < self.ask_min_relevance or evidence_id in self.withheld:
                 continue
             rows = linked.get(evidence_id, [])
             boost = GRAPH_BOOST if rows else 0.0

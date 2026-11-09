@@ -1,0 +1,157 @@
+{
+  "kb_source": "KnowledgeGraph",
+  "repeats_per_input": 10,
+  "note": "In-process TestClient on one machine, CPU inference, no network; not a load test.",
+  "predict_cold_start_ms": {
+    "thieu_glucose": 12838.9
+  },
+  "predict_warm": {
+    "n": 40,
+    "mean_ms": 247.9,
+    "median_ms": 262.8,
+    "p95_ms": 290.4,
+    "max_ms": 584.0
+  },
+  "predict_warm_by_profile": {
+    "thieu_glucose": {
+      "n": 10,
+      "mean_ms": 268.0,
+      "median_ms": 269.0,
+      "p95_ms": 290.4,
+      "max_ms": 290.4
+    },
+    "nguy_co_thap": {
+      "n": 10,
+      "mean_ms": 259.5,
+      "median_ms": 254.0,
+      "p95_ms": 283.0,
+      "max_ms": 283.0
+    },
+    "nguy_co_cao": {
+      "n": 10,
+      "mean_ms": 308.1,
+      "median_ms": 278.3,
+      "p95_ms": 584.0,
+      "max_ms": 584.0
+    },
+    "glucose_cao": {
+      "n": 10,
+      "mean_ms": 156.0,
+      "median_ms": 154.2,
+      "p95_ms": 170.8,
+      "max_ms": 170.8
+    }
+  },
+  "predict_pipeline_total_ms": {
+    "n": 40,
+    "mean_ms": 242.0,
+    "median_ms": 257.1,
+    "p95_ms": 284.2,
+    "max_ms": 577.9
+  },
+  "predict_component_ms": {
+    "explainer": {
+      "n": 40,
+      "mean_ms": 0.0,
+      "median_ms": 0.0,
+      "p95_ms": 0.0,
+      "max_ms": 0.0
+    },
+    "feature_explainer": {
+      "n": 40,
+      "mean_ms": 107.4,
+      "median_ms": 105.5,
+      "p95_ms": 118.7,
+      "max_ms": 128.8
+    },
+    "memory_search": {
+      "n": 40,
+      "mean_ms": 2.8,
+      "median_ms": 2.5,
+      "p95_ms": 5.9,
+      "max_ms": 6.3
+    },
+    "memory_store": {
+      "n": 40,
+      "mean_ms": 13.9,
+      "median_ms": 14.2,
+      "p95_ms": 16.1,
+      "max_ms": 16.7
+    },
+    "recommender": {
+      "n": 40,
+      "mean_ms": 0.1,
+      "median_ms": 0.1,
+      "p95_ms": 0.1,
+      "max_ms": 0.2
+    },
+    "retriever": {
+      "n": 40,
+      "mean_ms": 29.9,
+      "median_ms": 22.2,
+      "p95_ms": 29.4,
+      "max_ms": 317.4
+    },
+    "risk_model": {
+      "n": 40,
+      "mean_ms": 6.0,
+      "median_ms": 5.8,
+      "p95_ms": 7.9,
+      "max_ms": 11.5
+    },
+    "safety_guard": {
+      "n": 40,
+      "mean_ms": 0.0,
+      "median_ms": 0.0,
+      "p95_ms": 0.1,
+      "max_ms": 0.1
+    },
+    "support_policy": {
+      "n": 40,
+      "mean_ms": 0.0,
+      "median_ms": 0.0,
+      "p95_ms": 0.1,
+      "max_ms": 0.1
+    },
+    "what_if": {
+      "n": 40,
+      "mean_ms": 81.6,
+      "median_ms": 104.8,
+      "p95_ms": 121.3,
+      "max_ms": 130.0
+    }
+  },
+  "chat_cold_start_ms": {
+    "HbA1c bao nhiêu thì được chẩn đoán là đái tháo đường?": 24.8
+  },
+  "chat_warm": {
+    "n": 30,
+    "mean_ms": 22.3,
+    "median_ms": 22.1,
+    "p95_ms": 25.8,
+    "max_ms": 27.1
+  },
+  "chat_warm_by_question": {
+    "HbA1c bao nhiêu thì được chẩn đoán là đái tháo đường?": {
+      "n": 10,
+      "mean_ms": 24.2,
+      "median_ms": 23.8,
+      "p95_ms": 27.1,
+      "max_ms": 27.1
+    },
+    "Người tiền đái tháo đường nên ăn những gì?": {
+      "n": 10,
+      "mean_ms": 21.8,
+      "median_ms": 21.7,
+      "p95_ms": 23.8,
+      "max_ms": 23.8
+    },
+    "Thủ đô của nước Pháp là thành phố nào?": {
+      "n": 10,
+      "mean_ms": 21.0,
+      "median_ms": 21.2,
+      "p95_ms": 23.5,
+      "max_ms": 23.5
+    }
+  }
+}
