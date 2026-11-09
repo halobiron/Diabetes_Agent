@@ -37,7 +37,7 @@ export function KbPanel({ result }: { result: PredictionResult }) {
   if (kb.isPending) {
     return (
       <p role="status" className="flex items-center gap-2 text-sm font-semibold text-info">
-        <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Đang đọc cơ sở tri thức…
+        <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Đang đọc…
       </p>
     );
   }
@@ -65,23 +65,18 @@ export function KbPanel({ result }: { result: PredictionResult }) {
 function SourceStatus({ graph, mine }: { graph: KbGraphData; mine: number }) {
   const live = graph.source === "neo4j";
   return (
-    <div className="space-y-2 text-sm">
-      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-        <span className={clsx("inline-flex items-center gap-2 rounded-full border px-3 py-1.5 font-semibold", live ? "border-success/40 bg-success/10 text-success" : "border-warning/40 bg-warning/10 text-warning")}>
-          <Database aria-hidden="true" className="h-4 w-4" />
-          {live ? "Đang đọc trực tiếp từ Neo4j" : graph.neo4j_configured ? "Không kết nối được Neo4j, đang dùng file KB dự phòng" : "Chưa cấu hình Neo4j, đang dùng file KB"}
+    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted">
+      <span className={clsx("inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 font-semibold", live ? "border-success/40 bg-success/10 text-success" : "border-warning/40 bg-warning/10 text-warning")}>
+        <Database aria-hidden="true" className="h-3.5 w-3.5" />
+        {live ? "Neo4j" : "File KB dự phòng"}
+      </span>
+      <span className="tabular-nums">{graph.entities.length} thực thể · {graph.relations.length} quan hệ · {graph.evidence_count} đoạn · {graph.source_count} nguồn</span>
+      {mine > 0 ? (
+        <span className="flex items-center gap-1.5">
+          <span aria-hidden="true" className="inline-block h-3.5 w-5 rounded border-2 border-warning bg-warning/10" />
+          Viền vàng: đã dùng cho bạn ({mine})
         </span>
-        <span className="text-muted tabular-nums">
-          {graph.entities.length} thực thể · {graph.relations.length} quan hệ · {graph.evidence_count} đoạn bằng chứng · {graph.source_count} nguồn
-          {graph.version ? ` · phiên bản ${graph.version}` : ""}
-        </span>
-      </div>
-      <p className="flex flex-wrap items-center gap-2 text-muted">
-        <span aria-hidden="true" className="inline-block h-4 w-6 rounded-md border-2 border-warning bg-warning/10" />
-        {mine > 0
-          ? `${mine} thực thể được viền vàng là phần hệ thống đã dùng cho hồ sơ của bạn. Chọn một thực thể để xem bằng chứng làm căn cứ.`
-          : "Hồ sơ này chưa dùng thực thể nào của đồ thị. Bạn vẫn có thể chọn một thực thể để xem các quan hệ của nó."}
-      </p>
+      ) : null}
     </div>
   );
 }
@@ -140,23 +135,22 @@ function EntityDetail({ graph, entityId, usedEvidence, onSelect }: { graph: KbGr
   const column = KB_COLUMNS.find((c) => c.label === entity.label);
 
   return (
-    <section aria-labelledby="entity-title" className="border-t border-borderSoft pt-6">
-      <h3 id="entity-title" className="text-xl font-bold">{entity.name}</h3>
-      <p className="mt-1 text-sm text-muted">
-        {column?.title ?? entity.label}
-        {entity.key ? ` · khớp đặc trưng mô hình "${entity.key}"` : ""}
-      </p>
-      {entity.description ? <p className="mt-3 max-w-prose text-base leading-relaxed">{entity.description}</p> : null}
+    <section aria-labelledby="entity-title" className="border-t border-borderSoft pt-4">
+      <div className="flex flex-wrap items-center gap-2">
+        <h3 id="entity-title" className="text-lg font-bold">{entity.name}</h3>
+        <span className="rounded-full bg-infoSoft px-2 py-0.5 text-xs font-semibold text-info">{column?.title ?? entity.label}</span>
+      </div>
+      {entity.description ? <p className="mt-2 max-w-prose text-sm leading-6 text-muted">{entity.description}</p> : null}
 
-      <div className="mt-6">
+      <div className="mt-3">
         {detail.isPending ? (
           <p role="status" className="flex items-center gap-2 text-sm font-semibold text-info">
-            <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Đang đọc quan hệ và bằng chứng…
+            <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Đang đọc…
           </p>
         ) : detail.isError ? (
           <p role="alert" className="text-sm font-semibold text-danger">{detail.error.message}</p>
         ) : groups.length === 0 ? (
-          <p className="text-sm text-muted">Thực thể này chưa có quan hệ nào kèm bằng chứng.</p>
+          <p className="text-sm text-muted">Chưa có quan hệ nào kèm bằng chứng.</p>
         ) : (
           <ul className="divide-y divide-borderSoft border-y border-borderSoft">
             {groups.map((group) => {
@@ -164,21 +158,20 @@ function EntityDetail({ graph, entityId, usedEvidence, onSelect }: { graph: KbGr
               const phrase = text ? (group.outgoing ? text.outgoing : text.incoming) : group.relation;
               const usedCount = group.rows.filter((r) => usedEvidence.has(r.evidence_id)).length;
               return (
-                <li key={group.key} className="py-3">
+                <li key={group.key} className="py-2.5">
                   <details>
-                    <summary className="cursor-pointer list-none text-base [&::-webkit-details-marker]:hidden">
-                      <span className="text-muted">{entity.name} </span>
-                      <span className={clsx("font-semibold", text?.tone)}>{phrase}</span>{" "}
+                    <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-2 gap-y-1 text-sm [&::-webkit-details-marker]:hidden">
+                      <span className={clsx("font-semibold", text?.tone)}>{phrase}</span>
                       <span className="font-semibold">{group.otherName}</span>
-                      <span className="ml-2 text-sm text-muted">· {group.rows.length} đoạn bằng chứng</span>
-                      {usedCount > 0 ? <span className="ml-2 text-sm font-semibold text-warning">· {usedCount} đoạn đã dùng cho hồ sơ của bạn</span> : null}
+                      <span className="rounded-full bg-canvas px-2 py-0.5 text-xs tabular-nums text-muted">{group.rows.length} đoạn</span>
+                      {usedCount > 0 ? <span className="rounded-full bg-warning/15 px-2 py-0.5 text-xs font-semibold text-warning">{usedCount} đã dùng</span> : null}
                     </summary>
                     <div className="mt-3 space-y-3">
                       <ul className="space-y-3">
                         {group.rows.map((row) => (
                           <li key={row.evidence_id}>
                             <blockquote className={clsx("rounded-lg p-3 text-sm leading-6", usedEvidence.has(row.evidence_id) ? "bg-warning/10" : "bg-canvas")}>
-                              {usedEvidence.has(row.evidence_id) ? <p className="mb-1 text-xs font-semibold text-warning">Đã dùng cho hồ sơ của bạn</p> : null}
+                              {usedEvidence.has(row.evidence_id) ? <p className="mb-1 text-xs font-semibold text-warning">Đã dùng cho bạn</p> : null}
                               {row.evidence}
                               <footer className="mt-1 text-xs text-muted">
                                 <CitationLink citation={{ evidence_id: row.evidence_id, text: row.evidence, source_title: row.source_title, publisher: row.publisher, year: row.year, url: row.url }} />
@@ -188,7 +181,7 @@ function EntityDetail({ graph, entityId, usedEvidence, onSelect }: { graph: KbGr
                         ))}
                       </ul>
                       <button type="button" onClick={() => onSelect(group.otherId)} className="min-h-11 text-sm font-semibold text-info underline-offset-4 hover:underline">
-                        Xem {group.otherName}
+                        Đi tới {group.otherName} →
                       </button>
                     </div>
                   </details>

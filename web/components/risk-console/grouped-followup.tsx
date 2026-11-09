@@ -41,9 +41,8 @@ export function GroupedFollowup({ result, input, skipped, pending, error, onAnsw
         <div className="min-w-0">
           <h2 id="grouped-followup-title" className="text-base font-bold">Bạn Gợi · Bổ sung thông tin trong một lượt</h2>
           <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">
-            {active.length ? "Chọn tất cả những điều đúng với bạn, giống lúc điền hồ sơ, rồi cập nhật một lần." : "Bạn đã chọn chưa rõ hoặc bỏ qua các mục còn thiếu. Mình sẽ không hỏi lại các mục đó trong hồ sơ này."}
+            {active.length ? "Chọn những điều đúng với bạn (mục không chọn là Không; chọn “Chưa rõ” nếu chưa biết), rồi cập nhật một lần." : "Bạn đã chọn chưa rõ hoặc bỏ qua các mục còn thiếu. Mình sẽ không hỏi lại các mục đó trong hồ sơ này."}
           </p>
-          <p className="mt-1 max-w-prose text-sm leading-relaxed text-muted">Mục “Chưa rõ” vẫn dùng giá trị mặc định và không được hỏi lại sau khi bạn gửi. Bạn có thể bổ sung sau trong hồ sơ.</p>
         </div>
       </div>
 
@@ -51,7 +50,6 @@ export function GroupedFollowup({ result, input, skipped, pending, error, onAnsw
         <form onSubmit={submit} className="mt-4">
           <fieldset disabled={pending} className="min-w-0 space-y-5 disabled:opacity-60">
             <legend className="sr-only">Thông tin tiền sử và thói quen còn thiếu</legend>
-            <p className="text-sm leading-relaxed text-muted">Trong nhóm đã trả lời, mục được chọn là Có, mục không chọn là Không. Chọn “Chưa rõ” nếu chưa thể trả lời cả nhóm.</p>
             {groups.map((group) => {
               const items = (group === "Tiền sử bệnh" ? HISTORY : HABITS)
                 .filter(({ key }) => active.some(({ field }) => field === key));

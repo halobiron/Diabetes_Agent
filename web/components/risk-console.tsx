@@ -7,18 +7,14 @@ import { useState } from "react";
 import { createPrediction } from "@/lib/api";
 import type { AskableField, PatientInput, PredictionResult } from "@/types/healthcare";
 
-import { AgentTrace } from "./risk-console/agent-trace";
 import { Avatar, CAST, type CastId } from "./risk-console/agents";
 import { Assessment } from "./risk-console/assessment";
 import { ChatPanel } from "./risk-console/chat";
 import { DEFAULT_INPUT } from "./risk-console/constants";
-import { Fold } from "./risk-console/fold";
 import { Hero } from "./risk-console/hero";
-import { KbPanel } from "./risk-console/kb-explorer";
 import { InputReview } from "./risk-console/input-review";
 import { missingFollowupFields } from "./risk-console/followup-fields";
 import { GroupedFollowup } from "./risk-console/grouped-followup";
-import { ModelStrip } from "./risk-console/model-strip";
 import { FollowupChange, NextQuestion } from "./risk-console/next-question";
 import { calculateBmi } from "./risk-console/utils";
 import { Intake } from "./risk-console/intake";
@@ -114,7 +110,7 @@ function RiskConsoleInner() {
           </aside>
         </div>
       ) : (
-        <main className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8" aria-busy={mutation.isPending}>
+        <main className="mx-auto flex max-w-6xl flex-col gap-5 px-5 py-6" aria-busy={mutation.isPending}>
           <button type="button" onClick={() => { setEditStep(null); setView("form"); }} className="flex min-h-11 w-fit items-center gap-2 text-sm font-semibold text-info underline-offset-4 hover:underline">
             <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Xem hồ sơ đã nhập
           </button>
@@ -152,29 +148,6 @@ function RiskConsoleInner() {
             />
           ) : null}
           <Assessment result={result} scales={result.measurement_scales ?? []} />
-          <section aria-labelledby="more-title" className="mt-4 space-y-3">
-            <h2 id="more-title" className="text-xl font-bold">Tìm hiểu thêm</h2>
-            <Fold
-              title="Cơ sở tri thức Neo4j đã dùng cho hồ sơ này"
-              hint="Đồ thị thực thể và quan hệ, làm nổi phần đã dùng cho kết quả của bạn"
-              cast="chung"
-              defaultOpen
-            >
-              <KbPanel result={result} />
-            </Fold>
-            <ChatPanel />
-            <Fold
-              title="Cả đội đã làm việc thế nào"
-              hint={result.trace ? `${result.trace.steps.length} bước trong ${result.trace.total_ms.toFixed(0)} ms${(result.trace.dialogue ?? []).length > 0 ? ", có trao đổi giữa các agent" : ""}` : "Vết xử lý của các agent"}
-              cast="tiep"
-              defaultOpen={Boolean(result.trace?.disagreement)}
-            >
-              <AgentTrace result={result} />
-            </Fold>
-            <Fold title="Thẻ nhân viên của Ông Mô" hint="Chi tiết kỹ thuật của mô hình dự đoán" cast="mo">
-              <ModelStrip result={result} />
-            </Fold>
-          </section>
         </main>
       )}
     </div>

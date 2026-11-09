@@ -37,7 +37,7 @@ function useWideScreen() {
  * `dockOnWide`: trên màn rộng hiện thành cột phụ luôn mở (đặt cạnh nội dung chính);
  * trên màn hẹp, hoặc khi không bật, là khối gập như các khối phụ khác.
  */
-export function ChatPanel({ dockOnWide = false }: { dockOnWide?: boolean }) {
+export function ChatPanel({ dockOnWide = false, bare = false }: { dockOnWide?: boolean; bare?: boolean }) {
   const wide = useWideScreen();
   const docked = dockOnWide && wide;
   const [question, setQuestion] = useState("");
@@ -98,6 +98,7 @@ export function ChatPanel({ dockOnWide = false }: { dockOnWide?: boolean }) {
       </div>
   );
 
+  if (bare) return body;
   if (!docked) {
     return <Fold cast="chung" title={TITLE} hint={HINT}>{body}</Fold>;
   }
