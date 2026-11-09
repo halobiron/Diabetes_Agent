@@ -269,6 +269,28 @@ class KnowledgeGraph:
             limit=limit,
         )
 
+    def graph(self):
+        """Whole graph for display: entities, relations (with evidence counts) and corpus sizes."""
+        entities = self._run(
+            "MATCH (n:Entity) RETURN n.id AS id, n.name AS name, n.description AS description, "
+            "n.key AS key, [l IN labels(n) WHERE l <> 'Entity'][0] AS label ORDER BY label, name"
+        )
+        relations = self._run(
+            "MATCH (a:Entity)-[r]->(b:Entity) RETURN a.id AS `from`, type(r) AS type, "
+            "b.id AS `to`, size(r.evidence_ids) AS evidence_count ORDER BY `from`, type, `to`"
+        )
+        counts = self._run(
+            "OPTIONAL MATCH (e:Evidence) WITH count(e) AS evidence "
+            "OPTIONAL MATCH (s:Source) RETURN evidence, count(s) AS sources"
+        )[0]
+        return {
+            "version": self.kb_version(),
+            "entities": entities,
+            "relations": relations,
+            "evidence_count": counts["evidence"],
+            "source_count": counts["sources"],
+        }
+
     def support_for_risk_factors(self, factor_keys, limit=20):
         """Interventions and tests linked to risk factors (by model feature key), with evidence."""
         return self._run(
@@ -321,6 +343,60 @@ class FileKnowledgeBase:
 
     def kb_version(self):
         return self.kb["version"]
+
+    def graph(self):
+        return {
+            "version": self.kb["version"],
+            "entities": [
+                {
+                    "id": e["id"],
+                    "name": e["name"],
+                    "description": e.get("description"),
+                    "key": e.get("key"),
+                    "label": e["label"],
+                }
+                for e in sorted(self.kb["entities"], key=lambda e: (e["label"], e["name"]))
+            ],
+            "relations": [
+                {
+                    "from": r["from"],
+                    "type": r["type"],
+                    "to": r["to"],
+                    "evidence_count": len(r.get("evidence", [])),
+                }
+                for r in self.kb["relations"]
+            ],
+            "evidence_count": len(self._evidence),
+            "source_count": len(self._sources),
+        }
+
+    def relations_with_evidence(self, entity_id, limit=20):
+        rows = []
+        for rel in self.kb["relations"]:
+            if entity_id not in (rel["from"], rel["to"]):
+                continue
+            outgoing = rel["from"] == entity_id
+            other = self._entities[rel["to"] if outgoing else rel["from"]]
+            for evidence_id in rel.get("evidence", []):
+                row = self._evidence_row(evidence_id)
+                rows.append(
+                    {
+                        "relation": rel["type"],
+                        "outgoing": outgoing,
+                        "other_id": other["id"],
+                        "other_name": other["name"],
+                        "evidence_id": evidence_id,
+                        "evidence": row["text"],
+                        "section": row["section"],
+                        "source_id": row["source_id"],
+                        "source_title": row["source_title"],
+                        "publisher": row["publisher"],
+                        "year": row["year"],
+                        "url": row["url"],
+                    }
+                )
+        rows.sort(key=lambda r: (r["relation"], r["other_name"], r["evidence_id"]))
+        return rows[:limit]
 
     def support_for_risk_factors(self, factor_keys, limit=20):
         keys = set(factor_keys)

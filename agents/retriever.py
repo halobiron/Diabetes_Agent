@@ -1,5 +1,6 @@
 import hashlib
 import logging
+import re
 
 from tools.chroma_client import create_persistent_client
 from tools.neo4j_kb import FileKnowledgeBase, KnowledgeGraph, create_driver, load_kb_file
@@ -34,6 +35,20 @@ NO_ANSWER = (
     "câu hỏi này. Bạn có thể hỏi về triệu chứng, chẩn đoán, xét nghiệm, yếu tố nguy cơ, "
     "phòng ngừa hoặc điều trị đái tháo đường típ 2."
 )
+
+
+# Passages that give medication doses (e.g. insulin units, "điều chỉnh liều") stay in the KB but
+# are never shown to users: the system must not prescribe medication or dosage. Glucose cut-offs
+# in mg/dL are diagnostic criteria, not doses, so they are not matched.
+DOSING_PATTERN = re.compile(
+    r"(?<!\w)liều(?!\w)|đ\.?\s?v\s*/\s*kg|(?<!\w)đ\.?\s?v(?!\w)|\d+\s*đơn vị|(?<!\w)units?(?!\w)",
+    re.IGNORECASE,
+)
+
+
+def is_dosing_text(text):
+    """True when a passage contains medication-dose instructions."""
+    return bool(DOSING_PATTERN.search(text or ""))
 
 
 def excerpt(text, limit=ANSWER_CHARS):
@@ -86,6 +101,7 @@ class RetrievalAgent:
 
         self.factor_names = self.kb.risk_factor_names()
         self.evidence = {item["evidence_id"]: item for item in evidence}
+        self.withheld = {i for i, item in self.evidence.items() if is_dosing_text(item["text"])}
         self.client = create_persistent_client(chroma_path)
         self.collection = self._sync_collection(evidence)
 
@@ -154,7 +170,7 @@ class RetrievalAgent:
 
         contexts = []
         for evidence_id, score in relevance.items():
-            if score < self.min_relevance:
+            if score < self.min_relevance or evidence_id in self.withheld:
                 continue
             rows = linked.get(evidence_id, [])
             contexts.append(
@@ -190,6 +206,7 @@ class RetrievalAgent:
             "min_relevance": self.min_relevance,
             "graph_factors": factors,
             "graph_boost": GRAPH_BOOST,
+            "withheld_dosing_passages": len(self.withheld),
         }
         if not question or not trace["passages_in_index"]:
             return {"answer": NO_ANSWER, "citations": [], "status": "none", "trace": trace}
@@ -208,7 +225,7 @@ class RetrievalAgent:
 
         ranked = []
         for evidence_id, score in semantic.items():
-            if score < self.min_relevance:
+            if score < self.min_relevance or evidence_id in self.withheld:
                 continue
             rows = linked.get(evidence_id, [])
             boost = GRAPH_BOOST if rows else 0.0

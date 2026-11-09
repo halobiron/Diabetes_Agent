@@ -27,6 +27,8 @@ Phương án dự phòng nếu giao diện lỗi: `.\.venv\Scripts\python.exe sc
 
 ## Phần 1 - Show KB Neo4j (2-3 phút)
 
+**Trên giao diện web:** nhập một hồ sơ rồi xem phần "Cơ sở tri thức Neo4j đã dùng cho hồ sơ này" ở cuối trang kết quả. Huy hiệu cho biết đang đọc từ Neo4j hay file dự phòng, kèm số thực thể, quan hệ, đoạn bằng chứng và nguồn. Các thực thể viền vàng là phần hệ thống đã dùng cho hồ sơ đó; bấm một thực thể để xem quan hệ và các đoạn tài liệu làm căn cứ (đoạn đã dùng được đánh dấu). Phần Hỏi đáp ngay bên dưới dùng cùng đồ thị này khi truy xuất.
+
 **Nói:** KB được xây từ 12 tài liệu y khoa tiếng Việt (Bộ Y tế, WHO, Vinmec). Từ đó trích ra 20 thực thể, 35 quan hệ và 146 đoạn bằng chứng, sinh file `data/kb/kb_diabet.cypher` rồi nạp vào Neo4j.
 
 Trong Neo4j Browser chạy lần lượt:

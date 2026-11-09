@@ -148,3 +148,23 @@ def test_ask_declines_when_nothing_is_relevant(file_kb, tmp_path):
     reply = strict.ask("zzzz qqqq")
 
     assert reply["citations"] == [] and reply["status"] == "none"
+
+
+def test_dosing_passages_are_detected_but_diagnostic_cutoffs_are_not():
+    from agents.retriever import is_dosing_text
+
+    assert is_dosing_text("Bắt đầu điều trị: 10 đ.v/ ngày hoặc 0,1-0,2 đv/kg/ngày")
+    assert is_dosing_text("Dùng bắt đầu bằng liều 500mg x 2 lần /ngày")
+    assert not is_dosing_text("Chẩn đoán đái tháo đường khi FPG ≥ 126 mg/dL hoặc HbA1c ≥ 6,5%")
+    assert not is_dosing_text("community-based programs")
+
+
+def test_dosing_passages_are_never_returned_to_users(retriever):
+    assert retriever.withheld
+    patient = {"glucose_measured": False}
+    contexts = retriever.retrieve(patient, "High", FEATURES, n_results=50, broaden=True)
+    assert not {c["evidence_id"] for c in contexts} & retriever.withheld
+
+    answer = retriever.ask("Liều insulin khởi đầu là bao nhiêu?", n_results=50)
+    assert not {c["evidence_id"] for c in answer["citations"]} & retriever.withheld
+    assert answer["trace"]["withheld_dosing_passages"] == len(retriever.withheld)

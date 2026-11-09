@@ -120,3 +120,20 @@ def test_to_cypher_covers_every_kb_item_and_is_idempotent_merge():
     assert sum(line.startswith("MERGE (e:Evidence") for line in statements) == len(kb["evidence"])
     assert sum(line.startswith("MATCH (a:Entity") for line in statements) == len(kb["relations"])
     assert not any(line.startswith("CREATE (") for line in statements)
+
+
+def test_file_kb_graph_and_entity_evidence():
+    from tools.neo4j_kb import FileKnowledgeBase
+
+    kb = FileKnowledgeBase(load_kb_file(get_settings().kb_path))
+    graph = kb.graph()
+    assert graph["entities"] and graph["relations"]
+    assert graph["evidence_count"] > 0 and graph["source_count"] > 0
+    assert {"id", "name", "label"} <= graph["entities"][0].keys()
+    assert all(r["evidence_count"] > 0 for r in graph["relations"])
+
+    rows = kb.relations_with_evidence("high_bmi")
+    assert rows
+    assert all(r["evidence"] and r["source_title"] for r in rows)
+    assert {"type2_diabetes", "prediabetes"} <= {r["other_id"] for r in rows}
+    assert kb.relations_with_evidence("no_such_entity") == []

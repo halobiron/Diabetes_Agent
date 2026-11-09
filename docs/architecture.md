@@ -57,6 +57,27 @@ flowchart TD
     RET -.->|"không kết nối được Neo4j"| FILE["data/kb/diabetes_kb.json"]
 ```
 
+## Đối chiếu với tài liệu kiến trúc (`docs/pdf/project_architecture_multiagent_diabet_v1.pdf`)
+
+PDF mô tả 8 agent; mã nguồn gộp một số vai trò thành công cụ do Orchestrator gọi. Bảng dưới nói rõ phần nào là agent thật, phần nào chỉ là thành phần, để không nhận quá mức khi vấn đáp.
+
+| Agent trong PDF | Trong mã nguồn | Ghi chú |
+|---|---|---|
+| Patient Data Agent | `PatientRequest` (Pydantic) trong `api/app.py` + `RiskModel.assess` | Không phải agent riêng: kiểm tra đầu vào và điền giá trị mặc định ở API/mô hình. Dữ liệu sai trả HTTP 422 và dừng luồng. |
+| DL Prediction Agent | `agents/diagnosis_agent.py` (`DiagnosisAgent`) | Agent thật; gọi MLP đã huấn luyện. |
+| Rule-Based Agent | `tools/rules.py`, `tools/safety.py` (`SafetyGuard`) | Thành phần do Orchestrator gọi, không phải agent độc lập. |
+| KG/RAG Agent | `agents/retriever.py` (`RetrievalAgent`), nằm trong `AdvisorAgent` | Agent thật. |
+| Coordinator Agent | `agents/orchestrator.py` (`Orchestrator`) | Agent thật; sinh/nhận `request_id`, chạy trace. |
+| Explanation Agent | `agents/explainer.py`, `agents/recommender.py` | Agent thật (qua `AdvisorAgent`). |
+| Monitoring / Audit Agent | `RunLog` trong `agents/orchestrator.py` + `tools/audit_logger.py` | Không phải agent riêng: ghi vết từng bước và audit log. |
+| RL Agent | `rl/` (`QPolicy`, `StateTracker`) | Chỉ huấn luyện trên môi trường mô phỏng; luật an toàn luôn có quyền ưu tiên. |
+
+**Hợp đồng thông điệp (mục 6.1 của PDF).** Mỗi bước trong `trace.steps` mang `request_id`, `agent`, `component`, `status`, `ms`, `detail` và `version` (phiên bản mô hình cho `risk_model`/`feature_explainer`, phiên bản policy cho `support_policy`, loại KB cho `retriever`, `agents-v1` cho các bước còn lại). `trace` có thêm `request_id` và `versions`. Phần `payload` và `evidence` của thông điệp không nằm trong từng bước mà ở kết quả cuối (`retrieved_context`, `evidence_trail`, `recommendation`). `request_id` do API sinh và truyền vào `Orchestrator.run`, nên trùng với bản ghi audit.
+
+**Audit (mục 3 của PDF).** `logs/decisions.jsonl` ghi `request_id`, `model_version`, `versions`, `total_ms`, trạng thái và thời gian từng bước, danh sách thành phần lỗi (`degraded`) và `evidence_status`, bên cạnh mức rủi ro, xác suất và hướng xử trí.
+
+**Không kê thuốc, không nêu liều (mục 10 của PDF).** Kho tri thức giữ nguyên văn tài liệu gốc, trong đó có phác đồ insulin và liều metformin. `RetrievalAgent` đánh dấu các đoạn chứa liều (`is_dosing_text`) và không bao giờ trả chúng cho người dùng, cả ở luồng đánh giá lẫn chat. Bộ lọc cố ý nghiêng về an toàn: vài đoạn chỉ nhắc "liều" mà không nêu số cũng bị loại. Số đoạn bị loại hiện có trong `trace.withheld_dosing_passages` của `/v1/chat`.
+
 ## Liên hệ với kiến trúc phân cấp trong bài báo
 
 Dự án lấy cảm hứng từ kiến trúc Main Agent, Work-Agents và State Tracker, nhưng chỉ ở quy mô một bệnh. Agent điều phối đóng vai Main Agent, hai agent chẩn đoán và tư vấn cùng bộ luật là các work-agent, `StateTracker` là State Tracker, và reward có thành phần entropy reduction. Dự án không có nhiều bộ phân loại bệnh con và không có hội thoại mô phỏng nhiều bệnh như bài báo.

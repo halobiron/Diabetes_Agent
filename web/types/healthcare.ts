@@ -93,6 +93,15 @@ export type SupportPolicyResult = {
     | "escalate_to_clinician";
   overridden_by_rules: boolean;
   steps: { action: string; state: number[]; source: string; evidence_status_after?: string }[];
+  state_tracker?: {
+    risk: string;
+    glucose: "unmeasured" | "normal" | "elevated";
+    evidence: string;
+    asked_glucose: boolean;
+    retrieved_more: boolean;
+    need_entropy_bits: number;
+    actions: string[];
+  };
   q_values: Record<string, number> | null;
   version: string | null;
   feedback: string;
@@ -142,6 +151,10 @@ export type EvidenceTrailItem = {
 };
 
 export type TraceStep = {
+  request_id?: string;
+  /** Agent thực hiện bước này (diagnosis, advisor hoặc orchestrator). */
+  agent?: string;
+  version?: string | null;
   component: string;
   status: "ok" | "degraded";
   ms: number;
@@ -161,6 +174,8 @@ export type AgentMessage = {
 };
 
 export type AgentTrace = {
+  request_id?: string;
+  versions?: Record<string, string | null>;
   steps: TraceStep[];
   dialogue?: AgentMessage[];
   total_ms: number;
@@ -309,3 +324,45 @@ export type ChatReply = {
   status: "none" | "limited" | "sufficient";
   trace: ChatTrace;
 };
+
+export type KbEntity = {
+  id: string;
+  name: string;
+  description: string | null;
+  key: string | null;
+  label: "Condition" | "RiskFactor" | "Test" | "Intervention" | string;
+};
+
+export type KbRelation = {
+  from: string;
+  to: string;
+  type: string;
+  evidence_count: number;
+};
+
+export type KbGraph = {
+  source: "neo4j" | "file";
+  neo4j_configured: boolean;
+  version: string | null;
+  entities: KbEntity[];
+  relations: KbRelation[];
+  evidence_count: number;
+  source_count: number;
+};
+
+export type KbEvidenceRow = {
+  relation: string;
+  outgoing: boolean;
+  other_id: string;
+  other_name: string;
+  evidence_id: string;
+  evidence: string;
+  section: string | null;
+  source_id: string;
+  source_title: string;
+  publisher: string | null;
+  year: number | null;
+  url: string | null;
+};
+
+export type KbEntityDetail = { entity_id: string; relations: KbEvidenceRow[] };

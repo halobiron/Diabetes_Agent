@@ -1,6 +1,9 @@
 import logging
 import time
+from uuid import uuid4
 
+from agents.advisor_agent import AdvisorAgent
+from agents.diagnosis_agent import DiagnosisAgent
 from agents.dialogue import (
     RETRIEVE_MORE,
     conflict_exchanges,
@@ -8,8 +11,6 @@ from agents.dialogue import (
     requested_actions,
     retrieval_outcome,
 )
-from agents.advisor_agent import AdvisorAgent
-from agents.diagnosis_agent import DiagnosisAgent
 from agents.retriever import evidence_status
 from rl.environment import TERMINAL_ACTIONS
 from rl.state_tracker import StateTracker
@@ -20,6 +21,7 @@ from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS
 logger = logging.getLogger(__name__)
 
 MAX_POLICY_STEPS = 3
+AGENT_VERSION = "agents-v1"
 
 # Which agent owns each traced component (the orchestrator owns everything not listed).
 AGENT_OF = {
@@ -37,7 +39,9 @@ class RunLog:
     `degraded` keeps the failures (and is returned as such); `steps` is the full trace.
     """
 
-    def __init__(self):
+    def __init__(self, request_id=None, versions=None):
+        self.request_id = request_id or str(uuid4())
+        self.versions = dict(versions or {})
         self.degraded = []
         self.steps = []
         self._started = time.perf_counter()
@@ -45,8 +49,10 @@ class RunLog:
     def record(self, component, started, status, detail):
         self.steps.append(
             {
+                "request_id": self.request_id,
                 "component": component,
                 "agent": AGENT_OF.get(component, "orchestrator"),
+                "version": self.versions.get(component, self.versions.get("default")),
                 "status": status,
                 "ms": round((time.perf_counter() - started) * 1000, 1),
                 "detail": detail,
@@ -70,6 +76,8 @@ class RunLog:
         rules = [rule for rule in safety["rules"] if rule.get("escalation")]
         disagrees = safety["effective_risk"] != risk or bool(safety["conflicts"])
         return {
+            "request_id": self.request_id,
+            "versions": self.versions,
             "steps": self.steps,
             "dialogue": list(dialogue),
             "total_ms": round((time.perf_counter() - self._started) * 1000, 1),
@@ -113,8 +121,23 @@ class Orchestrator:
         self.diagnosis_agent = DiagnosisAgent(model, feature_explainer)
         self.advisor_agent = AdvisorAgent(retrieval_agent, recommendation_agent, explanation_agent)
 
-    def run(self, patient_data):
-        log = RunLog()
+    def _versions(self):
+        """Version label of each traced component, so every step says what produced it."""
+        model_version = getattr(self.model, "model_version", None)
+        policy_version = None
+        if self.support_policy is not None:
+            policy_version = getattr(self.support_policy, "metadata", {}).get("version")
+        retriever_version = getattr(self.retriever, "kb_source", None)
+        return {
+            "default": AGENT_VERSION,
+            "risk_model": model_version,
+            "feature_explainer": model_version,
+            "retriever": retriever_version,
+            "support_policy": policy_version,
+        }
+
+    def run(self, patient_data, request_id=None):
+        log = RunLog(request_id, self._versions())
         diagnosis = self.diagnosis_agent.diagnose(patient_data, log)
         prob, patient = diagnosis["probability"], diagnosis["patient"]
         risk, prediction = diagnosis["risk"], diagnosis["prediction"]
@@ -235,9 +258,7 @@ class Orchestrator:
             logger.warning("dialogue failed: %s", exc)
             return []
 
-    def _negotiate(
-        self, patient, prob, risk, feature_explanation, similar_cases, current, log
-    ):
+    def _negotiate(self, patient, prob, risk, feature_explanation, similar_cases, current, log):
         """Let components that disagree exchange messages, and act on what they propose.
 
         The safety guard challenges whatever its conflict rules contradict. The one proposal

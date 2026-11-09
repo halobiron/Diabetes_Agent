@@ -71,7 +71,7 @@ Kết quả: MLP đứng thứ 2 theo CV (0,8305) nên được tuning, và đư
 
 Chi tiết tại [Knowledge graph Neo4j](docs/neo4j_kb.md): 20 thực thể, 35 quan hệ, 21 bằng chứng từ 5 nguồn; kiểm thử bằng driver giả, chưa chạy trên server Neo4j thật (máy chưa bật Docker).
 
-Cập nhật 03/11/2026: đã chạy Neo4j thật `2026.10.1` trong Docker, nạp được
+Cập nhật 03/11/2026 (trên bản KB cũ 21 đoạn; KB hiện tại có 146 đoạn, 12 nguồn và chưa được nạp/xác minh lại trên Neo4j thật): đã chạy Neo4j thật `2026.10.1` trong Docker, nạp được
 46 nút/56 quan hệ, truy vấn bằng chứng có nguồn và chạy demo API + web
 26/26 ca với `kb_source=KnowledgeGraph`. Kết quả trước đó về việc chưa chạy
 Neo4j thật đã được giải quyết; xem `docs/neo4j_verification.json`.
@@ -81,7 +81,7 @@ Neo4j thật đã được giải quyết; xem `docs/neo4j_verification.json`.
 - [x] Thay embedding băm bằng embedding ngữ nghĩa; kết nối RetrievalAgent với KB Neo4j.
 - [x] Dùng nội dung truy xuất để tạo khuyến nghị có nguồn; xử lý thiếu bằng chứng và đánh giá độ liên quan.
 
-Chi tiết: embedding `sentence-transformers/all-MiniLM-L6-v2` (`tools/semantic_embeddings.py`); `RetrievalAgent` nạp 21 đoạn bằng chứng từ Neo4j (hoặc từ file KB khi Neo4j không kết nối được), tìm theo độ tương đồng cosine, cộng điểm cho bằng chứng mà đồ thị gắn với yếu tố nguy cơ của bệnh nhân. Mỗi đoạn có `relevance`, nguồn và URL; dưới ngưỡng 0,3 bị loại. Kết quả có `evidence_status` (none/limited/sufficient); khuyến nghị đánh số trích dẫn `[n]` kèm danh sách nguồn, và nói rõ khi thiếu bằng chứng. Chưa chạy trên server Neo4j thật; ngưỡng liên quan mới đặt theo vài ca thử, chưa hiệu chỉnh trên tập đánh giá.
+Chi tiết: embedding `sentence-transformers/all-MiniLM-L6-v2` (`tools/semantic_embeddings.py`); `RetrievalAgent` nạp 21 đoạn bằng chứng từ Neo4j (hoặc từ file KB khi Neo4j không kết nối được), tìm theo độ tương đồng cosine, cộng điểm cho bằng chứng mà đồ thị gắn với yếu tố nguy cơ của bệnh nhân. Mỗi đoạn có `relevance`, nguồn và URL; dưới ngưỡng 0,3 bị loại. Kết quả có `evidence_status` (none/limited/sufficient); khuyến nghị đánh số trích dẫn `[n]` kèm danh sách nguồn, và nói rõ khi thiếu bằng chứng. Ngưỡng liên quan mới đặt theo vài ca thử, chưa hiệu chỉnh trên tập đánh giá.
 
 ### Bước 8 — Hoàn thiện bộ luật
 
@@ -117,6 +117,13 @@ Mô hình đang dùng là MLP nên giải thích luôn là sensitivity (thay t�
 - [x] Demo hồ sơ đủ/thiếu dữ liệu, cảnh báo, thiếu bằng chứng và lỗi dịch vụ; thể hiện vai trò từng thành phần.
 
 Kết quả: 96 tests đạt, coverage 80,97%; frontend lint/typecheck/build đạt; demo tích hợp 26/26 ca đạt. Kịch bản và cách chạy lại: [Kiểm thử và demo](docs/kiem_thu_va_demo.md).
+
+### Bước 13 — Đối chiếu với tài liệu kiến trúc PDF
+
+- [x] Đối chiếu từng agent với `docs/pdf/project_architecture_multiagent_diabet_v1.pdf`; ghi bảng ánh xạ và phần chưa là agent riêng tại [Kiến trúc](docs/architecture.md).
+- [x] Thêm `request_id` và `version` vào từng bước trace; audit log ghi thêm `model_version`, thời gian, `degraded`, `evidence_status`.
+- [x] Chặn các đoạn chứa liều thuốc không bao giờ đến người dùng (PDF mục 10); 5 test mới, toàn bộ 177 tests đạt.
+- [ ] Chưa làm: nạp lại KB 146 đoạn vào Neo4j thật và cập nhật `neo4j_verification.json`; hiệu chỉnh ngưỡng liên quan 0,3 và đo chất lượng truy xuất (precision@k) trên tập câu hỏi có nhãn; đo và báo cáo độ trễ; để bác sĩ thẩm định bộ luật.
 
 ### Bước 13 — Hoàn thiện báo cáo
 

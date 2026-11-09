@@ -1,7 +1,7 @@
 "use client";
 
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
-import { ArrowLeft, ChevronDown, Stethoscope } from "lucide-react";
+import { ArrowLeft, Stethoscope } from "lucide-react";
 import { useState } from "react";
 
 import { createPrediction } from "@/lib/api";
@@ -12,7 +12,9 @@ import { Avatar, CAST, type CastId } from "./risk-console/agents";
 import { Assessment } from "./risk-console/assessment";
 import { ChatPanel } from "./risk-console/chat";
 import { DEFAULT_INPUT } from "./risk-console/constants";
+import { Fold } from "./risk-console/fold";
 import { Hero } from "./risk-console/hero";
+import { KbPanel } from "./risk-console/kb-explorer";
 import { InputReview } from "./risk-console/input-review";
 import { missingFollowupFields } from "./risk-console/followup-fields";
 import { GroupedFollowup } from "./risk-console/grouped-followup";
@@ -95,7 +97,7 @@ function RiskConsoleInner() {
       {mutation.isPending && view === "form" ? <WorkingOverlay /> : null}
 
       {view === "form" || !result ? (
-        <>
+        <div className="mx-auto grid w-full max-w-6xl lg:grid-cols-[minmax(0,40rem)_minmax(20rem,1fr)] lg:gap-10">
           <Intake
             initialStep={editStep}
             form={form}
@@ -107,10 +109,10 @@ function RiskConsoleInner() {
             onFieldChange={updateField}
             onCancel={() => setView("result")}
           />
-          <div className="mx-auto w-full max-w-2xl px-5 pb-16">
-            <ChatPanel />
-          </div>
-        </>
+          <aside className="mx-auto w-full max-w-2xl px-5 pb-16 lg:sticky lg:top-6 lg:max-w-none lg:self-start lg:pl-0 lg:pr-5 lg:pt-8">
+            <ChatPanel dockOnWide />
+          </aside>
+        </div>
       ) : (
         <main className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8" aria-busy={mutation.isPending}>
           <button type="button" onClick={() => { setEditStep(null); setView("form"); }} className="flex min-h-11 w-fit items-center gap-2 text-sm font-semibold text-info underline-offset-4 hover:underline">
@@ -150,11 +152,29 @@ function RiskConsoleInner() {
             />
           ) : null}
           <Assessment result={result} scales={result.measurement_scales ?? []} />
-          <AgentTrace result={result} />
-          <ChatPanel />
-          <Fold title="Thẻ nhân viên của Ông Mô" hint="Chi tiết kỹ thuật của mô hình dự đoán" cast="mo">
-            <ModelStrip result={result} />
-          </Fold>
+          <section aria-labelledby="more-title" className="mt-4 space-y-3">
+            <h2 id="more-title" className="text-xl font-bold">Tìm hiểu thêm</h2>
+            <Fold
+              title="Cơ sở tri thức Neo4j đã dùng cho hồ sơ này"
+              hint="Đồ thị thực thể và quan hệ, làm nổi phần đã dùng cho kết quả của bạn"
+              cast="chung"
+              defaultOpen
+            >
+              <KbPanel result={result} />
+            </Fold>
+            <ChatPanel />
+            <Fold
+              title="Cả đội đã làm việc thế nào"
+              hint={result.trace ? `${result.trace.steps.length} bước trong ${result.trace.total_ms.toFixed(0)} ms${(result.trace.dialogue ?? []).length > 0 ? ", có trao đổi giữa các agent" : ""}` : "Vết xử lý của các agent"}
+              cast="tiep"
+              defaultOpen={Boolean(result.trace?.disagreement)}
+            >
+              <AgentTrace result={result} />
+            </Fold>
+            <Fold title="Thẻ nhân viên của Ông Mô" hint="Chi tiết kỹ thuật của mô hình dự đoán" cast="mo">
+              <ModelStrip result={result} />
+            </Fold>
+          </section>
         </main>
       )}
     </div>
@@ -187,21 +207,5 @@ function WorkingOverlay() {
         </ul>
       </div>
     </div>
-  );
-}
-
-function Fold({ title, hint, cast, children }: { title: string; hint: string; cast: CastId; children: React.ReactNode }) {
-  return (
-    <details className="group rounded-2xl border-2 border-borderSoft bg-panel">
-      <summary className="flex cursor-pointer list-none items-center gap-4 p-4 md:px-6 [&::-webkit-details-marker]:hidden">
-        <Avatar id={cast} size={44} />
-        <span className="min-w-0 flex-1">
-          <span className="block text-lg font-bold" style={{ color: CAST[cast].ink }}>{title}</span>
-          <span className="block text-sm text-muted">{hint}</span>
-        </span>
-        <ChevronDown aria-hidden="true" className="h-5 w-5 shrink-0 text-muted transition group-open:rotate-180" />
-      </summary>
-      <div className="p-4 pt-0 md:px-6 md:pb-6">{children}</div>
-    </details>
   );
 }

@@ -1,5 +1,5 @@
-import sys
 import logging
+import sys
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from threading import Lock
@@ -132,8 +132,8 @@ def health():
 
 
 def _assess(patient):
-    result = _get_agent().run(patient.model_dump())
     request_id = str(uuid4())
+    result = _get_agent().run(patient.model_dump(), request_id=request_id)
     audit_logger.log_decision(request_id, result["patient"], result)
     return request_id, result
 
@@ -193,3 +193,37 @@ def chat_v1(request: ChatRequest, _auth=Depends(_authorize)):
     if retriever is None:
         raise HTTPException(status_code=503, detail="Chưa có cơ sở tri thức để trả lời.")
     return retriever.ask(request.question, n_results=request.n_results)
+
+
+@app.get("/v1/kb")
+def kb_overview(_auth=Depends(_authorize)):
+    """The knowledge graph behind the RAG: entities, relations, corpus sizes and which store serves it."""
+    retriever = _get_agent().retriever
+    if retriever is None:
+        raise HTTPException(status_code=503, detail="Chưa có cơ sở tri thức.")
+    try:
+        graph = retriever.kb.graph()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail=f"Không đọc được cơ sở tri thức: {exc}"
+        ) from exc
+    return {
+        "source": "neo4j" if retriever.kb_source == "KnowledgeGraph" else "file",
+        "neo4j_configured": bool(settings.neo4j_password),
+        **graph,
+    }
+
+
+@app.get("/v1/kb/entities/{entity_id}")
+def kb_entity(entity_id: str, _auth=Depends(_authorize)):
+    """Relations touching one entity, each with the evidence passages and sources that support it."""
+    retriever = _get_agent().retriever
+    if retriever is None:
+        raise HTTPException(status_code=503, detail="Chưa có cơ sở tri thức.")
+    try:
+        relations = retriever.kb.relations_with_evidence(entity_id, limit=60)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=503, detail=f"Không đọc được cơ sở tri thức: {exc}"
+        ) from exc
+    return {"entity_id": entity_id, "relations": relations}

@@ -1,4 +1,4 @@
-import type { ChatReply, PatientInput, PredictionResult } from "@/types/healthcare";
+import type { ChatReply, KbEntityDetail, KbGraph, PatientInput, PredictionResult } from "@/types/healthcare";
 
 export async function createPrediction(input: PatientInput): Promise<PredictionResult> {
   const response = await fetch("/api/predict", {
@@ -37,4 +37,21 @@ export async function askQuestion(question: string): Promise<ChatReply> {
   }
 
   return payload as ChatReply;
+}
+
+async function getJson<T>(path: string, fallback: string): Promise<T> {
+  const response = await fetch(path, { cache: "no-store" });
+  const payload = await response.json();
+  if (!response.ok) {
+    throw new Error(typeof payload?.detail === "string" ? payload.detail : fallback);
+  }
+  return payload as T;
+}
+
+export function fetchKb(): Promise<KbGraph> {
+  return getJson<KbGraph>("/api/kb", "Không đọc được cơ sở tri thức.");
+}
+
+export function fetchKbEntity(id: string): Promise<KbEntityDetail> {
+  return getJson<KbEntityDetail>(`/api/kb/entities/${encodeURIComponent(id)}`, "Không đọc được chi tiết thực thể.");
 }

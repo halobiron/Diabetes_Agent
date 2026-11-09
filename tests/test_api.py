@@ -206,3 +206,14 @@ def test_chat_returns_cited_answer_and_trace(client):
 
 def test_chat_rejects_empty_question(client):
     assert client.post("/v1/chat", json={"question": ""}).status_code == 422
+
+
+def test_kb_overview_and_entity_detail(client):
+    body = client.get("/v1/kb").json()
+    assert body["source"] in ("neo4j", "file")
+    assert body["entities"] and body["relations"] and body["evidence_count"] > 0
+
+    entity_id = body["relations"][0]["from"]
+    detail = client.get(f"/v1/kb/entities/{entity_id}")
+    assert detail.status_code == 200
+    assert detail.json()["relations"]

@@ -64,7 +64,9 @@ class FakeRetriever:
         return self.contexts
 
     def citation(self, evidence_id):
-        return {"evidence_id": evidence_id, "source_title": "ADA"} if evidence_id != "gone" else None
+        return (
+            {"evidence_id": evidence_id, "source_title": "ADA"} if evidence_id != "gone" else None
+        )
 
 
 class FakeWhatIf:
@@ -288,3 +290,23 @@ def test_trace_reports_when_rules_override_the_model_risk():
     assert trace["disagreement"]["model_risk"] == "Medium"  # the fake model says 0.6
     assert trace["disagreement"]["effective_risk"] == "High"  # a measured BP of 190 overrides it
     assert [rule["code"] for rule in trace["disagreement"]["rules"]][0] == "BP-180"
+
+
+def test_trace_carries_request_id_and_component_versions():
+    orchestrator, _ = build()
+    trace = orchestrator.run({"bp": 120}, request_id="req-123")["trace"]
+
+    assert trace["request_id"] == "req-123"
+    assert all(step["request_id"] == "req-123" for step in trace["steps"])
+    steps = {step["component"]: step for step in trace["steps"]}
+    assert steps["risk_model"]["version"] == "t"
+    assert steps["safety_guard"]["version"] == "agents-v1"
+    assert trace["versions"]["risk_model"] == "t"
+
+
+def test_request_id_is_generated_when_not_given():
+    orchestrator, _ = build()
+    first = orchestrator.run({"bp": 120})["trace"]["request_id"]
+    second = orchestrator.run({"bp": 120})["trace"]["request_id"]
+
+    assert first and second and first != second
