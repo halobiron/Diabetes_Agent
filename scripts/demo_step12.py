@@ -303,7 +303,7 @@ def main():
             if args.require_neo4j:
                 from tools.neo4j_kb import KnowledgeGraph
 
-                kb = api.agent.retriever.kb
+                kb = api._get_agent().retriever.kb
                 assert isinstance(kb, KnowledgeGraph), (
                     "Neo4j required; KB file fallback is not accepted"
                 )
@@ -319,7 +319,7 @@ def main():
                 }
 
             with TestClient(api.app) as client:
-                records = run_api_scenarios(client, api.agent, api.audit_logger.output_file)
+                records = run_api_scenarios(client, api._get_agent(), api.audit_logger.output_file)
             if args.with_web:
                 # Separate stores for the subprocess; no real patient history is touched.
                 isolated["CHROMA_PATH"] = str(work_dir / "web-chroma")
@@ -333,10 +333,10 @@ def main():
             report = {
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "python": sys.version,
-                "model": api.agent.model.artifact_metadata,
-                "kb_source": api.agent.retriever.kb_source,
+                "model": api._get_agent().model.artifact_metadata,
+                "kb_source": api._get_agent().retriever.kb_source,
                 "graph_checks": graph_checks,
-                "embedding_model": api.agent.retriever.embedding_model.name,
+                "embedding_model": api._get_agent().retriever.embedding_model.name,
                 "llm": "local fallback (no API key)",
                 "web_included": args.with_web,
                 "passed": len(records),

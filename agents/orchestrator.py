@@ -8,16 +8,27 @@ from agents.dialogue import (
     requested_actions,
     retrieval_outcome,
 )
+from agents.advisor_agent import AdvisorAgent
+from agents.diagnosis_agent import DiagnosisAgent
 from agents.retriever import evidence_status
-from rl.environment import TERMINAL_ACTIONS, encode_state
+from rl.environment import TERMINAL_ACTIONS
+from rl.state_tracker import StateTracker
 from tools.explainability import evidence_trail
 from tools.patient_guidance import build_followup, measurement_scales
-from tools.risk_classifier import classify_risk
-from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS, METHOD_LABELS, RISK_LABELS
+from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS
 
 logger = logging.getLogger(__name__)
 
 MAX_POLICY_STEPS = 3
+
+# Which agent owns each traced component (the orchestrator owns everything not listed).
+AGENT_OF = {
+    "risk_model": "diagnosis",
+    "feature_explainer": "diagnosis",
+    "retriever": "advisor",
+    "recommender": "advisor",
+    "explainer": "advisor",
+}
 
 
 class RunLog:
@@ -35,6 +46,7 @@ class RunLog:
         self.steps.append(
             {
                 "component": component,
+                "agent": AGENT_OF.get(component, "orchestrator"),
                 "status": status,
                 "ms": round((time.perf_counter() - started) * 1000, 1),
                 "detail": detail,
@@ -96,40 +108,17 @@ class Orchestrator:
         self.safety_guard = safety_guard
         self.support_policy = support_policy
         self.what_if = what_if
+        # Role split: the diagnosis agent runs the DL model, the advisor agent does RAG + KB
+        # advice, and this class coordinates them and applies safety rules and the policy.
+        self.diagnosis_agent = DiagnosisAgent(model, feature_explainer)
+        self.advisor_agent = AdvisorAgent(retrieval_agent, recommendation_agent, explanation_agent)
 
     def run(self, patient_data):
         log = RunLog()
-        started = time.perf_counter()
-        prob, patient = self.model.assess(patient_data)
-        risk = classify_risk(prob, self.model.risk_bands)
-        log.record(
-            "risk_model", started, "ok", f"xác suất {prob:.1%}, nguy cơ {RISK_LABELS.get(risk, risk)}"
-        )
-        threshold = self.model.decision_threshold
-        prediction = {
-            "probability": prob,
-            # 1 = flagged by the binary threshold chosen on validation; None when unknown.
-            "label": int(prob >= threshold) if threshold is not None else None,
-            "threshold": threshold,
-            "risk_level": risk,
-            "model": self.model.artifact_metadata.get("selected_model"),
-            "model_version": self.model.model_version,
-        }
-        no_explanation = {"method": "none", "features": []}
-        feature_explanation = log.guard(
-            "feature_explainer",
-            lambda: (
-                self.feature_explainer.explain(patient)
-                if self.feature_explainer is not None
-                else no_explanation
-            ),
-            no_explanation,
-            detail=lambda value: (
-                f"{METHOD_LABELS.get(value['method'], value['method'])}, "
-                f"{len(value['features'])} đặc trưng"
-            ),
-            on_failure="dùng ngưỡng đơn giản thay giải thích của mô hình",
-        )
+        diagnosis = self.diagnosis_agent.diagnose(patient_data, log)
+        prob, patient = diagnosis["probability"], diagnosis["patient"]
+        risk, prediction = diagnosis["risk"], diagnosis["prediction"]
+        feature_explanation = diagnosis["feature_explanation"]
         similar_cases = log.guard(
             "memory_search",
             lambda: self.memory.find_similar(patient),
@@ -188,19 +177,8 @@ class Orchestrator:
         )
 
         # Explained last so it sees the final evidence status and safety outcome.
-        explanation = log.guard(
-            "explainer",
-            lambda: self.explainer.explain(
-                patient,
-                prob,
-                feature_explanation=feature_explanation,
-                similar_cases=similar_cases,
-                safety=safety,
-                evidence_status=status,
-            ),
-            "Không tạo được giải thích; xem phần tác động đặc trưng để biết các yếu tố ảnh hưởng đến mô hình.",
-            detail=lambda value: "đã tạo giải thích",
-            on_failure="dùng văn bản cố định",
+        explanation = self.advisor_agent.explain(
+            patient, prob, feature_explanation, similar_cases, safety, status, log
         )
         log.guard(
             "memory_store",
@@ -315,17 +293,8 @@ class Orchestrator:
 
     def _retrieve(self, patient, risk, feature_explanation, log, broaden=False, previous=()):
         """Evidence search; if it fails, keep the `previous` passages instead of losing them."""
-        if self.retriever is None:
-            return list(previous)
-        return log.guard(
-            "retriever",
-            lambda: self.retriever.retrieve(patient, risk, feature_explanation, broaden=broaden),
-            list(previous),
-            detail=lambda value: (
-                f"{'tìm mở rộng, ' if broaden else ''}{len(value)} đoạn bằng chứng"
-                f" ({EVIDENCE_LABELS[evidence_status(value)]})"
-            ),
-            on_failure="giữ các đoạn bằng chứng trước đó",
+        return self.advisor_agent.retrieve(
+            patient, risk, feature_explanation, log, broaden=broaden, previous=previous
         )
 
     def _advise(
@@ -372,19 +341,8 @@ class Orchestrator:
                 ),
                 on_failure="chuyển hướng sang bác sĩ đánh giá",
             )
-        recommendation = log.guard(
-            "recommender",
-            lambda: self.recommender.recommend(
-                patient,
-                safety["effective_risk"],
-                retrieved_context=retrieved_context,
-                similar_cases=similar_cases,
-                safety=safety,
-                feature_explanation=feature_explanation,
-            ),
-            "Không tạo được khuyến nghị; hãy khám bác sĩ để được theo dõi.",
-            detail=lambda value: "đã tạo khuyến nghị",
-            on_failure="dùng văn bản cố định",
+        recommendation = self.advisor_agent.recommend(
+            patient, safety, retrieved_context, similar_cases, feature_explanation, log
         )
         return status, safety, recommendation
 
@@ -407,24 +365,15 @@ class Orchestrator:
         """
         retrieved_context, status, safety, recommendation = current
         steps = []
+        tracker = StateTracker(patient, risk, retrieved_more=retrieved_more)
         for _ in range(MAX_POLICY_STEPS):
-            glucose = "unmeasured"
-            if patient.get("glucose_measured", True):
-                codes = {rule["code"] for rule in safety["rules"]}
-                glucose = "elevated" if codes & {"GLU-200", "GLU-300"} else "normal"
-            state = encode_state(
-                risk,
-                glucose,
-                status,
-                asked_glucose=patient.get("glucose_unavailable", False),
-                retrieved_more=retrieved_more,
-            )
+            state = tracker.update(safety, status)
             decision = self.support_policy.decide(state)
             action = decision["action"]
             step = {"action": action, "state": list(state), "source": decision["source"]}
             steps.append(step)
+            tracker.record(action)
             if action == "retrieve_more_evidence" and self.retriever is not None:
-                retrieved_more = True
                 retrieved_context = self._retrieve(
                     patient,
                     risk,
@@ -460,6 +409,7 @@ class Orchestrator:
             "next_step": next_step,
             "overridden_by_rules": overridden,
             "steps": steps,
+            "state_tracker": tracker.snapshot(),
             "q_values": decision["q_values"],
             "version": self.support_policy.metadata.get("version"),
             "feedback": self.support_policy.metadata.get("feedback", "simulated"),

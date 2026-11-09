@@ -190,3 +190,49 @@ def test_no_policy_means_no_policy_block():
     orchestrator, retriever = make_orchestrator(None)
     assert orchestrator.run({"bp": 120})["policy"] is None
     assert retriever.calls == [False]
+
+
+def test_need_entropy_is_zero_once_known_and_positive_when_ambiguous():
+    from rl.environment import need_entropy
+
+    assert need_entropy("High", "unmeasured") == 0.0
+    assert need_entropy("Medium", "normal") == 0.0
+    assert need_entropy("Low", "unmeasured") > 0
+    assert need_entropy("Medium", "unmeasured") > need_entropy("Low", "unmeasured")
+
+
+def test_glucose_request_reward_includes_entropy_reduction():
+    from rl.environment import ENTROPY_WEIGHT, STEP_COST
+
+    env = SupportEnv(0)
+    env.reset()
+    env.risk, env.glucose, env.asked, env.elevated = "Medium", "unmeasured", False, False
+    env.rng.random = lambda: 0.0  # patient supplies glucose
+    _, reward, done, info = env.step("request_glucose")
+    assert not done and info["entropy_reduction"] > 0
+    assert reward == pytest.approx(-STEP_COST + ENTROPY_WEIGHT * info["entropy_reduction"])
+
+    env.rng.random = lambda: 0.99  # patient does not supply it
+    env.risk, env.glucose, env.asked = "Medium", "unmeasured", False
+    _, reward, _, info = env.step("request_glucose")
+    assert info["entropy_reduction"] == 0 and reward == pytest.approx(-STEP_COST)
+
+
+def test_state_tracker_builds_state_and_records_history():
+    from rl.state_tracker import StateTracker
+
+    tracker = StateTracker({"glucose_measured": False}, "Medium")
+    state = tracker.update({"rules": []}, "limited")
+    assert state == encode_state("Medium", "unmeasured", "limited")
+    assert tracker.uncertainty > 0
+
+    tracker.record("retrieve_more_evidence")
+    elevated = tracker.update({"rules": [{"code": "GLU-200"}]}, "sufficient")
+    assert elevated == encode_state("Medium", "unmeasured", "sufficient", retrieved_more=True)
+
+    measured = StateTracker({"glucose_measured": True}, "Low")
+    assert measured.update({"rules": [{"code": "GLU-300"}]}, "none") == encode_state(
+        "Low", "elevated", "none"
+    )
+    snap = measured.snapshot()
+    assert snap["need_entropy_bits"] == 0 and snap["actions"] == []

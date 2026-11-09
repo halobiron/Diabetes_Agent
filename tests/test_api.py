@@ -194,3 +194,15 @@ def test_grouped_followup_accepts_multiple_answers_and_skips_remaining_in_one_re
     assert "Smoker" not in after["safety"]["defaulted_fields"]
     assert after["safety"]["confidence_score"] > before["safety"]["confidence_score"]
     assert after["followup"] is None
+
+
+def test_chat_returns_cited_answer_and_trace(client):
+    response = client.post("/v1/chat", json={"question": "Triệu chứng sớm của đái tháo đường là gì?"})
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["citations"] and body["trace"]["passages_in_index"] > 0
+
+
+def test_chat_rejects_empty_question(client):
+    assert client.post("/v1/chat", json={"question": ""}).status_code == 422

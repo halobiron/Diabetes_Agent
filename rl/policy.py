@@ -6,7 +6,7 @@ from pathlib import Path
 
 from rl.environment import ACTIONS, GLUCOSE, RISKS, SupportEnv, valid_actions
 
-POLICY_VERSION = "support-policy-v1"
+POLICY_VERSION = "support-policy-v2"
 
 
 def _terminal_by_risk(state):
@@ -114,6 +114,7 @@ def train_q_learning(episodes=60000, alpha=0.1, epsilon_start=1.0, epsilon_end=0
             "gamma": 1.0,
             "seed": seed,
             "feedback": "simulated",
+            "reward": "triage reward + entropy reduction",
         },
     )
 

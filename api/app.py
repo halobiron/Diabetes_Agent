@@ -109,6 +109,11 @@ class PatientRequest(BaseModel):
         return self
 
 
+class ChatRequest(BaseModel):
+    question: str = Field(..., min_length=2, max_length=500)
+    n_results: int = Field(5, ge=1, le=10)
+
+
 def _authorize(authorization: Optional[str] = Header(default=None)):
     if not settings.require_api_token:
         return
@@ -179,3 +184,12 @@ def predict_v1(patient: PatientRequest, _auth=Depends(_authorize)):
 def predict_summary_v1(patient: PatientRequest, _auth=Depends(_authorize)):
     request_id, result = _assess(patient)
     return {"request_id": request_id, **_summary(result)}
+
+
+@app.post("/v1/chat")
+def chat_v1(request: ChatRequest, _auth=Depends(_authorize)):
+    """Answer a free-text question from the diabetes KB; returns citations and the retrieval trace."""
+    retriever = _get_agent().retriever
+    if retriever is None:
+        raise HTTPException(status_code=503, detail="Chưa có cơ sở tri thức để trả lời.")
+    return retriever.ask(request.question, n_results=request.n_results)

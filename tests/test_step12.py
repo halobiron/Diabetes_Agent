@@ -1,5 +1,6 @@
 """Acceptance scenarios across the HTTP API and real local agent components."""
 
+from concurrent.futures import Future
 from unittest.mock import patch
 
 import pytest
@@ -24,7 +25,9 @@ def integration_client(tmp_path, monkeypatch):
 
     # Explicit injection makes this fixture independent of earlier imports / API fixtures.
     monkeypatch.setattr(main, "CHROMA_PATH", tmp_path / "chroma")
-    monkeypatch.setattr(api, "agent", main.build_agent())
+    ready = Future()
+    ready.set_result(main.build_agent())
+    monkeypatch.setattr(api, "_agent_future", ready)
     monkeypatch.setattr(api, "settings", get_settings())
     monkeypatch.setattr(api, "audit_logger", AuditLogger(tmp_path / "logs"))
     with TestClient(api.app, raise_server_exceptions=False) as client:
@@ -33,13 +36,13 @@ def integration_client(tmp_path, monkeypatch):
 
 def test_real_artifact_api_acceptance_scenarios(integration_client):
     client, api = integration_client
-    records = run_api_scenarios(client, api.agent, api.audit_logger.output_file)
+    records = run_api_scenarios(client, api._get_agent(), api.audit_logger.output_file)
     assert len(records) == 16
 
 
 def test_core_model_failure_does_not_return_a_prediction(integration_client):
     client, api = integration_client
-    with patch.object(api.agent.model, "assess", side_effect=RuntimeError("Model unavailable")):
+    with patch.object(api._get_agent().model, "assess", side_effect=RuntimeError("Model unavailable")):
         response = client.post("/v1/predict", json={"age": 50, "bmi": 27, "bp": 120})
     assert response.status_code == 500
     assert "probability" not in response.text

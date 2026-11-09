@@ -13,10 +13,17 @@ State (what the Orchestrator can observe):
     asked_glucose   whether a glucose request was already made
     retrieved_more  whether a broadened evidence search was already done
 
+Reward: terminal steps get the triage reward below. Information-gathering steps cost
+STEP_COST and earn ENTROPY_WEIGHT times the entropy reduction (bits) of the belief about
+whether the patient needs escalation, the idea of reward by entropy reduction used in
+hierarchical diagnosis agents. Measuring glucose can remove that uncertainty; a wider
+evidence search does not change the belief, so it earns no entropy reward.
+
 Actions: two information-gathering steps (request glucose, retrieve more evidence) and
 three terminal steps (routine advice, follow-up advice, escalate to a clinician).
 """
 
+import math
 import random
 
 RISKS = ["Low", "Medium", "High"]
@@ -39,6 +46,7 @@ EVIDENCE_PRIOR = [0.2, 0.4, 0.4]
 P_PATIENT_SUPPLIES_GLUCOSE = 0.7
 P_BROADER_SEARCH_HELPS = 0.6  # evidence improves one level
 STEP_COST = 0.05
+ENTROPY_WEIGHT = 0.3  # reward per bit of uncertainty removed about "needs escalation"
 EVIDENCE_BONUS = {"none": -0.2, "limited": 0.0, "sufficient": 0.2}  # non-escalation advice only
 
 NEEDS = ["routine", "followup", "escalate"]
@@ -82,6 +90,14 @@ def valid_actions(state):
     return actions + TERMINAL_ACTIONS
 
 
+def need_entropy(risk, glucose):
+    """Entropy (bits) of "needs escalation" given the observed risk band and glucose status."""
+    if risk == "High" or glucose != "unmeasured":
+        return 0.0  # already escalated, or glucose is measured so the need is known
+    p = P_ELEVATED_GIVEN_RISK[RISKS.index(risk)]
+    return -(p * math.log2(p) + (1 - p) * math.log2(1 - p))
+
+
 def true_need(risk, elevated):
     if elevated or risk == "High":
         return "escalate"
@@ -121,12 +137,16 @@ class SupportEnv:
             need = true_need(self.risk, self.elevated)
             return self.state, terminal_reward(action, need, self.evidence), True, {"need": need}
 
+        reward, gain = -STEP_COST, 0.0
         if action == "request_glucose":
+            before = need_entropy(self.risk, self.glucose)
             self.asked = True
             if self.rng.random() < P_PATIENT_SUPPLIES_GLUCOSE:
                 self.glucose = "elevated" if self.elevated else "normal"
+            gain = before - need_entropy(self.risk, self.glucose)
+            reward += ENTROPY_WEIGHT * gain
         else:
             self.retrieved = True
             if self.rng.random() < P_BROADER_SEARCH_HELPS:
                 self.evidence = EVIDENCE[min(EVIDENCE.index(self.evidence) + 1, 2)]
-        return self.state, -STEP_COST, False, {}
+        return self.state, reward, False, {"entropy_reduction": gain}

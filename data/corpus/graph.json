@@ -4,7 +4,7 @@
     {"id": "type2_diabetes", "label": "Condition", "name": "Đái tháo đường típ 2", "description": "Bệnh mạn tính do suy giảm tác dụng và tiết insulin, làm tăng glucose máu."},
     {"id": "prediabetes", "label": "Condition", "name": "Tiền đái tháo đường", "description": "Glucose máu cao hơn bình thường nhưng chưa tới ngưỡng chẩn đoán đái tháo đường."},
     {"id": "cardiovascular_disease", "label": "Condition", "name": "Bệnh tim mạch", "description": "Bệnh tim và mạch máu, biến chứng nặng thường gặp ở người đái tháo đường."},
-    {"id": "high_bmi", "label": "RiskFactor", "name": "Thừa cân hoặc béo phì", "key": "BMI", "description": "BMI từ 23 kg/m² trở lên theo hướng dẫn của Bộ Y tế (người châu Á)."},
+    {"id": "high_bmi", "label": "RiskFactor", "name": "Thừa cân hoặc béo phì", "key": "BMI", "description": "Ngưỡng sàng lọc cho người Việt: BMI ≥ 23 kg/m² (Bộ Y tế, QĐ 3798/QĐ-BYT 2017; WHO Asia-Pacific: 23–24,9 thừa cân, 25–29,9 béo phì độ I, ≥ 30 béo phì độ II). Ngưỡng quốc tế của CDC/WHO chung: thừa cân ≥ 25, béo phì ≥ 30."},
     {"id": "high_bp", "label": "RiskFactor", "name": "Tăng huyết áp", "key": "HighBP", "description": "Huyết áp từ 140/90 mmHg trở lên hoặc đang điều trị thuốc hạ huyết áp."},
     {"id": "older_age", "label": "RiskFactor", "name": "Tuổi cao", "key": "Age", "description": "Nguy cơ đái tháo đường típ 2 tăng theo tuổi; bắt đầu tầm soát từ 45 tuổi."},
     {"id": "high_glucose", "label": "RiskFactor", "name": "Đường huyết cao", "key": "glucose", "description": "Glucose huyết tương lúc đói từ 100 mg/dL trở lên hoặc HbA1c từ 5,7% trở lên."},

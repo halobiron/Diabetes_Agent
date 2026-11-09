@@ -10,17 +10,21 @@ Dự án không có phản hồi thật từ bệnh nhân hay bác sĩ. Môi tr�
 
 - **State** (Orchestrator quan sát được): mức rủi ro (Low/Medium/High); glucose (chưa đo / bình thường / ≥ 200 mg/dL); `evidence_status` (none/limited/sufficient); đã hỏi glucose chưa; đã tìm mở rộng chưa. Tổng cộng 108 trạng thái.
 - **Action**: `request_glucose`, `retrieve_more_evidence` (hai bước thu thập, mỗi bước tối đa một lần), và ba bước kết thúc `recommend_routine`, `recommend_followup`, `escalate_to_clinician`.
-- **Reward**: bước thu thập −0,05. Bước kết thúc: +1 nếu đúng mức cần (cần chuyển tuyến nếu glucose thật ≥ 200 hoặc rủi ro High; theo dõi nếu Medium; thường quy nếu Low); sai mức thì phạt, phạt nặng nhất khi bỏ sót ca cần chuyển tuyến (−2), nhẹ khi chuyển tuyến thừa (−0,4 đến −0,8). Lời khuyên không chuyển tuyến được +0,2 nếu bằng chứng đủ, −0,2 nếu không có bằng chứng.
+- **Reward**: bước thu thập −0,05, cộng thêm `0,3 ×` mức giảm entropy (bit) của niềm tin "bệnh nhân có cần chuyển tuyến không". Hỏi glucose mà bệnh nhân cung cấp thì xóa được độ bất định này (nhiều nhất với nhóm Medium chưa đo glucose); với nhóm High độ bất định đã bằng 0 nên không được thưởng. Tìm thêm bằng chứng không đổi niềm tin nên không có thưởng entropy. Ý tưởng reward theo entropy reduction mượn từ các agent chẩn đoán phân cấp, ở đây áp dụng trên một bệnh. Bước kết thúc: +1 nếu đúng mức cần (cần chuyển tuyến nếu glucose thật ≥ 200 hoặc rủi ro High; theo dõi nếu Medium; thường quy nếu Low); sai mức thì phạt, phạt nặng nhất khi bỏ sót ca cần chuyển tuyến (−2), nhẹ khi chuyển tuyến thừa (−0,4 đến −0,8). Lời khuyên không chuyển tuyến được +0,2 nếu bằng chứng đủ, −0,2 nếu không có bằng chứng.
 - **Thuật toán**: Q-learning dạng bảng, 60.000 episode, ε giảm dần, không cần thư viện RL thêm. Policy lưu ở `artifacts/support_policy.json`.
+
+## State Tracker
+
+`rl/state_tracker.py` gom trạng thái policy quan sát được (mức rủi ro, glucose, bằng chứng, các bước đã làm) và tính entropy còn lại. Orchestrator dùng nó thay cho đoạn tự ghép trạng thái; ảnh chụp của tracker trả về trong `policy.state_tracker`.
 
 ## So sánh (20.000 episode đánh giá, mô phỏng)
 
 | Chiến lược | Reward TB (±95% CI) | Số bước TB | Bỏ sót ca cần chuyển tuyến | Chuyển tuyến thừa |
 |---|---|---|---|---|
-| Q-learning | 0,956 ± 0,005 | 1,78 | 0,65% | 3,55% |
-| Bảng kiểm cố định (luôn hỏi glucose, tìm thêm, rồi theo mức rủi ro) | 0,946 ± 0,007 | 2,10 | 2,34% | 0% |
+| Q-learning | 1,005 ± 0,006 | 1,69 | 0,95% | 2,83% |
+| Bảng kiểm cố định (luôn hỏi glucose, tìm thêm, rồi theo mức rủi ro) | 0,997 ± 0,007 | 2,10 | 2,34% | 0% |
 | Chỉ theo mức rủi ro (quy trình hiện tại) | 0,803 ± 0,011 | 1,00 | 7,42% | 0% |
-| Ngẫu nhiên | −0,367 ± 0,016 | 1,28 | 26,5% | 20,1% |
+| Ngẫu nhiên | −0,354 ± 0,016 | 1,28 | 26,5% | 20,1% |
 
 Q-learning và bảng kiểm cố định chênh nhau trong khoảng sai số, nên không thể nói RL tốt hơn bảng kiểm. Cả hai vượt rõ quy trình chỉ theo rủi ro. Policy học được dùng ít bước hơn và bỏ sót ít hơn, đổi lại chuyển tuyến thừa nhiều hơn. Kết quả này phụ thuộc vào ma trận reward.
 

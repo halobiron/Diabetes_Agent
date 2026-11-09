@@ -18,6 +18,34 @@ BROAD_QUERY = (
 )
 
 
+# Question keywords -> risk-factor keys, so a chat question can use the graph links as well.
+QUESTION_FACTORS = {
+    "BMI": ("bmi", "béo", "thừa cân", "cân nặng", "giảm cân", "gầy"),
+    "HighBP": ("huyết áp", "tăng huyết"),
+    "Age": ("tuổi", "cao tuổi", "người già", "lớn tuổi"),
+    "glucose": ("đường huyết", "glucose", "hba1c", "đường máu", "đường trong máu"),
+    "PhysActivity": ("vận động", "tập thể dục", "thể thao", "đi bộ"),
+    "Smoker": ("hút thuốc", "thuốc lá", "bỏ thuốc"),
+}
+ANSWER_PASSAGES = 3
+ANSWER_CHARS = 320
+NO_ANSWER = (
+    "Tôi không tìm thấy nội dung phù hợp trong cơ sở tri thức về đái tháo đường để trả lời "
+    "câu hỏi này. Bạn có thể hỏi về triệu chứng, chẩn đoán, xét nghiệm, yếu tố nguy cơ, "
+    "phòng ngừa hoặc điều trị đái tháo đường típ 2."
+)
+
+
+def excerpt(text, limit=ANSWER_CHARS):
+    """Shorten a passage to about `limit` characters, ending at a sentence if one fits."""
+    text = " ".join(text.split())
+    if len(text) <= limit:
+        return text
+    cut = text[:limit]
+    end = max(cut.rfind(". "), cut.rfind("; "))
+    return (cut[: end + 1] if end > limit // 2 else cut.rsplit(" ", 1)[0]) + "…"
+
+
 def evidence_status(contexts):
     """none / limited / sufficient, judged from how many passages are relevant and how strongly."""
     if not contexts:
@@ -144,6 +172,79 @@ class RetrievalAgent:
             key=lambda c: c["relevance"] + (GRAPH_BOOST if c["supports"] else 0.0), reverse=True
         )
         return contexts[:n_results]
+
+    def ask(self, question, n_results=5):
+        """Answer a free-text question from the KB and return the full retrieval trace.
+
+        Steps: embed the question, rank every passage by cosine similarity, drop those below
+        the relevance floor, then boost passages that the graph links to risk factors named in
+        the question. The answer is stitched from the top passages (no LLM), each cited.
+        """
+        question = " ".join(str(question).split())
+        factors = self._question_factors(question)
+        trace = {
+            "question": question,
+            "embedding_model": self.embedding_model.name,
+            "kb_source": self.kb_source,
+            "passages_in_index": self.collection.count(),
+            "min_relevance": self.min_relevance,
+            "graph_factors": factors,
+            "graph_boost": GRAPH_BOOST,
+        }
+        if not question or not trace["passages_in_index"]:
+            return {"answer": NO_ANSWER, "citations": [], "status": "none", "trace": trace}
+
+        results = self.collection.query(
+            query_embeddings=[self.embedding_model.embed_text(question)],
+            n_results=trace["passages_in_index"],
+            include=["distances"],
+        )
+        semantic = {
+            evidence_id: 1.0 - float(distance)
+            for evidence_id, distance in zip(results["ids"][0], results["distances"][0])
+        }
+        trace["best_score"] = round(max(semantic.values()), 3)
+        linked = self._graph_links(factors)
+
+        ranked = []
+        for evidence_id, score in semantic.items():
+            if score < self.min_relevance:
+                continue
+            rows = linked.get(evidence_id, [])
+            boost = GRAPH_BOOST if rows else 0.0
+            ranked.append(
+                {
+                    **self.citation(evidence_id),
+                    "relevance": round(score, 3),
+                    "graph_boost": boost,
+                    "final_score": round(score + boost, 3),
+                    "via": "graph+semantic" if rows else "semantic",
+                    "supports": list(dict.fromkeys(row["support_name"] for row in rows)),
+                }
+            )
+        ranked.sort(key=lambda c: c["final_score"], reverse=True)
+        citations = ranked[:n_results]
+        trace["passages_above_floor"] = len(ranked)
+        trace["graph_linked"] = sum(1 for c in ranked if c["graph_boost"])
+
+        if not citations:
+            return {"answer": NO_ANSWER, "citations": [], "status": "none", "trace": trace}
+        status = evidence_status(citations)
+        lines = ["Theo các tài liệu y khoa trong cơ sở tri thức:"]
+        for number, item in enumerate(citations[:ANSWER_PASSAGES], start=1):
+            lines.append(f"- {excerpt(item['text'])} [{number}]")
+        if status == "limited":
+            lines.append("(Bằng chứng tìm được còn hạn chế; hãy hỏi bác sĩ để được tư vấn thêm.)")
+        answer = chr(10).join(lines)
+        return {"answer": answer, "citations": citations, "status": status, "trace": trace}
+
+    def _question_factors(self, question):
+        lowered = question.lower()
+        return [
+            key
+            for key, words in QUESTION_FACTORS.items()
+            if key in self.factor_names and any(word in lowered for word in words)
+        ]
 
     def citation(self, evidence_id):
         """Display fields of one KB passage (no relevance score); None if the id is unknown."""

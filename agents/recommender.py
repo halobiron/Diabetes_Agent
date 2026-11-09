@@ -2,7 +2,7 @@ import os
 
 from openai import OpenAI
 
-from agents.retriever import evidence_status
+from agents.retriever import evidence_status, excerpt
 from tools.vietnamese import ESCALATION_LABELS, feature_label
 
 
@@ -108,7 +108,7 @@ class RecommendationAgent:
             )
 
         points = " ".join(
-            f"{item['text']} [{number}]" for number, item in enumerate(retrieved_context, 1)
+            f"{excerpt(item['text'], 260)} [{number}]" for number, item in enumerate(retrieved_context, 1)
         )
         note = f" Bằng chứng hướng dẫn: {points}"
         if status == "limited":
@@ -119,7 +119,7 @@ class RecommendationAgent:
         if not retrieved_context:
             return "(chưa truy xuất được bằng chứng)"
         return "\n".join(
-            f"[{number}] {item['text']} ({item['source_title']}, {item.get('year')})"
+            f"[{number}] {excerpt(item['text'], 700)} ({item['source_title']}, {item.get('year')})"
             for number, item in enumerate(retrieved_context, 1)
         )
 

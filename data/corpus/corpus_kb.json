@@ -110,7 +110,7 @@
       "label": "RiskFactor",
       "name": "Thừa cân hoặc béo phì",
       "key": "BMI",
-      "description": "BMI từ 23 kg/m² trở lên theo hướng dẫn của Bộ Y tế (người châu Á)."
+      "description": "Ngưỡng sàng lọc cho người Việt: BMI ≥ 23 kg/m² (Bộ Y tế, QĐ 3798/QĐ-BYT 2017; WHO Asia-Pacific: 23–24,9 thừa cân, 25–29,9 béo phì độ I, ≥ 30 béo phì độ II). Ngưỡng quốc tế của CDC/WHO chung: thừa cân ≥ 25, béo phì ≥ 30."
     },
     {
       "id": "high_bp",

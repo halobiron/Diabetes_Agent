@@ -122,3 +122,29 @@ def test_recommendation_admits_missing_evidence():
 
     assert "Chưa truy xuất được bằng chứng hướng dẫn đủ phù hợp" in text
     assert "Nguồn tham khảo:" not in text
+
+
+def test_ask_answers_with_citations_and_trace(retriever):
+    reply = retriever.ask("Xét nghiệm nào dùng để chẩn đoán đái tháo đường?")
+
+    assert reply["citations"] and reply["status"] in {"limited", "sufficient"}
+    assert "[1]" in reply["answer"]
+    scores = [c["final_score"] for c in reply["citations"]]
+    assert scores == sorted(scores, reverse=True)
+    trace = reply["trace"]
+    assert trace["passages_in_index"] == len(retriever.evidence)
+    assert trace["passages_above_floor"] >= len(reply["citations"])
+
+
+def test_ask_uses_graph_factors_from_the_question(retriever):
+    reply = retriever.ask("Hút thuốc lá có làm tăng nguy cơ tiểu đường không?", n_results=10)
+
+    assert reply["trace"]["graph_factors"] == ["Smoker"]
+    assert any(c["graph_boost"] for c in reply["citations"])
+
+
+def test_ask_declines_when_nothing_is_relevant(file_kb, tmp_path):
+    strict = RetrievalAgent(file_kb, WordEmbeddings(), tmp_path, min_relevance=0.95)
+    reply = strict.ask("zzzz qqqq")
+
+    assert reply["citations"] == [] and reply["status"] == "none"

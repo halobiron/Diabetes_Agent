@@ -2,16 +2,16 @@
   "feedback": "simulated (see rl/environment.py for every assumption)",
   "q_learning": {
     "episodes": 20000,
-    "mean_reward": 0.9559,
-    "ci95": 0.0053,
-    "mean_steps": 1.778,
-    "under_triage_rate": 0.0065,
-    "over_escalation_rate": 0.0355
+    "mean_reward": 1.0048,
+    "ci95": 0.0057,
+    "mean_steps": 1.689,
+    "under_triage_rate": 0.0095,
+    "over_escalation_rate": 0.0283
   },
   "fixed_full_checklist": {
     "episodes": 20000,
-    "mean_reward": 0.9456,
-    "ci95": 0.0065,
+    "mean_reward": 0.9973,
+    "ci95": 0.0067,
     "mean_steps": 2.101,
     "under_triage_rate": 0.0234,
     "over_escalation_rate": 0.0
@@ -26,8 +26,8 @@
   },
   "random": {
     "episodes": 20000,
-    "mean_reward": -0.367,
-    "ci95": 0.0161,
+    "mean_reward": -0.3544,
+    "ci95": 0.0162,
     "mean_steps": 1.276,
     "under_triage_rate": 0.2647,
     "over_escalation_rate": 0.2009

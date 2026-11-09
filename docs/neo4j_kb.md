@@ -14,7 +14,20 @@ File KB được sinh ra bằng `python scripts/collect_corpus.py --install` t�
 
 Quan hệ giữa các thực thể: `INCREASES_RISK_OF`, `DIAGNOSES`, `REDUCES_RISK_OF`, `ADDRESSES` (can thiệp → yếu tố nguy cơ), `SHOULD_TEST_WITH`. Mỗi quan hệ mang `evidence_ids`; mỗi `Evidence` có `(:Evidence)-[:FROM]->(:Source)`. Nhờ vậy mọi khẳng định truy vấn ra đều đi kèm trích dẫn.
 
-Nguồn gồm Quy trình lâm sàng ĐTĐ típ 2 của Bộ Y tế (QĐ 3798/QĐ-BYT, 2017), WHO Diabetes fact sheet và 10 bài của Vinmec. Văn bản Bộ Y tế 2017 đã được QĐ 5481/QĐ-BYT (2020) thay thế nên cần đối chiếu ngưỡng khi trích dẫn. Nội dung bằng chứng là văn bản trích nguyên từ các tài liệu này (đã lọc quảng cáo), riêng Vinmec là trang truyền thông bệnh viện và có chỗ chưa thống nhất ngưỡng (BMI 23/25/35); cần người có chuyên môn rà soát trước khi dùng ngoài mục đích học tập.
+Nguồn gồm Quy trình lâm sàng ĐTĐ típ 2 của Bộ Y tế (QĐ 3798/QĐ-BYT, 2017), WHO Diabetes fact sheet và 10 bài của Vinmec. Văn bản Bộ Y tế 2017 đã được QĐ 5481/QĐ-BYT (2020) thay thế nên cần đối chiếu ngưỡng khi trích dẫn. Nội dung bằng chứng là văn bản trích nguyên từ các tài liệu này (đã lọc quảng cáo), riêng Vinmec là trang truyền thông bệnh viện; cần người có chuyên môn rà soát trước khi dùng ngoài mục đích học tập.
+
+### Ngưỡng BMI đã chốt
+
+Các con số 23 / 25 / 35 trong nguồn không mâu thuẫn, chúng nói về những việc khác nhau:
+
+| Ngưỡng | Ý nghĩa | Nguồn |
+|---|---|---|
+| BMI ≥ 23 | Ngưỡng sàng lọc đái tháo đường típ 2 cho người Việt; dùng làm yếu tố nguy cơ trong KB | Bộ Y tế QĐ 3798/QĐ-BYT (2017); WHO Asia-Pacific (thừa cân 23–24,9) |
+| BMI ≥ 25 | Béo phì độ I theo chuẩn châu Á; cũng là ngưỡng thừa cân theo CDC/WHO chung | WHO Asia-Pacific 2000; CDC |
+| BMI ≥ 30 | Béo phì theo CDC/WHO chung; béo phì độ II theo chuẩn châu Á | CDC; WHO Asia-Pacific |
+| BMI > 35 | Béo phì nặng (độ II/III quốc tế); Vinmec chỉ nói nguy cơ rất cao, không phải ngưỡng sàng lọc | Vinmec |
+
+Quy ước của dự án: KB và phần giải thích bằng chứng dùng ngưỡng sàng lọc **23** của Bộ Y tế. Thang đo hiển thị trên giao diện ([patient_guidance.py](../tools/patient_guidance.py)) dùng phân nhóm CDC (25/30) vì mô hình được huấn luyện trên dữ liệu BRFSS của Mỹ; hai thang phục vụ hai mục đích và không dùng thay cho nhau.
 
 ## Chạy
 
