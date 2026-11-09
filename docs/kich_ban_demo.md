@@ -16,11 +16,12 @@ Get-Content .env | ForEach-Object { if ($_ -match '^\s*([^#=\s]+)\s*=\s*(.*)$') 
 # 3. (Chỉ khi cần nạp lại KB)
 .\.venv\Scripts\python.exe scripts\load_neo4j_kb.py
 
-# 4. Mở giao diện
-.\.venv\Scripts\python.exe -m streamlit run ui\app.py
+# 4. Chạy backend (cửa sổ này); giao diện chạy ở cửa sổ khác
+.\.venv\Scripts\python.exe -m uvicorn api.app:app --host 127.0.0.1 --port 8010
+# Cửa sổ 2: cd web; $env:API_BASE_URL="http://127.0.0.1:8010"; npm run dev
 ```
 
-Mở sẵn hai cửa sổ trình duyệt: http://localhost:7474 (Neo4j Browser, đăng nhập `neo4j` + mật khẩu trong `.env`) và http://localhost:8501 (giao diện). Lần đầu mở giao diện mất vài chục giây để tải mô hình nhúng.
+Mở sẵn hai cửa sổ trình duyệt: http://localhost:7474 (Neo4j Browser, đăng nhập `neo4j` + mật khẩu trong `.env`) và http://localhost:3000 (giao diện). Lần đầu mở giao diện mất vài chục giây để tải mô hình nhúng.
 
 Phương án dự phòng nếu giao diện lỗi: `.\.venv\Scripts\python.exe scripts\demo.py` chạy cả ba phần trên terminal (`--part 1|2|3` để chạy riêng một phần).
 
@@ -52,7 +53,7 @@ MATCH (e:Evidence {id:'ev-moh-qt-2017-017'}) RETURN e.text
 
 ## Phần 2 - Chat RAG (3 phút)
 
-Trên giao diện Streamlit, ngay khi chưa nhập hồ sơ, kéo xuống phần "Hỏi đáp". Hỏi lần lượt:
+Trên giao diện Next.js, ngay ở màn nhập hồ sơ, kéo xuống và mở panel "Hỏi đáp về đái tháo đường". Hỏi lần lượt:
 
 | Câu hỏi | Để cho thấy |
 |---|---|

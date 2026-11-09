@@ -65,5 +65,5 @@ Nếu không có đoạn nào đạt ngưỡng 0.3, hệ thống từ chối tr�
 ## 6. Cách chạy
 
 - API: `POST /v1/chat` với `{"question": "..."}`. Kết quả gồm `answer`, `citations`, `status` và `trace` (các bước ở mục 2 kèm số liệu).
-- Giao diện: tab **Hỏi đáp** trong `ui/app.py`, mục "Cách hệ thống truy xuất" hiện cùng vết này.
+- Giao diện: panel **Hỏi đáp** trong giao diện Next.js (`web/components/risk-console/chat.tsx`, gọi qua `web/app/api/chat/route.ts`), mục "Cách hệ thống truy xuất" hiện cùng vết này.
 - Mã: `RetrievalAgent.ask` trong [agents/retriever.py](../agents/retriever.py).

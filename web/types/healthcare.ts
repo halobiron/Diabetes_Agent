@@ -281,3 +281,31 @@ export type FollowupQuestion = {
   reason: string;
   model_note: string;
 };
+
+export type ChatCitation = Citation & {
+  title: string;
+  relevance: number;
+  final_score: number;
+  via: "semantic" | "graph+semantic";
+  supports: string[];
+};
+
+export type ChatTrace = {
+  question: string;
+  embedding_model: string;
+  kb_source: string;
+  passages_in_index: number;
+  min_relevance: number;
+  graph_factors: string[];
+  graph_boost: number;
+  best_score?: number;
+  passages_above_floor?: number;
+  graph_linked?: number;
+};
+
+export type ChatReply = {
+  answer: string;
+  citations: ChatCitation[];
+  status: "none" | "limited" | "sufficient";
+  trace: ChatTrace;
+};

@@ -7,7 +7,7 @@ Hệ thống có ba vai trò. **Agent chẩn đoán** chạy mô hình Deep Lear
 ```mermaid
 flowchart TD
     subgraph UI["Giao diện"]
-        WEB["Next.js / Streamlit / API client"]
+        WEB["Next.js / API client"]
     end
 
     WEB -->|"hồ sơ bệnh nhân"| API["FastAPI: /v1/predict"]
@@ -88,14 +88,14 @@ flowchart LR
 | RiskModel | `models/risk_model.py` nạp `artifacts/risk_model.joblib`: MLP đã hiệu chuẩn, trả xác suất, nhãn theo ngưỡng và mức rủi ro. Glucose không thuộc đầu vào mô hình BRFSS. |
 | RetrievalAgent | `agents/retriever.py` dùng `paraphrase-multilingual-MiniLM-L12-v2`, ChromaDB và liên kết đồ thị để xếp hạng bằng chứng. Hàm `retrieve` phục vụ luồng chẩn đoán; hàm `ask` phục vụ chat và trả cả vết truy xuất. Chi tiết: [giải thích RAG](rag_giai_thich.md). |
 | KB | `tools/neo4j_kb.py`: `KnowledgeGraph` truy vấn Neo4j; `FileKnowledgeBase` đọc JSON khi chưa cấu hình hoặc không kết nối được. KB gồm 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng, 12 nguồn tiếng Việt. Hàm `to_cypher` sinh `data/kb/kb_diabet.cypher`. |
-| Chat RAG | `POST /v1/chat` trong `api/app.py` và tab "Hỏi đáp" trong `ui/app.py`. Trả câu trả lời có trích dẫn, và từ chối khi không đoạn nào đạt ngưỡng liên quan 0,3. |
+| Chat RAG | `POST /v1/chat` trong `api/app.py` và panel "Hỏi đáp" trong `web/components/risk-console/chat.tsx`. Trả câu trả lời có trích dẫn, và từ chối khi không đoạn nào đạt ngưỡng liên quan 0,3. |
 | SafetyGuard và luật | `tools/safety.py`, `tools/rules.py`: cảnh báo, mức chuyển tuyến, xử lý xung đột và điểm chất lượng dữ liệu. Luật có quyền ưu tiên so với dự đoán và policy RL. |
 | QPolicy và StateTracker | `rl/policy.py`, `rl/environment.py`, `rl/state_tracker.py`: Q-learning lưu tại `artifacts/support_policy.json`; chọn hỏi glucose, truy xuất thêm, khuyến nghị hoặc chuyển bác sĩ. Reward gồm điểm phân loại mức xử trí và phần thưởng giảm entropy khi thu thập thông tin; `StateTracker` gom trạng thái cho policy. Huấn luyện bằng phản hồi mô phỏng. |
 | RecommendationAgent | `agents/recommender.py` nhận bằng chứng, ca tương tự, tác động đặc trưng và kết quả luật để tạo khuyến nghị có trích dẫn; dùng OpenAI khi có key, văn bản dự phòng khi không có key hoặc lỗi LLM. |
 | ExplanationAgent | `agents/explainer.py` chạy sau cùng để giải thích theo kết quả luật và trạng thái bằng chứng cuối; hỗ trợ LLM và văn bản dự phòng. |
 | FeatureExplainer | `tools/explainability.py`: độ nhạy đối với MLP hiện tại, SHAP chỉ cho mô hình tuyến tính; đánh dấu trường tự điền và đầu vào không thuộc mô hình. |
 | MemoryAgent | `memory/store.py`: lưu dự đoán và tìm hồ sơ tương tự bằng khoảng cách các chỉ số; `outcome_confirmed=false`, không coi dự đoán cũ là kết quả bệnh đã xác nhận. |
-| API và giao diện | `api/app.py`, `web/`, `ui/app.py`: kiểm tra dữ liệu, dự đoán, chat, hiển thị đánh giá/bằng chứng/lịch sử/hỏi đáp. API ghi audit bằng `tools/audit_logger.py`. |
+| API và giao diện | `api/app.py`, `web/`: kiểm tra dữ liệu, dự đoán, chat, hiển thị đánh giá/bằng chứng/lịch sử/hỏi đáp. API ghi audit bằng `tools/audit_logger.py`. |
 
 ## Trình tự xử lý một yêu cầu
 

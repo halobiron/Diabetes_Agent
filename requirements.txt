@@ -2,7 +2,6 @@ pandas
 scikit-learn==1.6.1
 joblib
 lightgbm
-streamlit
 fastapi
 pydantic>=2,<3
 httpx

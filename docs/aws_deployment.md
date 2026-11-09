@@ -57,6 +57,5 @@ to the protected FastAPI `/v1/predict` endpoint.
 - persisted model artifact with metrics and model card
 - FastAPI inference service
 - Next.js production risk console
-- Streamlit decision dashboard as a local fallback
 - retrieval, memory, safety checks, and explainability
 - Dockerized deployment to AWS App Runner with Terraform

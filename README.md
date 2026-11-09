@@ -21,7 +21,7 @@ Local healthcare AI prototype: **model training**, **multi-agent orchestration**
 | **Data & ML** | CDC BRFSS diabetes dataset (253k rows), local training, CV + tuning + calibration |
 | **Inference** | FastAPI service with persisted `joblib` artifact and BRFSS feature mapping |
 | **AI agents** | Risk scoring, SHAP/sensitivity explainability, RAG retrieval, memory, safety guardrails; optional LLM text |
-| **UI** | Next.js clinical risk console (portfolio UI) + Streamlit for rapid iteration |
+| **UI** | Next.js clinical risk console (risk assessment + RAG Q&A) |
 | **Runtime** | Local Python and Node.js; Docker Compose for local services |
 
 ## Product demo
@@ -68,7 +68,7 @@ Metrics live in [`artifacts/metrics.json`](artifacts/metrics.json). Local traini
 ## Architecture
 
 ```text
-Patient input (Next.js / Streamlit / API)
+Patient input (Next.js / API)
         │
         ▼
 FastAPI  ──►  BRFSS risk model (local artifact)
@@ -102,7 +102,7 @@ See [`docs/hoi_bo_sung_va_thang_do.md`](docs/hoi_bo_sung_va_thang_do.md).
 - **GPU environment:** PyTorch CUDA, verified on the local RTX 5060 Ti; trains the MLP candidate (optional, inference runs on NumPy without torch)
 - **Agents:** ChromaDB, local medical knowledge base; optional OpenAI for richer text (not required)
 - **Backend:** FastAPI, Uvicorn, Docker
-- **Frontend:** Next.js 15, TypeScript, Tailwind, TanStack Query, Recharts; Streamlit
+- **Frontend:** Next.js 15, TypeScript, Tailwind, TanStack Query, Recharts
 - **Deploy:** Vercel, Heroku, Docker; optional AWS App Runner + Terraform
 
 ## Local setup (PowerShell)
@@ -150,7 +150,7 @@ npm ci
 npm run dev
 ```
 
-Open **http://localhost:3000** (production portfolio UI) or **http://localhost:8501** with `streamlit run ui/app.py`.
+Open **http://localhost:3000**.
 
 ### Docker (all services)
 
@@ -161,7 +161,6 @@ docker compose up --build
 | Service | URL |
 |---------|-----|
 | Next.js console | http://localhost:3000 |
-| Streamlit | http://localhost:8501 |
 | FastAPI | http://localhost:8000 |
 | API docs | http://localhost:8000/docs |
 
@@ -203,7 +202,6 @@ healthcare-agent-system/
 ├── data/             # Local training CSV, knowledge base, memory
 ├── models/           # RiskModel + local training pipeline
 ├── web/              # Next.js production UI
-├── ui/               # Streamlit dashboard
 ├── infra/aws/        # Terraform (App Runner + ECR)
 ├── scripts/          # Download data, train, evaluate locally
 └── tests/

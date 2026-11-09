@@ -10,6 +10,7 @@ import type { AskableField, PatientInput, PredictionResult } from "@/types/healt
 import { AgentTrace } from "./risk-console/agent-trace";
 import { Avatar, CAST, type CastId } from "./risk-console/agents";
 import { Assessment } from "./risk-console/assessment";
+import { ChatPanel } from "./risk-console/chat";
 import { DEFAULT_INPUT } from "./risk-console/constants";
 import { Hero } from "./risk-console/hero";
 import { InputReview } from "./risk-console/input-review";
@@ -94,17 +95,22 @@ function RiskConsoleInner() {
       {mutation.isPending && view === "form" ? <WorkingOverlay /> : null}
 
       {view === "form" || !result ? (
-        <Intake
-          initialStep={editStep}
-          form={form}
-          calculatedBmi={calculatedBmi}
-          isPending={mutation.isPending}
-          error={mutation.error}
-          hasResult={result !== null}
-          onSubmit={submit}
-          onFieldChange={updateField}
-          onCancel={() => setView("result")}
-        />
+        <>
+          <Intake
+            initialStep={editStep}
+            form={form}
+            calculatedBmi={calculatedBmi}
+            isPending={mutation.isPending}
+            error={mutation.error}
+            hasResult={result !== null}
+            onSubmit={submit}
+            onFieldChange={updateField}
+            onCancel={() => setView("result")}
+          />
+          <div className="mx-auto w-full max-w-2xl px-5 pb-16">
+            <ChatPanel />
+          </div>
+        </>
       ) : (
         <main className="mx-auto flex max-w-6xl flex-col gap-6 px-5 py-8" aria-busy={mutation.isPending}>
           <button type="button" onClick={() => { setEditStep(null); setView("form"); }} className="flex min-h-11 w-fit items-center gap-2 text-sm font-semibold text-info underline-offset-4 hover:underline">
@@ -145,6 +151,7 @@ function RiskConsoleInner() {
           ) : null}
           <Assessment result={result} scales={result.measurement_scales ?? []} />
           <AgentTrace result={result} />
+          <ChatPanel />
           <Fold title="Thẻ nhân viên của Ông Mô" hint="Chi tiết kỹ thuật của mô hình dự đoán" cast="mo">
             <ModelStrip result={result} />
           </Fold>
