@@ -49,7 +49,6 @@ STEP_COST = 0.05
 ENTROPY_WEIGHT = 0.3  # reward per bit of uncertainty removed about "needs escalation"
 EVIDENCE_BONUS = {"none": -0.2, "limited": 0.0, "sufficient": 0.2}  # non-escalation advice only
 
-NEEDS = ["routine", "followup", "escalate"]
 # REWARD[need][terminal action]: under-triage is penalised hardest, over-triage mildly.
 REWARD = {
     "routine": {

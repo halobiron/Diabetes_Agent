@@ -243,16 +243,6 @@ class KnowledgeGraph:
         rows = self._run("MATCH (s:Source) RETURN s.kb_version AS version LIMIT 1")
         return rows[0]["version"] if rows else None
 
-    def find_entities(self, text, limit=5):
-        return self._run(
-            "MATCH (n:Entity) WHERE toLower(n.name) CONTAINS toLower($text) "
-            "OR toLower(n.description) CONTAINS toLower($text) "
-            "RETURN n.id AS id, n.name AS name, labels(n) AS labels "
-            "ORDER BY n.name LIMIT $limit",
-            text=text,
-            limit=limit,
-        )
-
     def relations_with_evidence(self, entity_id, limit=20):
         """Every relation touching the entity, each with its supporting evidence and source."""
         return self._run(

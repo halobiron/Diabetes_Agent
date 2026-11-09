@@ -22,11 +22,3 @@ class LocalEmbeddingModel:
             return vector
 
         return [value / norm for value in vector]
-
-    def embed_patient(self, patient):
-        text = (
-            f"age {patient.get('age')} bmi {patient.get('bmi')} "
-            f"blood pressure {patient.get('bp')} glucose {patient.get('glucose')} "
-            f"glucose measured {patient.get('glucose_measured')}"
-        )
-        return self.embed_text(text)

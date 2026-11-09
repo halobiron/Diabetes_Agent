@@ -66,4 +66,4 @@ chạy; cấu hình Compose vẫn khai báo `neo4j:5-community`.
 - `relations_with_evidence(entity_id)`: mọi quan hệ của một thực thể cùng bằng chứng và nguồn.
 - `support_for_risk_factors(["BMI", "HighBP"])`: can thiệp và xét nghiệm gắn với các yếu tố nguy cơ theo tên đặc trưng; dùng cho RetrievalAgent.
 - `all_evidence()`: toàn bộ đoạn bằng chứng kèm nguồn, RetrievalAgent nhúng chúng để tìm ngữ nghĩa. `FileKnowledgeBase` có cùng API, đọc từ file JSON khi Neo4j không kết nối được (hoặc chưa đặt `NEO4J_PASSWORD`).
-- `find_entities(text)`, `stats()`.
+- `stats()`.
