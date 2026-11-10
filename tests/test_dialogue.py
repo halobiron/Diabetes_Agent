@@ -4,7 +4,8 @@ from agents.dialogue import (
     INFORM,
     PROPOSE,
     RETRIEVE_MORE,
-    build_dialogue,
+    conflict_exchanges,
+    override_exchange,
     requested_actions,
 )
 from tests.test_orchestrator import STRONG, FakeRetriever, build
@@ -34,12 +35,13 @@ def conflict(code):
 
 
 def test_no_messages_when_components_agree():
-    assert build_dialogue({"conflicts": []}, None) == []
-    assert build_dialogue({"conflicts": []}, {"steps": [], "overridden_by_rules": False}) == []
+    assert conflict_exchanges({"conflicts": []}) == []
+    assert override_exchange(None) == []
+    assert override_exchange({"steps": [], "overridden_by_rules": False}) == []
 
 
 def test_measurement_beats_prediction_is_a_challenge_then_accept():
-    messages = build_dialogue({"conflicts": [conflict("CF-PRED-LOW-MEASURED-HIGH")]})
+    messages = conflict_exchanges({"conflicts": [conflict("CF-PRED-LOW-MEASURED-HIGH")]})
     assert [m["performative"] for m in messages] == [CHALLENGE, ACCEPT]
     assert (messages[0]["sender"], messages[0]["receiver"]) == ("safety_guard", "risk_model")
     assert (messages[1]["sender"], messages[1]["receiver"]) == ("risk_model", "safety_guard")
@@ -48,14 +50,14 @@ def test_measurement_beats_prediction_is_a_challenge_then_accept():
 
 
 def test_model_holds_its_ground_against_a_normal_glucose():
-    messages = build_dialogue({"conflicts": [conflict("CF-PRED-HIGH-GLUCOSE-NORMAL")]})
+    messages = conflict_exchanges({"conflicts": [conflict("CF-PRED-HIGH-GLUCOSE-NORMAL")]})
     assert [m["performative"] for m in messages] == [CHALLENGE, PROPOSE]
     assert "A1C" in messages[1]["content"]
     assert requested_actions(messages) == []  # advice only; the recommendation already says it
 
 
 def test_retriever_proposal_carries_an_action():
-    messages = build_dialogue({"conflicts": [conflict("CF-ESCALATION-NO-EVIDENCE")]})
+    messages = conflict_exchanges({"conflicts": [conflict("CF-ESCALATION-NO-EVIDENCE")]})
     assert [m["performative"] for m in messages] == [CHALLENGE, PROPOSE]
     assert messages[0]["receiver"] == "retriever"
     assert requested_actions(messages) == [RETRIEVE_MORE]
@@ -63,12 +65,12 @@ def test_retriever_proposal_carries_an_action():
 
 def test_retriever_is_not_challenged_when_there_is_none():
     safety = {"conflicts": [conflict("CF-ESCALATION-NO-EVIDENCE")]}
-    assert build_dialogue(safety, retriever_available=False) == []
+    assert conflict_exchanges(safety, retriever_available=False) == []
 
 
 def test_policy_override_is_challenged_and_accepted():
     policy = {"steps": [{"action": "recommend_routine"}], "overridden_by_rules": True}
-    messages = build_dialogue({"conflicts": []}, policy)
+    messages = override_exchange(policy)
     assert [m["performative"] for m in messages] == [CHALLENGE, ACCEPT]
     assert messages[0]["receiver"] == "support_policy" and messages[0]["rule"] is None
 
@@ -88,7 +90,9 @@ def test_the_proposal_changes_the_outcome_but_never_the_escalation():
     assert retriever.calls == [False, True]  # searched once, then wider because it was proposed
     assert result["evidence_status"] == "sufficient"
     assert result["retrieved_context"] == STRONG
-    assert recorder.recommend_kwargs["retrieved_context"] == STRONG  # advice rebuilt on new evidence
+    assert (
+        recorder.recommend_kwargs["retrieved_context"] == STRONG
+    )  # advice rebuilt on new evidence
     assert result["safety"]["escalation"] == "urgent_clinician_review"  # never lowered
     assert result["safety"]["conflicts"] == []  # the evidence conflict is gone
 
