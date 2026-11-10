@@ -1,6 +1,6 @@
 """Evaluate RAG retrieval quality and pick the relevance threshold.
 
-Relevance labels come from `data/eval/retrieval_questions.json`: a passage is relevant to a
+Relevance labels come from `evaluation/retrieval_questions.json`: a passage is relevant to a
 question when its text matches that question's `relevant_if` pattern. Every in-scope question
 must have at least one relevant passage in the KB (checked here), so each label is grounded in
 the corpus text. Labels are a keyword proxy for relevance: a passage that answers the question
@@ -30,16 +30,17 @@ from tools.neo4j_kb import (  # noqa: E402
 )
 from tools.semantic_embeddings import SemanticEmbeddingModel  # noqa: E402
 
-DATASET = PROJECT_ROOT / "data/eval/retrieval_questions.json"
+DATASET = PROJECT_ROOT / "evaluation/retrieval_questions.json"
 THRESHOLDS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55]
 TOP_K = ANSWER_PASSAGES
 
 
 def build_retriever(kind, chroma_path):
     settings = get_settings()
-    kb = FileKnowledgeBase(load_kb_file(settings.kb_path))
     if kind == "neo4j":
         kb = KnowledgeGraph(create_driver(settings), settings.neo4j_database)
+    else:
+        kb = FileKnowledgeBase(load_kb_file(settings.kb_path))
     # min_relevance=0 so one search yields every score; thresholds are applied afterwards.
     return RetrievalAgent(kb, SemanticEmbeddingModel(), chroma_path, min_relevance=0.0)
 

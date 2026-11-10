@@ -6,6 +6,8 @@ kaggle/
 infra/
 scripts/
 tests/
+data/training/
+evaluation/
 .cursor/
 .pytest_cache/
 .ruff_cache/

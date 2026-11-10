@@ -124,8 +124,11 @@ Use Python 3.11 in `.venv` and Node.js 22 or later. The existing environment fro
 ```
 
 The dataset is downloaded from the [UCI BRFSS mirror](https://archive.ics.uci.edu/dataset/891/cdc+diabetes+health+indicators)
-to `data/diabetes_binary_health_indicators_BRFSS2015.csv`. Model outputs go to `artifacts/`.
+to `data/training/diabetes_binary_health_indicators_BRFSS2015.csv`. Model outputs go to `artifacts/`.
 Both default paths are based on the project directory.
+Application startup requires a trained model at `MODEL_ARTIFACT_PATH` (default:
+`artifacts/risk_model.joblib`). A missing model produces an initialization error;
+the application does not train a replacement from demo data.
 
 ### 3. Configure environment
 
@@ -137,7 +140,7 @@ Copy-Item web/.env.example web/.env.local
 Neo4j is required at application startup. Set `NEO4J_PASSWORD` in `.env`, start
 `docker compose up -d neo4j`, and load the knowledge base following
 [the Neo4j setup guide](docs/neo4j_kb.md). Startup errors do not fall back to JSON;
-`python scripts/collect_corpus.py` ingests web/PDF sources straight into Neo4j (no intermediate JSON); `data/kb/diabetes_kb.json` is only an offline snapshot for tests.
+`python scripts/collect_corpus.py` ingests web/PDF sources straight into Neo4j (no intermediate JSON); `tests/fixtures/diabetes_kb.json` is only an offline snapshot for tests.
 
 ### 4. Run API + Next.js UI
 
@@ -190,12 +193,18 @@ Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 
 | Path | Contents |
 |------|----------|
-| `data/diabetes_binary_health_indicators_BRFSS2015.csv` | Full training dataset |
+| `data/training/diabetes_binary_health_indicators_BRFSS2015.csv` | Full training dataset |
 | `models/training_pipeline.py` | Training pipeline |
 | `artifacts/` | Model, metrics and model card |
 | `data/chroma/` | Knowledge index and case memory |
-| `data/kb/diabetes_kb.json` | Source file of the Neo4j knowledge graph ([docs/neo4j_kb.md](docs/neo4j_kb.md)) |
+| `data/corpus/sources.json`, `data/corpus/graph.json` | Source manifest and curated graph for direct ingestion into Neo4j |
+| `evaluation/retrieval_questions.json` | Labeled RAG evaluation questions |
+| `tests/fixtures/diabetes_kb.json` | Offline KB snapshot for tests, reports and optional restore ([docs/neo4j_kb.md](docs/neo4j_kb.md)) |
+| `tests/fixtures/patients.csv` | Sample data for the legacy demo evaluation script |
+| `artifacts/kb_diabet.cypher` | Generated Cypher export of the offline snapshot |
 | `logs/` | Decision logs and runtime checks |
+
+See [data/README.md](data/README.md) for the data lifecycle and commands.
 
 ## Project structure
 
@@ -204,12 +213,13 @@ healthcare-agent-system/
 ├── agents/           # Orchestrator, explainer, recommender, retriever
 ├── api/              # FastAPI app
 ├── artifacts/        # Local model, metrics.json, model_card.md
-├── data/             # Local training CSV, knowledge base, memory
+├── data/             # Corpus inputs, training CSV, ChromaDB
+├── evaluation/       # Labeled retrieval evaluation dataset
 ├── models/           # RiskModel + local training pipeline
 ├── web/              # Next.js production UI
 ├── infra/aws/        # Terraform (App Runner + ECR)
 ├── scripts/          # Download data, train, evaluate locally
-└── tests/
+└── tests/            # Tests and shared offline fixtures
 ```
 
 ## Development

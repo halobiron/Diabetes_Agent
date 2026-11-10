@@ -40,11 +40,11 @@ def evaluate(data_path):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Evaluate healthcare risk model.")
+    parser = argparse.ArgumentParser(description="Evaluate the legacy demo model on sample data.")
     parser.add_argument(
         "--data",
-        default=str(Path(__file__).resolve().parents[1] / "data" / "patients.csv"),
-        help="Path to CSV with features and target column.",
+        default=str(Path(__file__).resolve().parents[1] / "tests" / "fixtures" / "patients.csv"),
+        help="Demo CSV with features and target; not the production BRFSS evaluation.",
     )
     args = parser.parse_args()
 

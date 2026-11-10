@@ -1,5 +1,5 @@
 {
-  "description": "Thực thể và quan hệ của đồ thị tri thức, trỏ tới các đoạn bằng chứng (evidence id) trong passages.jsonl. collect_corpus.py gộp file này vào corpus_kb.json và kiểm tra mọi evidence id còn tồn tại. Trường 'key' nối thực thể RiskFactor với đặc trưng của mô hình.",
+  "description": "Thực thể và quan hệ của đồ thị tri thức, trỏ tới các đoạn bằng chứng (evidence id) được collect_corpus.py trích từ nguồn web/PDF. Script ghép dữ liệu trong bộ nhớ, kiểm tra mọi evidence id còn tồn tại rồi nạp trực tiếp vào Neo4j. Trường 'key' nối thực thể RiskFactor với đặc trưng của mô hình.",
   "entities": [
     {"id": "type2_diabetes", "label": "Condition", "name": "Đái tháo đường típ 2", "description": "Bệnh mạn tính do suy giảm tác dụng và tiết insulin, làm tăng glucose máu."},
     {"id": "prediabetes", "label": "Condition", "name": "Tiền đái tháo đường", "description": "Glucose máu cao hơn bình thường nhưng chưa tới ngưỡng chẩn đoán đái tháo đường."},

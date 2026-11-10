@@ -1,4 +1,4 @@
-"""Download the public BRFSS binary dataset into the project's data directory."""
+"""Download the public BRFSS binary dataset into data/training/."""
 
 import csv
 import shutil
@@ -6,7 +6,7 @@ from pathlib import Path
 from urllib.request import urlopen
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-DATA_PATH = PROJECT_ROOT / "data" / "diabetes_binary_health_indicators_BRFSS2015.csv"
+DATA_PATH = PROJECT_ROOT / "data" / "training" / "diabetes_binary_health_indicators_BRFSS2015.csv"
 SOURCE_URL = "https://archive.ics.uci.edu/static/public/891/data.csv"
 
 

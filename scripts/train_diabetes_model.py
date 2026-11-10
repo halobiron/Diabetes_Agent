@@ -8,7 +8,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from models.training_pipeline import load_dataset_from_path, train_production_model
 
-DEFAULT_DATA = PROJECT_ROOT / "data" / "diabetes_binary_health_indicators_BRFSS2015.csv"
+DEFAULT_DATA = (
+    PROJECT_ROOT / "data" / "training" / "diabetes_binary_health_indicators_BRFSS2015.csv"
+)
 DEFAULT_OUTPUT = PROJECT_ROOT / "artifacts"
 
 

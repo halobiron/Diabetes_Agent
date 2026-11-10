@@ -60,7 +60,7 @@ code(
     """from sklearn.model_selection import train_test_split
 from models.training_pipeline import FEATURE_NAMES, TARGET_COLUMN, RANDOM_STATE, TEST_SIZE, VALIDATION_SIZE
 
-df = pd.read_csv(ROOT / "data" / "diabetes_binary_health_indicators_BRFSS2015.csv")
+df = pd.read_csv(ROOT / "data" / "training" / "diabetes_binary_health_indicators_BRFSS2015.csv")
 X, y = df[FEATURE_NAMES], df[TARGET_COLUMN].astype(int)
 X_dev, X_test, y_dev, y_test = train_test_split(X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y)
 X_train, X_val, y_train, y_val = train_test_split(X_dev, y_dev, test_size=VALIDATION_SIZE, random_state=RANDOM_STATE, stratify=y_dev)
@@ -199,11 +199,11 @@ fig.tight_layout(); fig.savefig(OUT / "fig_confusion.png"); plt.show()""",
     "confusion",
 )
 
-md("## 6. Đồ thị tri thức (cùng nguồn `data/kb/diabetes_kb.json` được nạp vào Neo4j)")
+md("## 6. Đồ thị tri thức (bản chụp ngoại tuyến `tests/fixtures/diabetes_kb.json`)")
 code(
     """import networkx as nx
 from collections import Counter
-kb = json.loads((ROOT / "data" / "kb" / "diabetes_kb.json").read_text(encoding="utf-8-sig"))
+kb = json.loads((ROOT / "tests" / "fixtures" / "diabetes_kb.json").read_text(encoding="utf-8-sig"))
 G = nx.DiGraph()
 for e in kb["entities"]:
     G.add_node(e["id"], name=e["name"], label=e["label"])

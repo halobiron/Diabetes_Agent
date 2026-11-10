@@ -15,17 +15,13 @@ from tools.safety import SafetyGuard
 from tools.what_if import WhatIfSimulator
 
 BASE_DIR = Path(__file__).resolve().parent
-DATA_PATH = BASE_DIR / "data" / "patients.csv"
 CHROMA_PATH = Path(os.getenv("CHROMA_PATH", str(BASE_DIR / "data" / "chroma")))
 
 
 def build_agent():
     settings = get_settings()
     model = RiskModel()
-    if settings.model_artifact_path.exists():
-        model.load_artifact(settings.model_artifact_path)
-    else:
-        model.train_from_csv(DATA_PATH)
+    model.load_artifact(settings.model_artifact_path)
 
     explainer = ExplanationAgent()
     recommender = RecommendationAgent()

@@ -12,8 +12,8 @@ from tools.neo4j_kb import KnowledgeGraph, create_driver, load_kb_file, validate
 
 def main():
     settings = get_settings()
-    parser = argparse.ArgumentParser(description="Load or update the diabetes knowledge graph.")
-    parser.add_argument("--kb", default=str(settings.kb_path), help="KB JSON file")
+    parser = argparse.ArgumentParser(description="Restore an offline KB snapshot into Neo4j.")
+    parser.add_argument("--kb", default=str(settings.kb_path), help="Offline KB JSON snapshot")
     parser.add_argument("--dry-run", action="store_true", help="validate the file, skip Neo4j")
     parser.add_argument(
         "--no-prune", action="store_true", help="keep graph items missing from file"

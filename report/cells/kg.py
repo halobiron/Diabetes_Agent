@@ -1,6 +1,6 @@
 import networkx as nx
 from collections import Counter
-kb = json.loads((ROOT / "data" / "kb" / "diabetes_kb.json").read_text(encoding="utf-8-sig"))
+kb = json.loads((ROOT / "tests" / "fixtures" / "diabetes_kb.json").read_text(encoding="utf-8-sig"))
 G = nx.DiGraph()
 for e in kb["entities"]:
     G.add_node(e["id"], name=e["name"], label=e["label"])

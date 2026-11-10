@@ -258,7 +258,7 @@ Bảng~\ref{tab:map} ánh xạ từng khối trên sơ đồ sang mã nguồn.
 \textbf{Khối trên sơ đồ} & \textbf{Thành phần} & \textbf{Hiện thực}\\
 \midrule
 DB $\rightarrow$ Deep learning $\rightarrow$ Dự đoán, Phân loại & \code{models/}, \code{RiskModel} & Huấn luyện bằng \code{training_pipeline.py}; MLP PyTorch, suy luận bằng NumPy; ngưỡng và mức nguy cơ lưu trong artifact (Mục~4.1)\\
-Neo4j KB & \code{tools/neo4j_kb.py}, \code{scripts/load_neo4j_kb.py} & Đọc \code{data/kb/diabetes_kb.json}, kiểm tra nhất quán rồi nạp (\code{MERGE}) vào Neo4j; ứng dụng bắt buộc dùng Neo4j (Mục~4.2)\\
+Neo4j KB & \code{tools/neo4j_kb.py}, \code{scripts/collect_corpus.py} & Thu thập web/PDF, ghép đồ thị tuyển chọn trong bộ nhớ, kiểm tra rồi nạp (\code{MERGE}) trực tiếp vào Neo4j; ứng dụng bắt buộc dùng Neo4j (Mục~4.2)\\
 RAG $\rightarrow$ Agent & \code{RetrievalAgent} & Nhúng \code{all-MiniLM-L6-v2}, chỉ mục ChromaDB (cosine), cộng điểm cho đoạn gắn với yếu tố nguy cơ qua đồ thị\\
 Bộ luật & \code{SafetyGuard}, \code{RuleEngine} & 5 luật cơ sở và 4 luật xung đột (Mục~4.3)\\
 Reinforcement learning & \code{rl/environment.py}, \code{rl/policy.py} & Q-learning dạng bảng trên môi trường mô phỏng (Mục~4.3)\\
@@ -442,11 +442,11 @@ Một con số xác suất chưa đủ để tư vấn. Quanh mô hình, \code{R
 
 \section{Knowledge Base và RAG}
 \subsection{Nguồn tri thức và đồ thị Neo4j}
-Tri thức được tuyển chọn thủ công trong \code{data/kb/diabetes_kb.json} (phiên bản 9) từ năm nguồn: ADA Standards of Care 2025 \cite{ada2025}, WHO \cite{who2024}, CDC \cite{cdc}, NIDDK \cite{niddk} và thử nghiệm DPP \cite{dpp2002}. Nội dung bằng chứng là diễn giải ngắn từ các tài liệu này; \textbf{chưa được đối chiếu lại từng URL tự động và chưa được chuyên gia y khoa thẩm định}. Script \code{scripts/load_neo4j_kb.py} kiểm tra tính nhất quán của tệp (nguồn, thực thể, quan hệ) rồi nạp vào Neo4j bằng \code{MERGE}, nên chạy lại an toàn; mục không còn trong tệp bị xoá trừ khi dùng \code{--no-prune}.
+Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}; các thực thể và quan hệ tuyển chọn nằm tại \code{data/corpus/graph.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng, ghép đồ thị trong bộ nhớ, kiểm tra nhất quán rồi nạp trực tiếp vào Neo4j bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Bản chụp cố định \code{tests/fixtures/diabetes_kb.json} phục vụ kiểm thử, đánh giá ngoại tuyến và báo cáo; \code{scripts/load_neo4j_kb.py} là công cụ khôi phục tùy chọn từ bản chụp này.
 
 Lược đồ gồm bốn nhãn thực thể (\code{Condition}, \code{RiskFactor}, \code{Test}, \code{Intervention}), nút \code{Evidence} và \code{Source}, và năm loại quan hệ: \code{INCREASES_RISK_OF}, \code{DIAGNOSES}, \code{REDUCES_RISK_OF}, \code{ADDRESSES}, \code{SHOULD_TEST_WITH}. Mỗi quan hệ mang \code{evidence_ids}; mỗi \code{Evidence} nối tới \code{Source} qua \code{FROM}, nên mọi khẳng định truy vấn ra đều đi kèm trích dẫn. Kết quả: 20 thực thể, 35 quan hệ nghiệp vụ, 21 đoạn bằng chứng, 5 nguồn; sau khi nạp, Neo4j có 46 nút và 56 quan hệ (gồm 21 quan hệ bằng chứng $\rightarrow$ nguồn), được xác minh ngày 03/11/2026 trên Neo4j 2026.10.1 chạy trong Docker.
 
-Hình~\ref{fig:kg} vẽ đồ thị tri thức từ chính tệp \code{data/kb/diabetes_kb.json} (tệp được nạp vào Neo4j) bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
+Hình~\ref{fig:kg} vẽ đồ thị tri thức từ bản chụp ngoại tuyến \code{tests/fixtures/diabetes_kb.json} bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
 
 \begin{figure}[H]
 \centering
@@ -593,7 +593,8 @@ healthcare-agent-system/
 |-- tools/               rules.py, safety.py, neo4j_kb.py, explainability.py,
 |                        what_if.py, patient_guidance.py, audit_logger.py
 |-- memory/store.py      MemoryAgent (ChromaDB)
-|-- data/                BRFSS 2015 CSV, kb/diabetes_kb.json
+|-- data/                corpus/, training/ (BRFSS 2015 CSV), chroma/
+|-- evaluation/          retrieval_questions.json
 |-- artifacts/           risk_model.joblib, metrics.json, support_policy.json
 |-- scripts/             download_training_data, train_diabetes_model,
 |                        train_support_policy, load_neo4j_kb, demo_step12
