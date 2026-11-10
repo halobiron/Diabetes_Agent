@@ -4,11 +4,6 @@ Only a proposal carrying RETRIEVE_MORE triggers work in the Orchestrator. Other
 messages record why the safety rules prevailed; none can lower an escalation.
 """
 
-CHALLENGE = "challenge"
-ACCEPT = "accept"
-PROPOSE = "propose"
-INFORM = "inform"
-
 RETRIEVE_MORE = "retrieve_more_evidence"
 
 
@@ -16,24 +11,24 @@ RETRIEVE_MORE = "retrieve_more_evidence"
 CONFLICT_REPLIES = {
     "CF-PRED-LOW-MEASURED-HIGH": (
         "risk_model",
-        ACCEPT,
+        "accept",
         "Tôi chỉ thấy các yếu tố lối sống nên không thấy số đo nguy hiểm này; "
         "chấp nhận nâng nguy cơ hiệu lực lên Cao theo số đo.",
     ),
     "CF-PRED-HIGH-GLUCOSE-NORMAL": (
         "risk_model",
-        PROPOSE,
+        "propose",
         "Glucose không phải đặc trưng của tôi nên một lần đo bình thường không bác được dự đoán; "
         "giữ mức Cao và đề nghị xét nghiệm A1C để xác nhận.",
     ),
     "CF-PRED-HIGH-LOW-QUALITY": (
         "risk_model",
-        ACCEPT,
+        "accept",
         "Dữ liệu đầu vào chất lượng thấp; chấp nhận đánh dấu dự đoán là tạm thời.",
     ),
     "CF-ESCALATION-NO-EVIDENCE": (
         "retriever",
-        PROPOSE,
+        "propose",
         "Đề nghị tìm mở rộng bằng chứng; mức chuyển tuyến không hạ trong lúc chờ.",
     ),
 }
@@ -64,7 +59,7 @@ def conflict_exchanges(safety, retriever_available=True):
         action = RETRIEVE_MORE if target == "retriever" else None
         messages.extend(
             [
-                _message("safety_guard", target, CHALLENGE, conflict["message"], rule),
+                _message("safety_guard", target, "challenge", conflict["message"], rule),
                 _message(target, "safety_guard", performative, content, rule, action),
             ]
         )
@@ -79,13 +74,13 @@ def override_exchange(policy):
         _message(
             "safety_guard",
             "support_policy",
-            CHALLENGE,
+            "challenge",
             "Luật yêu cầu mức chuyển tuyến cao hơn bước policy đã chọn.",
         ),
         _message(
             "support_policy",
             "safety_guard",
-            ACCEPT,
+            "accept",
             "Chấp nhận bị ghi đè: bước tiếp theo là chuyển bác sĩ vì luật đã yêu cầu mức cao hơn "
             "bước tôi chọn.",
         ),
@@ -94,7 +89,7 @@ def override_exchange(policy):
 
 def requested_actions(messages):
     """Actions that components proposed and the Orchestrator should carry out."""
-    return [m["action"] for m in messages if m["performative"] == PROPOSE and m.get("action")]
+    return [m["action"] for m in messages if m["performative"] == "propose" and m.get("action")]
 
 
 def retrieval_outcome(count, status_label, rule=None, failed=False):
@@ -106,4 +101,4 @@ def retrieval_outcome(count, status_label, rule=None, failed=False):
         else f"Đã tìm mở rộng: {count} đoạn bằng chứng ({status_label}); "
         "mức chuyển tuyến giữ nguyên."
     )
-    return _message("retriever", "safety_guard", INFORM, content, rule)
+    return _message("retriever", "safety_guard", "inform", content, rule)

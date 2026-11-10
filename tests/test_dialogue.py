@@ -1,8 +1,4 @@
 from agents.dialogue import (
-    ACCEPT,
-    CHALLENGE,
-    INFORM,
-    PROPOSE,
     RETRIEVE_MORE,
     conflict_exchanges,
     override_exchange,
@@ -42,7 +38,7 @@ def test_no_messages_when_components_agree():
 
 def test_measurement_beats_prediction_is_a_challenge_then_accept():
     messages = conflict_exchanges({"conflicts": [conflict("CF-PRED-LOW-MEASURED-HIGH")]})
-    assert [m["performative"] for m in messages] == [CHALLENGE, ACCEPT]
+    assert [m["performative"] for m in messages] == ["challenge", "accept"]
     assert (messages[0]["sender"], messages[0]["receiver"]) == ("safety_guard", "risk_model")
     assert (messages[1]["sender"], messages[1]["receiver"]) == ("risk_model", "safety_guard")
     assert all(m["rule"] == "CF-PRED-LOW-MEASURED-HIGH" for m in messages)
@@ -51,14 +47,14 @@ def test_measurement_beats_prediction_is_a_challenge_then_accept():
 
 def test_model_holds_its_ground_against_a_normal_glucose():
     messages = conflict_exchanges({"conflicts": [conflict("CF-PRED-HIGH-GLUCOSE-NORMAL")]})
-    assert [m["performative"] for m in messages] == [CHALLENGE, PROPOSE]
+    assert [m["performative"] for m in messages] == ["challenge", "propose"]
     assert "A1C" in messages[1]["content"]
     assert requested_actions(messages) == []  # advice only; the recommendation already says it
 
 
 def test_retriever_proposal_carries_an_action():
     messages = conflict_exchanges({"conflicts": [conflict("CF-ESCALATION-NO-EVIDENCE")]})
-    assert [m["performative"] for m in messages] == [CHALLENGE, PROPOSE]
+    assert [m["performative"] for m in messages] == ["challenge", "propose"]
     assert messages[0]["receiver"] == "retriever"
     assert requested_actions(messages) == [RETRIEVE_MORE]
 
@@ -71,7 +67,7 @@ def test_retriever_is_not_challenged_when_there_is_none():
 def test_policy_override_is_challenged_and_accepted():
     policy = {"steps": [{"action": "recommend_routine"}], "overridden_by_rules": True}
     messages = override_exchange(policy)
-    assert [m["performative"] for m in messages] == [CHALLENGE, ACCEPT]
+    assert [m["performative"] for m in messages] == ["challenge", "accept"]
     assert messages[0]["receiver"] == "support_policy" and messages[0]["rule"] is None
 
 
@@ -98,9 +94,9 @@ def test_the_proposal_changes_the_outcome_but_never_the_escalation():
 
     kinds = [(m["sender"], m["performative"]) for m in result["trace"]["dialogue"]]
     assert kinds == [
-        ("safety_guard", CHALLENGE),
-        ("retriever", PROPOSE),
-        ("retriever", INFORM),
+        ("safety_guard", "challenge"),
+        ("retriever", "propose"),
+        ("retriever", "inform"),
     ]
     assert result["trace"]["dialogue"][1]["action"] == RETRIEVE_MORE
 
@@ -137,4 +133,4 @@ def test_failed_wider_search_keeps_earlier_evidence_and_says_so():
     assert result["safety"]["escalation"] == "urgent_clinician_review"
     assert [item["component"] for item in result["degraded"]] == ["retriever"]
     outcome = result["trace"]["dialogue"][-1]
-    assert outcome["performative"] == INFORM and "lỗi" in outcome["content"]
+    assert outcome["performative"] == "inform" and "lỗi" in outcome["content"]
