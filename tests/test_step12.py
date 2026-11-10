@@ -21,10 +21,24 @@ def integration_client(tmp_path, monkeypatch):
     monkeypatch.setenv("SUPPORT_POLICY_PATH", str(ROOT / "artifacts/support_policy.json"))
     import api.app as api
     import main
+    from agents.retriever import CHAT_MIN_RELEVANCE, RetrievalAgent
     from core.config import get_settings
+    from tools.neo4j_kb import FileKnowledgeBase, load_kb_file
+    from tools.semantic_embeddings import SemanticEmbeddingModel
 
     # Explicit injection makes this fixture independent of earlier imports / API fixtures.
     monkeypatch.setattr(main, "CHROMA_PATH", tmp_path / "chroma")
+    # Offline acceptance tests inject their KB explicitly; production requires Neo4j.
+    monkeypatch.setattr(
+        main.RetrievalAgent,
+        "from_settings",
+        lambda settings, path: RetrievalAgent(
+            FileKnowledgeBase(load_kb_file(settings.kb_path)),
+            SemanticEmbeddingModel(),
+            path,
+            ask_min_relevance=CHAT_MIN_RELEVANCE,
+        ),
+    )
     ready = Future()
     ready.set_result(main.build_agent())
     monkeypatch.setattr(api, "_agent_future", ready)

@@ -277,7 +277,7 @@ def main():
     parser.add_argument(
         "--require-neo4j",
         action="store_true",
-        help="Use configured Neo4j and fail if retrieval falls back to the KB file (load KB first).",
+        help="Verify Neo4j graph contents (application startup always requires Neo4j).",
     )
     parser.add_argument("--api-port", type=int, default=18000)
     parser.add_argument("--web-port", type=int, default=13000)
@@ -289,7 +289,7 @@ def main():
             "OPENAI_API_KEY": "",
             "API_TOKEN": "",
             "REQUIRE_API_TOKEN": "false",
-            "NEO4J_PASSWORD": os.getenv("NEO4J_PASSWORD", "") if args.require_neo4j else "",
+            "NEO4J_PASSWORD": os.getenv("NEO4J_PASSWORD", ""),
             "CHROMA_PATH": str(work_dir / "chroma"),
             "LOG_DIR": str(work_dir / "audit"),
             "MODEL_ARTIFACT_PATH": str(ROOT / "artifacts/risk_model.joblib"),

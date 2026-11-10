@@ -3,7 +3,7 @@ import logging
 import re
 
 from tools.chroma_client import create_persistent_client
-from tools.neo4j_kb import FileKnowledgeBase, KnowledgeGraph, create_driver, load_kb_file
+from tools.neo4j_kb import KnowledgeGraph, create_driver
 from tools.semantic_embeddings import SemanticEmbeddingModel
 from tools.vietnamese import RISK_LABELS
 
@@ -77,8 +77,8 @@ def evidence_status(contexts):
 class RetrievalAgent:
     """Semantic search over the diabetes KB evidence, boosted by the graph's risk-factor links.
 
-    `knowledge_base` is a KnowledgeGraph (Neo4j) or FileKnowledgeBase; if the graph is
-    unreachable at startup we fall back to `fallback_kb` (the same KB read from the JSON file).
+    Application startup requires Neo4j via `from_settings`. Tests and offline evaluation
+    may inject another knowledge base explicitly; startup errors never switch to JSON.
     """
 
     def __init__(
@@ -86,7 +86,6 @@ class RetrievalAgent:
         knowledge_base,
         embedding_model,
         chroma_path,
-        fallback_kb=None,
         min_relevance=MIN_RELEVANCE,
         ask_min_relevance=None,
     ):
@@ -95,15 +94,7 @@ class RetrievalAgent:
         self.ask_min_relevance = min_relevance if ask_min_relevance is None else ask_min_relevance
         self.kb = knowledge_base
         self.kb_source = type(knowledge_base).__name__
-        try:
-            evidence = self.kb.all_evidence()
-        except Exception as exc:
-            if fallback_kb is None:
-                raise
-            logger.warning("Knowledge graph unavailable (%s); using KB file instead", exc)
-            self.kb = fallback_kb
-            self.kb_source = type(fallback_kb).__name__
-            evidence = self.kb.all_evidence()
+        evidence = self.kb.all_evidence()
 
         self.factor_names = self.kb.risk_factor_names()
         self.evidence = {item["evidence_id"]: item for item in evidence}
@@ -113,18 +104,23 @@ class RetrievalAgent:
 
     @classmethod
     def from_settings(cls, settings, chroma_path):
-        """Neo4j when NEO4J_PASSWORD is set, otherwise the KB file; the file is also the fallback."""
-        file_kb = FileKnowledgeBase(load_kb_file(settings.kb_path))
-        kb = file_kb
-        if settings.neo4j_password:
-            kb = KnowledgeGraph(create_driver(settings), settings.neo4j_database)
-        return cls(
-            kb,
-            SemanticEmbeddingModel(),
-            chroma_path,
-            fallback_kb=file_kb,
-            ask_min_relevance=CHAT_MIN_RELEVANCE,
-        )
+        """Require configured Neo4j; JSON is only a source for loading and offline tools."""
+        if not settings.neo4j_password:
+            raise ValueError(
+                "Thiếu NEO4J_PASSWORD. Ứng dụng bắt buộc dùng Neo4j; "
+                "hãy cấu hình và nạp biến môi trường trước khi khởi chạy."
+            )
+        driver = create_driver(settings)
+        try:
+            return cls(
+                KnowledgeGraph(driver, settings.neo4j_database),
+                SemanticEmbeddingModel(),
+                chroma_path,
+                ask_min_relevance=CHAT_MIN_RELEVANCE,
+            )
+        except Exception:
+            driver.close()
+            raise
 
     def _sync_collection(self, evidence):
         # The name hashes model + corpus, so changed KB text or a new model builds a fresh index.

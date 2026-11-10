@@ -27,7 +27,7 @@ Phương án dự phòng nếu giao diện lỗi: `.\.venv\Scripts\python.exe sc
 
 ## Phần 1 - Show KB Neo4j (2-3 phút)
 
-**Trên giao diện web:** nhập một hồ sơ rồi xem phần "Cơ sở tri thức Neo4j đã dùng cho hồ sơ này" ở cuối trang kết quả. Huy hiệu cho biết đang đọc từ Neo4j hay file dự phòng, kèm số thực thể, quan hệ, đoạn bằng chứng và nguồn. Các thực thể viền vàng là phần hệ thống đã dùng cho hồ sơ đó; bấm một thực thể để xem quan hệ và các đoạn tài liệu làm căn cứ (đoạn đã dùng được đánh dấu). Phần Hỏi đáp ngay bên dưới dùng cùng đồ thị này khi truy xuất.
+**Trên giao diện web:** nhập một hồ sơ rồi xem phần "Cơ sở tri thức Neo4j đã dùng cho hồ sơ này" ở cuối trang kết quả. Huy hiệu cho biết nguồn Neo4j, kèm số thực thể, quan hệ, đoạn bằng chứng và nguồn. Các thực thể viền vàng là phần hệ thống đã dùng cho hồ sơ đó; bấm một thực thể để xem quan hệ và các đoạn tài liệu làm căn cứ (đoạn đã dùng được đánh dấu). Phần Hỏi đáp ngay bên dưới dùng cùng đồ thị này khi truy xuất.
 
 **Nói:** KB được xây từ 12 tài liệu y khoa tiếng Việt (Bộ Y tế, WHO, Vinmec). Từ đó trích ra 20 thực thể, 35 quan hệ và 146 đoạn bằng chứng, sinh file `data/kb/kb_diabet.cypher` rồi nạp vào Neo4j.
 
@@ -86,7 +86,7 @@ Sau đó chạy **hồ sơ nguy cơ thấp** (tuổi 28, BMI 21, huyết áp 112
 
 - **Mô hình DL là gì, độ chính xác ra sao?** MLP PyTorch hai lớp ẩn (128, 64), huấn luyện trên BRFSS2015 (253.680 mẫu, 21 đặc trưng), xác suất đã hiệu chuẩn. Trên tập test: ROC-AUC 0,826, recall 0,60, precision 0,38 ở ngưỡng 0,239. Chi tiết trong [model card](../artifacts/model_card.md).
 - **Đây có phải chẩn đoán y khoa không?** Không. Dữ liệu là khảo sát tự khai, mô hình chỉ ước lượng nguy cơ; kết quả luôn kèm khuyến nghị gặp bác sĩ.
-- **Nếu Neo4j hỏng?** `RetrievalAgent` tự chuyển sang đọc `data/kb/diabetes_kb.json`, vết RAG ghi rõ nguồn KB đang dùng.
+- **Nếu Neo4j hỏng?** Lỗi kết nối lúc khởi tạo khiến dịch vụ phân tích chưa sẵn sàng (API trả 503), không chuyển sang JSON. Cần khởi động lại Neo4j rồi khởi động lại API. Nếu chỉ truy vấn liên kết đồ thị bị lỗi sau khi đã khởi tạo, truy xuất tiếp tục bằng chỉ mục ngữ nghĩa Chroma đã tạo.
 - **Nếu một agent lỗi?** Lỗi mô hình không trả xác suất giả. Lỗi tư vấn dùng nội dung dự phòng và được ghi vào `degraded`. Lỗi bộ luật chuyển sang "cần bác sĩ đánh giá".
 - **Chat có dùng LLM không?** Không. Câu trả lời ghép từ các đoạn tài liệu truy xuất được, nên không bịa nội dung ngoài KB. Đổi lại văn phong là trích đoạn, không mượt như LLM.
 - **Hạn chế đã biết:** KB nhỏ (12 nguồn); chưa có bộ câu hỏi đánh giá chính thức cho RAG; Q-learning huấn luyện trên phản hồi mô phỏng.

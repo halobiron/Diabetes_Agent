@@ -15,6 +15,22 @@ def client(tmp_path_factory):
         patch.setenv("CHROMA_PATH", str(test_dir / "chroma"))
         patch.setenv("LOG_DIR", str(test_dir / "logs"))
         patch.setenv("MODEL_ARTIFACT_PATH", str(PROJECT_ROOT / "artifacts/risk_model.joblib"))
+        import main
+        from agents.retriever import CHAT_MIN_RELEVANCE, RetrievalAgent
+        from tools.neo4j_kb import FileKnowledgeBase, load_kb_file
+        from tools.semantic_embeddings import SemanticEmbeddingModel
+
+        # Offline tests choose a file KB explicitly; application startup requires Neo4j.
+        patch.setattr(
+            main.RetrievalAgent,
+            "from_settings",
+            lambda settings, path: RetrievalAgent(
+                FileKnowledgeBase(load_kb_file(settings.kb_path)),
+                SemanticEmbeddingModel(),
+                path,
+                ask_min_relevance=CHAT_MIN_RELEVANCE,
+            ),
+        )
         from api.app import app
 
         with TestClient(app) as test_client:

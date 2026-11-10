@@ -56,17 +56,63 @@ def test_min_relevance_filters_everything_when_too_strict(file_kb, tmp_path):
     assert strict.retrieve({}, "Low", {"features": []}) == []
 
 
-def test_falls_back_to_file_kb_when_graph_is_down(file_kb, tmp_path):
+def test_startup_fails_when_graph_is_down(tmp_path):
     class DownGraph:
         def all_evidence(self):
             raise ConnectionError("neo4j unreachable")
 
-    agent = RetrievalAgent(
-        DownGraph(), WordEmbeddings(), tmp_path, fallback_kb=file_kb, min_relevance=0.1
-    )
+    with pytest.raises(ConnectionError, match="neo4j unreachable"):
+        RetrievalAgent(DownGraph(), WordEmbeddings(), tmp_path)
 
-    assert agent.kb_source == "FileKnowledgeBase"
+
+def test_from_settings_requires_neo4j_password(tmp_path, monkeypatch):
+    from core.config import get_settings
+
+    monkeypatch.setenv("NEO4J_PASSWORD", "")
+    monkeypatch.setenv("KB_PATH", str(tmp_path / "missing.json"))
+    with pytest.raises(ValueError, match="NEO4J_PASSWORD"):
+        RetrievalAgent.from_settings(get_settings(), tmp_path / "chroma")
+
+
+def test_from_settings_uses_neo4j_without_reading_json(file_kb, tmp_path, monkeypatch):
+    from unittest.mock import Mock
+
+    import agents.retriever as module
+    from core.config import get_settings
+
+    driver = Mock()
+    graph = Mock(wraps=file_kb)
+    graph_factory = Mock(return_value=graph)
+    monkeypatch.setenv("NEO4J_PASSWORD", "test-password")
+    monkeypatch.setenv("KB_PATH", str(tmp_path / "missing.json"))
+    monkeypatch.setattr(module, "create_driver", lambda settings: driver)
+    monkeypatch.setattr(module, "KnowledgeGraph", graph_factory)
+    monkeypatch.setattr(module, "SemanticEmbeddingModel", WordEmbeddings)
+
+    agent = RetrievalAgent.from_settings(get_settings(), tmp_path / "chroma")
+
+    graph_factory.assert_called_once_with(driver, get_settings().neo4j_database)
+    assert agent.kb is graph
     assert agent.collection.count() == len(file_kb.all_evidence())
+    driver.close.assert_not_called()
+
+
+def test_from_settings_propagates_neo4j_error_and_closes_driver(tmp_path, monkeypatch):
+    from unittest.mock import Mock
+
+    import agents.retriever as module
+    from core.config import get_settings
+
+    driver = Mock()
+    graph = Mock()
+    graph.all_evidence.side_effect = ConnectionError("neo4j unreachable")
+    monkeypatch.setenv("NEO4J_PASSWORD", "test-password")
+    monkeypatch.setattr(module, "create_driver", lambda settings: driver)
+    monkeypatch.setattr(module, "KnowledgeGraph", lambda *args: graph)
+
+    with pytest.raises(ConnectionError, match="neo4j unreachable"):
+        RetrievalAgent.from_settings(get_settings(), tmp_path / "chroma")
+    driver.close.assert_called_once()
 
 
 def test_graph_error_at_query_time_degrades_to_semantic_only(file_kb, tmp_path):
