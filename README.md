@@ -137,7 +137,7 @@ Copy-Item web/.env.example web/.env.local
 Neo4j is required at application startup. Set `NEO4J_PASSWORD` in `.env`, start
 `docker compose up -d neo4j`, and load the knowledge base following
 [the Neo4j setup guide](docs/neo4j_kb.md). Startup errors do not fall back to JSON;
-`data/kb/diabetes_kb.json` remains the source for loading and updating the graph.
+`python scripts/collect_corpus.py` ingests web/PDF sources straight into Neo4j (no intermediate JSON); `data/kb/diabetes_kb.json` is only an offline snapshot for tests.
 
 ### 4. Run API + Next.js UI
 

@@ -86,14 +86,9 @@ Dự án lấy cảm hứng từ kiến trúc Main Agent, Work-Agents và State 
 ```mermaid
 flowchart LR
     SRC["data/corpus/sources.json: 12 nguồn (Bộ Y tế, WHO, Vinmec)"] --> COL["scripts/collect_corpus.py: tải, làm sạch, chia đoạn"]
-    COL --> PAS["passages.jsonl: 146 đoạn"]
-    GRAPH["data/corpus/graph.json: 20 thực thể, 35 quan hệ"] --> MERGE
-    PAS --> MERGE["Hợp nhất và kiểm tra hợp lệ"]
-    MERGE --> KBJ["data/kb/diabetes_kb.json"]
-    KBJ --> EXPORT["scripts/export_kb_cypher.py"]
-    EXPORT --> CY["data/kb/kb_diabet.cypher"]
-    CY --> NEO[("Neo4j")]
-    KBJ -->|"scripts/load_neo4j_kb.py"| NEO
+    GRAPH["data/corpus/graph.json: 20 thực thể, 35 quan hệ (viết tay)"] --> MERGE
+    COL -->|"146 đoạn, trong bộ nhớ"| MERGE["Hợp nhất và kiểm tra hợp lệ"]
+    MERGE -->|"MERGE trực tiếp"| NEO[("Neo4j")]
     NEO --> EMB["Mô hình nhúng đa ngôn ngữ"] --> CHR[("ChromaDB")]
 ```
 

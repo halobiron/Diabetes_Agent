@@ -1,23 +1,19 @@
-"""Thu thập tài liệu y khoa về đái tháo đường (web + PDF) thành corpus dạng KB.
+"""Pipeline nạp tri thức: web/PDF -> đoạn bằng chứng -> Neo4j, không qua tệp JSON trung gian.
 
-Đọc data/corpus/sources.json, tải từng nguồn (cache ở data/corpus/.cache), làm sạch,
-chia thành các đoạn (passage) và ghi:
-
-  data/corpus/passages.jsonl    mỗi dòng một đoạn: id, source, section, text, lang
-  data/corpus/corpus_kb.json    cùng schema với data/kb/diabetes_kb.json
-                                (sources + evidence từ các đoạn trên,
-                                entities + relations từ data/corpus/graph.json)
+Đọc data/corpus/sources.json (danh sách nguồn) và data/corpus/graph.json (thực thể/quan hệ
+viết tay, trỏ tới evidence id), tải từng nguồn (cache HTML/PDF ở data/corpus/.cache), làm sạch,
+chia đoạn, ghép thành KB trong bộ nhớ, kiểm tra nhất quán rồi MERGE thẳng vào Neo4j.
 
 Dùng:
-  python scripts/collect_corpus.py                 # tải + xử lý tất cả nguồn
-  python scripts/collect_corpus.py --only who-diabetes
-  python scripts/collect_corpus.py --install       # ghi đè data/kb/diabetes_kb.json (có sao lưu)
+  python scripts/collect_corpus.py                       # tải + xử lý + nạp Neo4j
+  python scripts/collect_corpus.py --dry-run             # chỉ xử lý và kiểm tra
+  python scripts/collect_corpus.py --only who-diabetes   # thử một nguồn, không nạp
 """
 
 import argparse
+import datetime
 import json
 import re
-import shutil
 import sys
 import urllib.parse
 from pathlib import Path
@@ -26,12 +22,12 @@ import requests
 from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-from tools.neo4j_kb import KnowledgeBaseError, validate_kb  # noqa: E402
+from core.config import get_settings  # noqa: E402
+from tools.neo4j_kb import KnowledgeBaseError, KnowledgeGraph, create_driver, validate_kb  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS_DIR = ROOT / "data" / "corpus"
 CACHE_DIR = CORPUS_DIR / ".cache"
-KB_PATH = ROOT / "data" / "kb" / "diabetes_kb.json"
 HEADERS = {"User-Agent": "Mozilla/5.0 (healthcare-agent-system corpus collector; educational use)"}
 TIMEOUT = 60
 
@@ -269,73 +265,57 @@ def process(source):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
-    parser.add_argument("--only", nargs="*", help="chỉ xử lý các source id này")
-    parser.add_argument("--install", action="store_true", help="ghi đè data/kb/diabetes_kb.json (có sao lưu)")
+    parser.add_argument("--only", nargs="*", help="chỉ xử lý các source id này (không nạp Neo4j)")
+    parser.add_argument("--dry-run", action="store_true", help="xử lý và kiểm tra, không nạp Neo4j")
     args = parser.parse_args()
 
     manifest = json.loads((CORPUS_DIR / "sources.json").read_text(encoding="utf-8"))
     sources = [s for s in manifest["sources"] if not args.only or s["id"] in args.only]
 
-    all_passages, done_sources, failed = [], [], []
+    passages, failed = [], []
     for source in sources:
         try:
-            passages = process(source)
+            found = process(source)
+            if not found:
+                raise ValueError("không trích được nội dung")
         except Exception as exc:  # một nguồn lỗi không làm hỏng cả corpus
-            failed.append((source["id"], str(exc)))
+            failed.append(source["id"])
             print(f"[LỖI] {source['id']}: {exc}", file=sys.stderr)
             continue
-        if not passages:
-            failed.append((source["id"], "không trích được nội dung"))
-            print(f"[LỖI] {source['id']}: không trích được nội dung", file=sys.stderr)
-            continue
-        total = sum(len(p["text"]) for p in passages)
-        print(f"[OK ] {source['id']:<30} {len(passages):>3} đoạn  {total:>6} ký tự")
-        all_passages.extend(passages)
-        done_sources.append(source)
+        print(f"[OK ] {source['id']:<30} {len(found):>3} đoạn")
+        passages.extend(found)
 
-    if args.only:
-        print("Chạy một phần (--only): không ghi đè corpus.", file=sys.stderr)
-        return 1 if failed else 0
-    if not all_passages:
-        print("Không có dữ liệu nào được thu thập.", file=sys.stderr)
-        return 1
+    # Nạp thiếu nguồn rồi prune sẽ xóa dữ liệu cũ của nguồn lỗi, nên dừng sớm.
+    if args.only or failed or not passages:
+        print("Không nạp Neo4j (chạy một phần, có nguồn lỗi hoặc không có dữ liệu).", file=sys.stderr)
+        return 1 if failed or not passages else 0
 
     graph = json.loads((CORPUS_DIR / "graph.json").read_text(encoding="utf-8"))
-    with (CORPUS_DIR / "passages.jsonl").open("w", encoding="utf-8") as file:
-        for passage in all_passages:
-            file.write(json.dumps(passage, ensure_ascii=False) + "\n")
-
     kb = {
-        "version": "corpus-" + __import__("datetime").date.today().isoformat(),
-        "sources": [
-            {k: s[k] for k in ("id", "title", "publisher", "year", "url") if k in s}
-            for s in done_sources
-        ],
+        "version": "corpus-" + datetime.date.today().isoformat(),
+        "sources": [{k: s[k] for k in ("id", "title", "publisher", "year", "url") if k in s} for s in sources],
         "entities": graph["entities"],
-        "evidence": [
-            {k: p[k] for k in ("id", "source", "section", "text")} for p in all_passages
-        ],
+        "evidence": [{k: p[k] for k in ("id", "source", "section", "text")} for p in passages],
         "relations": graph["relations"],
     }
     try:
         validate_kb(kb)  # evidence id trong graph.json phải còn tồn tại sau khi chia đoạn
     except KnowledgeBaseError as exc:
-        print(f"[LỖI] corpus_kb.json không hợp lệ: {exc}", file=sys.stderr)
+        print(f"[LỖI] KB không hợp lệ: {exc}", file=sys.stderr)
         return 1
-    (CORPUS_DIR / "corpus_kb.json").write_text(
-        json.dumps(kb, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
-    )
-    print(f"\nTổng: {len(done_sources)} nguồn, {len(all_passages)} đoạn -> data/corpus/")
+    if args.dry_run:
+        print(f"KB hợp lệ: {len(passages)} đoạn. --dry-run: không nạp Neo4j.")
+        return 0
 
-    if args.install:
-        backup = KB_PATH.with_suffix(".json.bak")
-        shutil.copy2(KB_PATH, backup)
-        KB_PATH.write_text(json.dumps(kb, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        print(f"Đã ghi đè {KB_PATH.relative_to(ROOT)} (sao lưu: {backup.name})")
-
-    if failed:
-        print(f"{len(failed)} nguồn lỗi: " + ", ".join(i for i, _ in failed), file=sys.stderr)
-    return 1 if failed else 0
+    settings = get_settings()
+    driver = create_driver(settings)
+    try:
+        graph_db = KnowledgeGraph(driver, settings.neo4j_database)
+        graph_db.load(kb)
+        print("Đã nạp vào Neo4j:", graph_db.stats())
+    finally:
+        driver.close()
+    return 0
 
 
 if __name__ == "__main__":

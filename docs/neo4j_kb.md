@@ -1,8 +1,8 @@
 # Knowledge graph Neo4j về tiểu đường
 
-Nguồn dữ liệu: [data/kb/diabetes_kb.json](../data/kb/diabetes_kb.json) (version ghi trong file). Script nạp đọc file này, kiểm tra tính nhất quán rồi upsert vào Neo4j.
+Pipeline `python scripts/collect_corpus.py` đọc nguồn web/PDF, chia đoạn, ghép với đồ thị viết tay, kiểm tra nhất quán rồi upsert thẳng vào Neo4j, không tạo tệp JSON trung gian. `--dry-run` chỉ kiểm tra. [data/kb/diabetes_kb.json](../data/kb/diabetes_kb.json) nay chỉ là bản chụp dùng cho test offline, `FileKnowledgeBase` và `load_neo4j_kb.py`, không còn là nguồn sự thật.
 
-File KB được sinh ra bằng `python scripts/collect_corpus.py --install` từ: danh sách nguồn [data/corpus/sources.json](../data/corpus/sources.json) (web + PDF tiếng Việt: Bộ Y tế, Vinmec, WHO), các đoạn bằng chứng tự động trích và chia đoạn, và đồ thị thực thể/quan hệ viết tay trong [data/corpus/graph.json](../data/corpus/graph.json). Sửa nguồn hoặc đồ thị rồi chạy lại script; script kiểm tra mọi quan hệ đều trỏ tới đoạn bằng chứng còn tồn tại.
+KB được xây từ: danh sách nguồn [data/corpus/sources.json](../data/corpus/sources.json) (web + PDF tiếng Việt: Bộ Y tế, Vinmec, WHO), các đoạn bằng chứng tự động trích và chia đoạn, và đồ thị thực thể/quan hệ viết tay trong [data/corpus/graph.json](../data/corpus/graph.json). Sửa nguồn hoặc đồ thị rồi chạy lại script; script kiểm tra mọi quan hệ đều trỏ tới đoạn bằng chứng còn tồn tại.
 
 ## Lược đồ
 
