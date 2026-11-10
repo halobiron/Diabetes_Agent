@@ -7,7 +7,6 @@ infra/
 scripts/
 tests/
 data/train/
-data/snapshots/
 data/eval/
 .cursor/
 .pytest_cache/

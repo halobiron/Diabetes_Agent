@@ -4,7 +4,7 @@ Kết quả đo ngày 09/11/2026 trên máy phát triển (Windows, CPU, không 
 
 ## 1. Nạp lại KB vào Neo4j
 
-`scripts/load_neo4j_kb.py` nạp 20 thực thể, 146 đoạn bằng chứng, 35 quan hệ, 12 nguồn: **178 nút, 181 quan hệ**. Demo tích hợp `scripts/demo_step12.py --require-neo4j` (không gồm phần web) đạt **16/16 ca** với `kb_source=KnowledgeGraph`; chế độ này dừng nếu hệ thống rơi về KB file. Kết quả rút gọn: [neo4j_verification.json](neo4j_verification.json). Số liệu này thay cho lần xác minh ngày 03/11 trên bản KB cũ (21 đoạn).
+Lần đo ngày 09/11/2026, Neo4j chứa 20 thực thể, 146 đoạn bằng chứng, 35 quan hệ, 12 nguồn: **178 nút, 181 quan hệ**. Demo tích hợp `scripts/demo_step12.py --require-neo4j` (không gồm phần web) đạt **16/16 ca** với `kb_source=KnowledgeGraph`. Kết quả rút gọn: [neo4j_verification.json](neo4j_verification.json). Số liệu này thay cho lần xác minh ngày 03/11 trên bản KB cũ (21 đoạn).
 
 ## 2. Bộ câu hỏi đánh giá và cách gán nhãn
 
@@ -62,7 +62,7 @@ Mỗi hồ sơ gửi 10 lần sau 1 lần khởi động (40 yêu cầu `/v1/pre
 ## 5. Chạy lại
 
 ```bash
-# Cần Neo4j đang chạy và biến môi trường từ .env; thêm --kb file để dùng KB file
-python scripts/evaluate_retrieval.py --kb neo4j --output logs/retrieval-eval.json
+# Cần Neo4j đang chạy, đã có dữ liệu và biến môi trường từ .env
+python scripts/evaluate_retrieval.py --output logs/retrieval-eval.json
 python scripts/measure_latency.py --repeats 10 --output logs/latency.json
 ```

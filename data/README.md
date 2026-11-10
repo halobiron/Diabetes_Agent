@@ -8,12 +8,13 @@
 | `train/` | CSV BRFSS tải về, không đưa vào Git | Khi huấn luyện và tạo báo cáo |
 | `chroma/` | Chỉ mục vector và bộ nhớ ca, không đưa vào Git | Khi ứng dụng chạy |
 | `eval/rag_retrieval_questions.json` | Bộ câu hỏi có nhãn đánh giá RAG | Khi chạy `scripts/evaluate_retrieval.py` |
-| `snapshots/diabetes_kb_snapshot.json` | Một bản chụp KB cố định dùng chung | Kiểm thử, đánh giá offline, báo cáo, khôi phục tùy chọn |
-| `../artifacts/` | Mô hình, policy, chỉ số và bản xuất Cypher | Ứng dụng nạp mô hình/policy; công cụ và báo cáo dùng các tệp còn lại |
+| Neo4j | Cơ sở tri thức dùng khi chạy hệ thống | Ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo |
+| `../artifacts/` | Mô hình, policy và chỉ số đánh giá | Ứng dụng nạp mô hình/policy; báo cáo dùng chỉ số |
+| `../artifacts/kb_diabet.cypher` | Script dựng hoặc nạp lại KB vào Neo4j | Khi triển khai hoặc khôi phục cơ sở dữ liệu |
 
 Luồng xây dựng KB: nguồn web/PDF → trích và chia đoạn trong bộ nhớ → ghép đồ thị tuyển chọn → kiểm tra → Neo4j. Pipeline không ghi `passages.jsonl` hay một tệp KB trung gian.
 
-Ứng dụng truy vấn Neo4j và ChromaDB; không đọc bộ câu hỏi đánh giá, bản chụp KB hoặc CSV huấn luyện. Khởi tạo nạp mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH` (mặc định `artifacts/risk_model.joblib`).
+Ứng dụng truy vấn Neo4j và ChromaDB; không đọc bộ câu hỏi đánh giá hoặc CSV huấn luyện. Khởi tạo nạp mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH` (mặc định `artifacts/risk_model.joblib`). ChromaDB là chỉ mục tìm kiếm và bộ nhớ ca; tri thức nguồn được đọc từ Neo4j.
 
 Chạy từ thư mục gốc dự án:
 
@@ -25,15 +26,16 @@ Chạy từ thư mục gốc dự án:
 # Xây dựng/cập nhật Neo4j (nạp biến môi trường Neo4j trước)
 .\.venv\Scripts\python.exe scripts/collect_corpus.py
 
-# Đánh giá từ bản chụp hoặc từ Neo4j
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --kb file
-.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py --kb neo4j
+# Đánh giá RAG từ Neo4j
+.\.venv\Scripts\python.exe scripts/evaluate_retrieval.py
 
-# Kiểm tra bản chụp; xuất Cypher vào artifacts/kb_diabet.cypher
-.\.venv\Scripts\python.exe scripts/load_neo4j_kb.py --dry-run
+# Xuất script nạp dữ liệu vào artifacts/kb_diabet.cypher
 .\.venv\Scripts\python.exe scripts/export_kb_cypher.py
+
+# Nạp KB có sẵn từ Cypher vào Neo4j
+Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD
 ```
 
-`KB_PATH` cho phép chọn bản chụp khác cho kiểm thử và công cụ offline; không thay đổi nguồn tri thức của ứng dụng. Khi đánh giá Neo4j, công cụ không cần đọc bản chụp. Khi sửa nguồn hoặc đồ thị, cần chạy lại pipeline để cập nhật Neo4j; bản chụp kiểm thử không tự thay đổi theo dữ liệu đang chạy.
+Các công cụ cần cấu hình `NEO4J_URI`, `NEO4J_USER`, `NEO4J_PASSWORD` và `NEO4J_DATABASE`. Kiểm thử tích hợp và notebook báo cáo cũng cần Neo4j đã có dữ liệu. Có thể nạp KB từ `artifacts/kb_diabet.cypher` mà không cần tải lại nguồn. Khi cần cập nhật tri thức từ web/PDF, chạy `collect_corpus.py`, rồi xuất lại Cypher để đồng bộ script triển khai. Ứng dụng truy vấn dữ liệu trong Neo4j sau khi nạp.
 
 Các đường dẫn nằm trong metadata hoặc kết quả đánh giá đã lưu phản ánh thời điểm tạo artifact, không phải cấu hình đường dẫn hiện tại.

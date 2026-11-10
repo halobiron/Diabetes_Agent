@@ -6,7 +6,7 @@ must have at least one relevant passage in the KB (checked here), so each label 
 the corpus text. Labels are a keyword proxy for relevance: a passage that answers the question
 without the key term counts as irrelevant, so precision is a lower bound.
 
-Usage: python scripts/evaluate_retrieval.py [--kb file|neo4j] [--output logs/retrieval-eval.json]
+Usage: python scripts/evaluate_retrieval.py [--output logs/retrieval-eval.json]
 """
 
 import argparse
@@ -22,12 +22,7 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from agents.retriever import ANSWER_PASSAGES, RetrievalAgent, is_dosing_text  # noqa: E402
 from core.config import get_settings  # noqa: E402
-from tools.neo4j_kb import (  # noqa: E402
-    FileKnowledgeBase,
-    KnowledgeGraph,
-    create_driver,
-    load_kb_file,
-)
+from tools.neo4j_kb import KnowledgeGraph, create_driver  # noqa: E402
 from tools.semantic_embeddings import SemanticEmbeddingModel  # noqa: E402
 
 DATASET = PROJECT_ROOT / "data/eval/rag_retrieval_questions.json"
@@ -35,14 +30,9 @@ THRESHOLDS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55]
 TOP_K = ANSWER_PASSAGES
 
 
-def build_retriever(kind, chroma_path):
-    settings = get_settings()
-    if kind == "neo4j":
-        kb = KnowledgeGraph(create_driver(settings), settings.neo4j_database)
-    else:
-        kb = FileKnowledgeBase(load_kb_file(settings.kb_path))
+def build_retriever(knowledge_graph, chroma_path):
     # min_relevance=0 so one search yields every score; thresholds are applied afterwards.
-    return RetrievalAgent(kb, SemanticEmbeddingModel(), chroma_path, min_relevance=0.0)
+    return RetrievalAgent(knowledge_graph, SemanticEmbeddingModel(), chroma_path, min_relevance=0.0)
 
 
 def ranked(retriever, question):
@@ -118,12 +108,15 @@ def evaluate(retriever, data):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--kb", choices=["file", "neo4j"], default="file")
     parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "logs/retrieval-eval.json")
     args = parser.parse_args()
     data = json.loads(DATASET.read_text(encoding="utf-8"))
-    with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-        result = evaluate(build_retriever(args.kb, tmp), data)
+    settings = get_settings()
+    with create_driver(settings) as driver:
+        graph = KnowledgeGraph(driver, settings.neo4j_database)
+        graph.export_kb()  # Fail clearly if the required database has not been populated.
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
+            result = evaluate(build_retriever(graph, tmp), data)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=1))

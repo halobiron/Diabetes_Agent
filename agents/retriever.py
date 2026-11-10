@@ -77,8 +77,8 @@ def evidence_status(contexts):
 class RetrievalAgent:
     """Semantic search over the diabetes KB evidence, boosted by the graph's risk-factor links.
 
-    Application startup requires Neo4j via `from_settings`. Tests and offline evaluation
-    may inject another knowledge base explicitly; startup errors never switch to JSON.
+    Applications, evaluation and integration tests read knowledge from Neo4j.
+    Unit tests may inject doubles; startup errors propagate to the caller.
     """
 
     def __init__(
@@ -104,7 +104,7 @@ class RetrievalAgent:
 
     @classmethod
     def from_settings(cls, settings, chroma_path):
-        """Require Neo4j; JSON snapshots are reserved for offline tools and optional restore."""
+        """Initialize retrieval from the configured Neo4j database."""
         if not settings.neo4j_password:
             raise ValueError(
                 "Thiếu NEO4J_PASSWORD. Ứng dụng bắt buộc dùng Neo4j; "

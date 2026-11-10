@@ -13,6 +13,21 @@ concurrency:
 jobs:
   test:
     runs-on: ubuntu-latest
+    env:
+      NEO4J_URI: bolt://localhost:7687
+      NEO4J_PASSWORD: test-password
+    services:
+      neo4j:
+        image: neo4j:5-community
+        env:
+          NEO4J_AUTH: neo4j/test-password
+        ports:
+          - 7687:7687
+        options: >-
+          --health-cmd "cypher-shell -u neo4j -p test-password 'RETURN 1'"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
     strategy:
       fail-fast: false
       matrix:
@@ -41,6 +56,9 @@ jobs:
 
       - name: Format check
         run: ruff format --check .
+
+      - name: Populate Neo4j from Cypher
+        run: docker exec -i ${{ job.services.neo4j.id }} cypher-shell -u neo4j -p "$NEO4J_PASSWORD" < artifacts/kb_diabet.cypher
 
       - name: Run tests with coverage
         run: pytest -q --cov=. --cov-report=term-missing --cov-fail-under=60

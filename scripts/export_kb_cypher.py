@@ -1,7 +1,7 @@
-"""Sinh file Cypher (kb_diabet.cypher) từ KB JSON để nạp vào Neo4j bằng cypher-shell / Browser.
+"""Xuất tri thức từ Neo4j thành script Cypher để nạp hoặc dựng lại cơ sở dữ liệu.
 
 python scripts/export_kb_cypher.py                      # artifacts/kb_diabet.cypher
-python scripts/export_kb_cypher.py --kb X.json --out Y.cypher
+python scripts/export_kb_cypher.py --out Y.cypher
 """
 
 import argparse
@@ -12,18 +12,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from tools.neo4j_kb import load_kb_file, to_cypher  # noqa: E402
+from core.config import get_settings  # noqa: E402
+from tools.neo4j_kb import KnowledgeGraph, create_driver, to_cypher  # noqa: E402
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "--kb", default=str(PROJECT_ROOT / "data" / "snapshots" / "diabetes_kb_snapshot.json")
-    )
     parser.add_argument("--out", default=str(PROJECT_ROOT / "artifacts" / "kb_diabet.cypher"))
     args = parser.parse_args()
 
-    script = to_cypher(load_kb_file(args.kb))
+    settings = get_settings()
+    with create_driver(settings) as driver:
+        script = to_cypher(KnowledgeGraph(driver, settings.neo4j_database).export_kb())
     output_path = Path(args.out)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(script, encoding="utf-8")

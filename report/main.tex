@@ -442,11 +442,11 @@ Một con số xác suất chưa đủ để tư vấn. Quanh mô hình, \code{R
 
 \section{Knowledge Base và RAG}
 \subsection{Nguồn tri thức và đồ thị Neo4j}
-Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}; các thực thể và quan hệ tuyển chọn nằm tại \code{data/corpus/graph.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng, ghép đồ thị trong bộ nhớ, kiểm tra nhất quán rồi nạp trực tiếp vào Neo4j bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Bản chụp cố định \code{data/snapshots/diabetes_kb_snapshot.json} phục vụ kiểm thử, đánh giá ngoại tuyến và báo cáo; \code{scripts/load_neo4j_kb.py} là công cụ khôi phục tùy chọn từ bản chụp này.
+Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}; các thực thể và quan hệ tuyển chọn nằm tại \code{data/corpus/graph.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng, ghép đồ thị trong bộ nhớ, kiểm tra nhất quán rồi nạp trực tiếp vào Neo4j bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Ứng dụng, công cụ đánh giá RAG, kiểm thử tích hợp và notebook báo cáo đều đọc tri thức đã xử lý từ Neo4j.
 
 Lược đồ gồm bốn nhãn thực thể (\code{Condition}, \code{RiskFactor}, \code{Test}, \code{Intervention}), nút \code{Evidence} và \code{Source}, và năm loại quan hệ: \code{INCREASES_RISK_OF}, \code{DIAGNOSES}, \code{REDUCES_RISK_OF}, \code{ADDRESSES}, \code{SHOULD_TEST_WITH}. Mỗi quan hệ mang \code{evidence_ids}; mỗi \code{Evidence} nối tới \code{Source} qua \code{FROM}, nên mọi khẳng định truy vấn ra đều đi kèm trích dẫn. Kết quả: 20 thực thể, 35 quan hệ nghiệp vụ, 21 đoạn bằng chứng, 5 nguồn; sau khi nạp, Neo4j có 46 nút và 56 quan hệ (gồm 21 quan hệ bằng chứng $\rightarrow$ nguồn), được xác minh ngày 03/11/2026 trên Neo4j 2026.10.1 chạy trong Docker.
 
-Hình~\ref{fig:kg} vẽ đồ thị tri thức từ bản chụp ngoại tuyến \code{data/snapshots/diabetes_kb_snapshot.json} bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
+Hình~\ref{fig:kg} vẽ đồ thị tri thức truy vấn trực tiếp từ Neo4j bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
 
 \begin{figure}[H]
 \centering
@@ -468,7 +468,7 @@ Hình~\ref{fig:kg} vẽ đồ thị tri thức từ bản chụp ngoại tuyến
 \item Loại đoạn có độ liên quan dưới \textbf{0,3}; đoạn mà đồ thị gắn với yếu tố nguy cơ của bệnh nhân được cộng \textbf{0,15} khi xếp hạng.
 \item Gán \code{evidence_status}: \code{none} (không có đoạn nào), \code{limited} (dưới 2 đoạn hoặc đoạn tốt nhất dưới 0,45), \code{sufficient} (còn lại).
 \end{enumerate}
-Khi policy chọn ``tìm thêm bằng chứng'', agent chạy thêm một truy vấn hướng dẫn chung, giữ điểm tốt nhất của mỗi đoạn và trả tối đa 5 đoạn. Ứng dụng bắt buộc dùng Neo4j; nếu không kết nối được lúc khởi tạo hoặc chưa đặt \code{NEO4J_PASSWORD}, dịch vụ phân tích báo lỗi và không chuyển sang JSON. Tệp JSON vẫn là nguồn nạp/cập nhật đồ thị; \code{FileKnowledgeBase} chỉ được chọn tường minh cho kiểm thử và đánh giá ngoại tuyến.
+Khi policy chọn ``tìm thêm bằng chứng'', agent chạy thêm một truy vấn hướng dẫn chung, giữ điểm tốt nhất của mỗi đoạn và trả tối đa 5 đoạn. Ứng dụng bắt buộc dùng Neo4j; nếu không kết nối được lúc khởi tạo hoặc chưa đặt \code{NEO4J_PASSWORD}, dịch vụ phân tích báo lỗi. Công cụ đánh giá, kiểm thử tích hợp và báo cáo cũng truy vấn Neo4j.
 
 \begin{lstlisting}[caption={Rút gọn RetrievalAgent.retrieve (agents/retriever.py)}]
 factors = self._risk_factors(patient_data, feature_explanation)
@@ -593,10 +593,10 @@ healthcare-agent-system/
 |-- tools/               rules.py, safety.py, neo4j_kb.py, explainability.py,
 |                        what_if.py, patient_guidance.py, audit_logger.py
 |-- memory/store.py      MemoryAgent (ChromaDB)
-|-- data/                corpus/, train/ (BRFSS 2015 CSV), snapshots/, eval/, chroma/
+|-- data/                corpus/, train/ (BRFSS 2015 CSV), eval/, chroma/
 |-- artifacts/           risk_model.joblib, metrics.json, support_policy.json
 |-- scripts/             download_training_data, train_diabetes_model,
-|                        train_support_policy, load_neo4j_kb, demo_step12
+|                        train_support_policy, collect_corpus, demo_step12
 |-- web/                 Next.js: app/, components/risk-console/, lib/
 |-- ui/app.py            ban Streamlit
 |-- tests/               154 kiem thu tu dong
@@ -650,7 +650,7 @@ safety = log.guard("safety_guard",
 .\.venv\Scripts\python.exe scripts/train_diabetes_model.py      # artifacts/
 .\.venv\Scripts\python.exe scripts/train_support_policy.py      # policy Q-learning
 docker compose up -d neo4j                                       # tuy chon
-.\.venv\Scripts\python.exe scripts/load_neo4j_kb.py              # nap KB vao Neo4j
+.\.venv\Scripts\python.exe scripts/collect_corpus.py              # nap KB vao Neo4j
 .\.venv\Scripts\python.exe -m uvicorn api.app:app --reload --env-file .env
 cd web; npm ci; npm run dev                                      # http://localhost:3000
 .\.venv\Scripts\python.exe -m pytest -q                          # kiem thu

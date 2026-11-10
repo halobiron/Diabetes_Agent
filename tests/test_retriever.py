@@ -3,7 +3,6 @@ import pytest
 from agents.recommender import RecommendationAgent
 from agents.retriever import RetrievalAgent, evidence_status
 from tools.local_embeddings import LocalEmbeddingModel
-from tools.neo4j_kb import FileKnowledgeBase, load_kb_file
 
 
 class WordEmbeddings(LocalEmbeddingModel):
@@ -18,16 +17,9 @@ class WordEmbeddings(LocalEmbeddingModel):
         return [self.embed_text(text) for text in texts]
 
 
-@pytest.fixture(scope="module")
-def file_kb():
-    from core.config import get_settings
-
-    return FileKnowledgeBase(load_kb_file(get_settings().kb_path))
-
-
 @pytest.fixture
-def retriever(file_kb, tmp_path):
-    return RetrievalAgent(file_kb, WordEmbeddings(), tmp_path, min_relevance=0.1)
+def retriever(knowledge_graph, tmp_path):
+    return RetrievalAgent(knowledge_graph, WordEmbeddings(), tmp_path, min_relevance=0.1)
 
 
 FEATURES = {"features": [{"feature": "BMI", "impact": 0.4}, {"feature": "HighBP", "impact": 0.2}]}
@@ -50,8 +42,8 @@ def test_graph_links_mark_evidence(retriever):
     assert any(item["via"] == "graph+semantic" and item["supports"] for item in contexts)
 
 
-def test_min_relevance_filters_everything_when_too_strict(file_kb, tmp_path):
-    strict = RetrievalAgent(file_kb, WordEmbeddings(), tmp_path, min_relevance=0.99)
+def test_min_relevance_filters_everything_when_too_strict(knowledge_graph, tmp_path):
+    strict = RetrievalAgent(knowledge_graph, WordEmbeddings(), tmp_path, min_relevance=0.99)
 
     assert strict.retrieve({}, "Low", {"features": []}) == []
 
@@ -69,22 +61,20 @@ def test_from_settings_requires_neo4j_password(tmp_path, monkeypatch):
     from core.config import get_settings
 
     monkeypatch.setenv("NEO4J_PASSWORD", "")
-    monkeypatch.setenv("KB_PATH", str(tmp_path / "missing.json"))
     with pytest.raises(ValueError, match="NEO4J_PASSWORD"):
         RetrievalAgent.from_settings(get_settings(), tmp_path / "chroma")
 
 
-def test_from_settings_uses_neo4j_without_reading_json(file_kb, tmp_path, monkeypatch):
+def test_from_settings_uses_neo4j(knowledge_graph, tmp_path, monkeypatch):
     from unittest.mock import Mock
 
     import agents.retriever as module
     from core.config import get_settings
 
     driver = Mock()
-    graph = Mock(wraps=file_kb)
+    graph = Mock(wraps=knowledge_graph)
     graph_factory = Mock(return_value=graph)
     monkeypatch.setenv("NEO4J_PASSWORD", "test-password")
-    monkeypatch.setenv("KB_PATH", str(tmp_path / "missing.json"))
     monkeypatch.setattr(module, "create_driver", lambda settings: driver)
     monkeypatch.setattr(module, "KnowledgeGraph", graph_factory)
     monkeypatch.setattr(module, "SemanticEmbeddingModel", WordEmbeddings)
@@ -93,7 +83,7 @@ def test_from_settings_uses_neo4j_without_reading_json(file_kb, tmp_path, monkey
 
     graph_factory.assert_called_once_with(driver, get_settings().neo4j_database)
     assert agent.kb is graph
-    assert agent.collection.count() == len(file_kb.all_evidence())
+    assert agent.collection.count() == len(knowledge_graph.all_evidence())
     driver.close.assert_not_called()
 
 
@@ -115,13 +105,13 @@ def test_from_settings_propagates_neo4j_error_and_closes_driver(tmp_path, monkey
     driver.close.assert_called_once()
 
 
-def test_graph_error_at_query_time_degrades_to_semantic_only(file_kb, tmp_path):
+def test_graph_error_at_query_time_degrades_to_semantic_only(knowledge_graph, tmp_path):
     class FlakyKB:
         def risk_factor_names(self):
-            return file_kb.risk_factor_names()
+            return knowledge_graph.risk_factor_names()
 
         def all_evidence(self):
-            return file_kb.all_evidence()
+            return knowledge_graph.all_evidence()
 
         def support_for_risk_factors(self, keys):
             raise ConnectionError("lost connection")
@@ -132,15 +122,15 @@ def test_graph_error_at_query_time_degrades_to_semantic_only(file_kb, tmp_path):
     assert contexts and all(item["via"] == "semantic" for item in contexts)
 
 
-def test_index_rebuilds_when_corpus_changes(file_kb, tmp_path):
-    first = RetrievalAgent(file_kb, WordEmbeddings(), tmp_path)
+def test_index_rebuilds_when_corpus_changes(knowledge_graph, tmp_path):
+    first = RetrievalAgent(knowledge_graph, WordEmbeddings(), tmp_path)
 
     class ShrunkKB:
         def risk_factor_names(self):
             return {}
 
         def all_evidence(self):
-            return file_kb.all_evidence()[:3]
+            return knowledge_graph.all_evidence()[:3]
 
     second = RetrievalAgent(ShrunkKB(), WordEmbeddings(), tmp_path)
 
@@ -189,8 +179,8 @@ def test_ask_uses_graph_factors_from_the_question(retriever):
     assert any(c["graph_boost"] for c in reply["citations"])
 
 
-def test_ask_declines_when_nothing_is_relevant(file_kb, tmp_path):
-    strict = RetrievalAgent(file_kb, WordEmbeddings(), tmp_path, min_relevance=0.95)
+def test_ask_declines_when_nothing_is_relevant(knowledge_graph, tmp_path):
+    strict = RetrievalAgent(knowledge_graph, WordEmbeddings(), tmp_path, min_relevance=0.95)
     reply = strict.ask("zzzz qqqq")
 
     assert reply["citations"] == [] and reply["status"] == "none"
@@ -216,10 +206,10 @@ def test_dosing_passages_are_never_returned_to_users(retriever):
     assert answer["trace"]["withheld_dosing_passages"] == len(retriever.withheld)
 
 
-def test_chat_uses_its_own_relevance_floor(file_kb, tmp_path):
-    lenient = RetrievalAgent(file_kb, WordEmbeddings(), tmp_path / "a", min_relevance=0.1)
+def test_chat_uses_its_own_relevance_floor(knowledge_graph, tmp_path):
+    lenient = RetrievalAgent(knowledge_graph, WordEmbeddings(), tmp_path / "a", min_relevance=0.1)
     strict = RetrievalAgent(
-        file_kb, WordEmbeddings(), tmp_path / "b", min_relevance=0.1, ask_min_relevance=0.99
+        knowledge_graph, WordEmbeddings(), tmp_path / "b", min_relevance=0.1, ask_min_relevance=0.99
     )
     question = "HbA1c bao nhiêu thì chẩn đoán đái tháo đường?"
 

@@ -14,7 +14,7 @@ docker compose up -d neo4j
 Get-Content .env | ForEach-Object { if ($_ -match '^\s*([^#=\s]+)\s*=\s*(.*)$') { Set-Item "env:$($Matches[1])" $Matches[2] } }
 
 # 3. (Chỉ khi cần nạp lại KB)
-.\.venv\Scripts\python.exe scripts\load_neo4j_kb.py
+.\.venv\Scripts\python.exe scripts\collect_corpus.py
 
 # 4. Chạy backend (cửa sổ này); giao diện chạy ở cửa sổ khác
 .\.venv\Scripts\python.exe -m uvicorn api.app:app --host 127.0.0.1 --port 8010
@@ -29,7 +29,7 @@ Phương án dự phòng nếu giao diện lỗi: `.\.venv\Scripts\python.exe sc
 
 **Trên giao diện web:** nhập một hồ sơ rồi xem phần "Cơ sở tri thức Neo4j đã dùng cho hồ sơ này" ở cuối trang kết quả. Huy hiệu cho biết nguồn Neo4j, kèm số thực thể, quan hệ, đoạn bằng chứng và nguồn. Các thực thể viền vàng là phần hệ thống đã dùng cho hồ sơ đó; bấm một thực thể để xem quan hệ và các đoạn tài liệu làm căn cứ (đoạn đã dùng được đánh dấu). Phần Hỏi đáp ngay bên dưới dùng cùng đồ thị này khi truy xuất.
 
-**Nói:** KB được xây từ 12 tài liệu y khoa tiếng Việt (Bộ Y tế, WHO, Vinmec). Pipeline trích và chia đoạn, ghép với 20 thực thể và 35 quan hệ tuyển chọn, kiểm tra rồi nạp trực tiếp vào Neo4j. Bản chụp kiểm thử có 146 đoạn bằng chứng; `artifacts/kb_diabet.cypher` là bản xuất tùy chọn từ bản chụp này.
+**Nói:** KB được xây từ 12 tài liệu y khoa tiếng Việt (Bộ Y tế, WHO, Vinmec). Pipeline trích và chia đoạn, ghép với 20 thực thể và 35 quan hệ tuyển chọn, kiểm tra rồi nạp trực tiếp vào Neo4j. Neo4j hiện chứa 146 đoạn bằng chứng và phục vụ cả ứng dụng, đánh giá, kiểm thử tích hợp và báo cáo.
 
 Trong Neo4j Browser chạy lần lượt:
 

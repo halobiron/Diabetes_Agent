@@ -203,7 +203,7 @@ def kb_overview(_auth=Depends(_authorize)):
             status_code=503, detail=f"Không đọc được cơ sở tri thức: {exc}"
         ) from exc
     return {
-        "source": "neo4j" if retriever.kb_source == "KnowledgeGraph" else "file",
+        "source": "neo4j",
         "neo4j_configured": bool(settings.neo4j_password),
         **graph,
     }

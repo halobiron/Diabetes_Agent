@@ -140,7 +140,8 @@ Copy-Item web/.env.example web/.env.local
 Neo4j is required at application startup. Set `NEO4J_PASSWORD` in `.env`, start
 `docker compose up -d neo4j`, and load the knowledge base following
 [the Neo4j setup guide](docs/neo4j_kb.md). Startup errors do not fall back to JSON;
-`python scripts/collect_corpus.py` ingests web/PDF sources straight into Neo4j (no intermediate JSON); `data/snapshots/diabetes_kb_snapshot.json` is only an offline snapshot for tests.
+`python scripts/collect_corpus.py` ingests web/PDF sources straight into Neo4j. Application requests,
+RAG evaluation, integration tests and the report notebook all read the processed knowledge from Neo4j.
 
 ### 4. Run API + Next.js UI
 
@@ -199,8 +200,8 @@ Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 | `data/chroma/` | Knowledge index and case memory |
 | `data/corpus/sources.json`, `data/corpus/graph.json` | Source manifest and curated graph for direct ingestion into Neo4j |
 | `data/eval/rag_retrieval_questions.json` | Labeled RAG evaluation questions |
-| `data/snapshots/diabetes_kb_snapshot.json` | Offline KB snapshot for tests, reports and optional restore ([docs/neo4j_kb.md](docs/neo4j_kb.md)) |
-| `artifacts/kb_diabet.cypher` | Generated Cypher export of the offline snapshot |
+| Neo4j (`NEO4J_URI`, `NEO4J_DATABASE`) | Processed knowledge for the application, evaluation, integration tests and reports |
+| `artifacts/kb_diabet.cypher` | Cypher script to populate or restore the Neo4j knowledge base |
 | `logs/` | Decision logs and runtime checks |
 
 See [data/README.md](data/README.md) for the data lifecycle and commands.
@@ -212,7 +213,7 @@ healthcare-agent-system/
 ├── agents/           # Orchestrator, explainer, recommender, retriever
 ├── api/              # FastAPI app
 ├── artifacts/        # Local model, metrics.json, model_card.md
-├── data/             # corpus/, train/, snapshots/, eval/, ChromaDB
+├── data/             # corpus/, train/, eval/, ChromaDB
 ├── models/           # RiskModel + local training pipeline
 ├── web/              # Next.js production UI
 ├── infra/aws/        # Terraform (App Runner + ECR)

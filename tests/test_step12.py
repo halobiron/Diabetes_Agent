@@ -11,9 +11,8 @@ from tools.audit_logger import AuditLogger
 
 
 @pytest.fixture
-def integration_client(tmp_path, monkeypatch):
+def integration_client(tmp_path, monkeypatch, knowledge_graph):
     monkeypatch.setenv("OPENAI_API_KEY", "")
-    monkeypatch.setenv("NEO4J_PASSWORD", "")
     monkeypatch.setenv("REQUIRE_API_TOKEN", "false")
     monkeypatch.setenv("CHROMA_PATH", str(tmp_path / "chroma"))
     monkeypatch.setenv("LOG_DIR", str(tmp_path / "logs"))
@@ -23,17 +22,15 @@ def integration_client(tmp_path, monkeypatch):
     import main
     from agents.retriever import CHAT_MIN_RELEVANCE, RetrievalAgent
     from core.config import get_settings
-    from tools.neo4j_kb import FileKnowledgeBase, load_kb_file
     from tools.semantic_embeddings import SemanticEmbeddingModel
 
     # Explicit injection makes this fixture independent of earlier imports / API fixtures.
     monkeypatch.setattr(main, "CHROMA_PATH", tmp_path / "chroma")
-    # Offline acceptance tests inject their KB explicitly; production requires Neo4j.
     monkeypatch.setattr(
         main.RetrievalAgent,
         "from_settings",
         lambda settings, path: RetrievalAgent(
-            FileKnowledgeBase(load_kb_file(settings.kb_path)),
+            knowledge_graph,
             SemanticEmbeddingModel(),
             path,
             ask_min_relevance=CHAT_MIN_RELEVANCE,

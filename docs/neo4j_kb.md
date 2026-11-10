@@ -1,6 +1,6 @@
 # Knowledge graph Neo4j về tiểu đường
 
-Pipeline `python scripts/collect_corpus.py` đọc nguồn web/PDF, chia đoạn, ghép với đồ thị viết tay, kiểm tra nhất quán rồi upsert thẳng vào Neo4j, không tạo tệp JSON trung gian. `--dry-run` chỉ kiểm tra. [data/snapshots/diabetes_kb_snapshot.json](../data/snapshots/diabetes_kb_snapshot.json) nay chỉ là bản chụp dùng cho test offline, `FileKnowledgeBase` và `load_neo4j_kb.py`, không còn là nguồn sự thật.
+Pipeline `python scripts/collect_corpus.py` thu thập web/PDF, chia đoạn, ghép đồ thị tuyển chọn và nạp trực tiếp vào Neo4j. Có thể dựng KB từ script có sẵn `artifacts/kb_diabet.cypher` mà không cần thu thập lại tài liệu. Ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo truy vấn dữ liệu trong Neo4j.
 
 KB được xây từ: danh sách nguồn [data/corpus/sources.json](../data/corpus/sources.json) (web + PDF tiếng Việt: Bộ Y tế, Vinmec, WHO), các đoạn bằng chứng tự động trích và chia đoạn, và đồ thị thực thể/quan hệ viết tay trong [data/corpus/graph.json](../data/corpus/graph.json). Sửa nguồn hoặc đồ thị rồi chạy lại script; script kiểm tra mọi quan hệ đều trỏ tới đoạn bằng chứng còn tồn tại.
 
@@ -40,27 +40,25 @@ docker compose up -d neo4j           # Browser: http://localhost:7474 (NEO4J_PAS
 
 Python không tự nạp `.env`; cần nạp các biến môi trường trước khi chạy script.
 
-### Khôi phục bản chụp ngoại tuyến (tùy chọn)
+### Nạp KB từ Cypher
 
-`data/snapshots/diabetes_kb_snapshot.json` là bản chụp cố định cho kiểm thử, đánh giá ngoại tuyến và báo cáo. Có thể dùng nó để dựng lại dữ liệu mẫu khi không thu thập web/PDF. `KB_PATH` chỉ chọn bản chụp cho các công cụ này; ứng dụng không đọc tệp đó khi xử lý yêu cầu.
-
-```powershell
-.\.venv\Scripts\python.exe scripts/load_neo4j_kb.py --dry-run   # kiểm tra bản chụp
-.\.venv\Scripts\python.exe scripts/load_neo4j_kb.py             # khôi phục vào Neo4j
-```
-
-Hoặc xuất bản chụp thành Cypher rồi nạp bằng `cypher-shell`:
+Với Neo4j đang chạy và `NEO4J_PASSWORD` đã được nạp vào môi trường:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/export_kb_cypher.py        # sinh artifacts/kb_diabet.cypher từ diabetes_kb_snapshot.json
-Get-Content artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p <mật khẩu>
+Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD
 ```
 
-File Cypher dùng `MERGE` nên chạy lại nhiều lần không nhân đôi dữ liệu, và dọn các mục thuộc phiên bản KB cũ. Đã kiểm tra trên Neo4j 5 thật: nạp cả hai cách (Cypher rồi Python) cho cùng 178 nút và 181 quan hệ.
+Script gồm ràng buộc, nguồn, thực thể, bằng chứng và quan hệ; dùng `MERGE` để nạp lại không nhân đôi dữ liệu. Script có bước dọn phiên bản KB cũ, nên chỉ nạp vào database dành cho KB của dự án.
 
-Xem đồ thị trong Neo4j Browser, ví dụ `MATCH (n)-[r]->(m) RETURN n,r,m LIMIT 100`, hoặc gọi `KnowledgeGraph` từ code.
+### Cập nhật script Cypher từ Neo4j
 
-Cập nhật luồng chính: sửa `data/corpus/sources.json` hoặc `data/corpus/graph.json`, rồi chạy `collect_corpus.py`. Nạp là idempotent (`MERGE`); script chỉ nạp khi thu thập đầy đủ nguồn và dữ liệu hợp lệ. Công cụ khôi phục `load_neo4j_kb.py` mặc định xóa mục không thuộc bản chụp; thêm `--no-prune` để giữ chúng.
+```powershell
+.\.venv\Scripts\python.exe scripts/export_kb_cypher.py
+```
+
+Công cụ đọc Neo4j và cập nhật `artifacts/kb_diabet.cypher` để dùng khi triển khai hoặc khôi phục KB.
+
+Cập nhật KB: sửa `data/corpus/sources.json` hoặc `data/corpus/graph.json`, rồi chạy `collect_corpus.py`. Script chỉ nạp khi thu thập đủ nguồn và dữ liệu hợp lệ.
 
 ## Truy vấn từ code
 
@@ -70,11 +68,12 @@ nạp được 46 nút, 56 quan hệ; truy xuất 21 bằng chứng; luồng API
 và [cách kiểm tra lại](kiem_thu_va_demo.md). Đây là kết quả trên phiên bản đã
 chạy; cấu hình Compose vẫn khai báo `neo4j:5-community`.
 
-**Lưu ý số liệu:** lần xác minh ngày 03/11/2026 (46 nút, 56 quan hệ, 21 bằng chứng) được thực hiện trên bản KB cũ. Bản KB hiện tại (`data/snapshots/diabetes_kb_snapshot.json`, version 17) có 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng và 12 nguồn, nên các con số trên không còn đúng với KB hiện tại. Ngày 09/11/2026 KB hiện tại đã được nạp lại vào Neo4j 5.26.32: **178 nút, 181 quan hệ, 146 đoạn bằng chứng**; demo `--require-neo4j` (không gồm web) đạt 16/16 ca. Xem [neo4j_verification.json](neo4j_verification.json) và [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md).
+**Lưu ý số liệu:** lần xác minh ngày 03/11/2026 (46 nút, 56 quan hệ, 21 bằng chứng) được thực hiện trên bản KB cũ. Bản KB hiện tại (corpus-2026-11-08) có 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng và 12 nguồn, nên các con số trên không còn đúng với KB hiện tại. Ngày 09/11/2026 KB hiện tại đã được nạp lại vào Neo4j 5.26.32: **178 nút, 181 quan hệ, 146 đoạn bằng chứng**; demo `--require-neo4j` (không gồm web) đạt 16/16 ca. Xem [neo4j_verification.json](neo4j_verification.json) và [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md).
 
 `tools/neo4j_kb.py` → `KnowledgeGraph`:
 
 - `relations_with_evidence(entity_id)`: mọi quan hệ của một thực thể cùng bằng chứng và nguồn.
 - `support_for_risk_factors(["BMI", "HighBP"])`: can thiệp và xét nghiệm gắn với các yếu tố nguy cơ theo tên đặc trưng; dùng cho RetrievalAgent.
-- `all_evidence()`: toàn bộ đoạn bằng chứng kèm nguồn, RetrievalAgent nhúng chúng để tìm ngữ nghĩa. Khi chạy ứng dụng, Neo4j là bắt buộc: thiếu `NEO4J_PASSWORD` hoặc lỗi kết nối lúc khởi tạo sẽ báo lỗi, không chuyển sang JSON. `FileKnowledgeBase` có cùng API, chỉ được chọn tường minh trong kiểm thử và công cụ đánh giá ngoại tuyến. Pipeline chính nạp trực tiếp từ web/PDF; bản chụp JSON chỉ phục vụ kiểm thử và khôi phục tùy chọn.
+- `all_evidence()`: toàn bộ đoạn bằng chứng kèm nguồn, RetrievalAgent nhúng chúng để tìm ngữ nghĩa. Khi chạy ứng dụng, Neo4j là bắt buộc: thiếu `NEO4J_PASSWORD` hoặc lỗi kết nối lúc khởi tạo sẽ báo lỗi. Ứng dụng, đánh giá và báo cáo đều đọc Neo4j.
+- `export_kb()`: đọc toàn bộ tri thức hiện tại trong một truy vấn để tạo báo cáo và xuất Cypher.
 - `stats()`.

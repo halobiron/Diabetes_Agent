@@ -11,7 +11,7 @@ việc chặn Python Windows không ngăn demo bằng Docker.
 ## Xác minh lại với Neo4j thật ngày 03/11/2026
 
 Đã chạy Neo4j `2026.10.1` trong container riêng và nạp KB bằng
-`scripts/load_neo4j_kb.py`: **46 nút, 56 quan hệ** (35 quan hệ nghiệp vụ và 21
+`scripts/collect_corpus.py`: **46 nút, 56 quan hệ** (35 quan hệ nghiệp vụ và 21
 quan hệ bằng chứng → nguồn). Truy vấn được 21 bằng chứng và các liên kết hỗ trợ
 yếu tố nguy cơ có URL nguồn.
 
@@ -32,7 +32,7 @@ Linux/Docker đã cài dependencies, đặt `NEO4J_URI`, `NEO4J_USER`,
 `NEO4J_PASSWORD`, rồi chạy:
 
 ```bash
-python scripts/load_neo4j_kb.py
+python scripts/collect_corpus.py
 python scripts/demo_step12.py --require-neo4j --with-web --output logs/neo4j-live-demo.json
 ```
 

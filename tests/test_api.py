@@ -7,7 +7,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.fixture(scope="module")
-def client(tmp_path_factory):
+def client(tmp_path_factory, knowledge_graph):
     test_dir = tmp_path_factory.mktemp("api")
     with pytest.MonkeyPatch.context() as patch:
         patch.setenv("OPENAI_API_KEY", "")
@@ -17,15 +17,13 @@ def client(tmp_path_factory):
         patch.setenv("MODEL_ARTIFACT_PATH", str(PROJECT_ROOT / "artifacts/risk_model.joblib"))
         import main
         from agents.retriever import CHAT_MIN_RELEVANCE, RetrievalAgent
-        from tools.neo4j_kb import FileKnowledgeBase, load_kb_file
         from tools.semantic_embeddings import SemanticEmbeddingModel
 
-        # Offline tests choose a file KB explicitly; application startup requires Neo4j.
         patch.setattr(
             main.RetrievalAgent,
             "from_settings",
             lambda settings, path: RetrievalAgent(
-                FileKnowledgeBase(load_kb_file(settings.kb_path)),
+                knowledge_graph,
                 SemanticEmbeddingModel(),
                 path,
                 ask_min_relevance=CHAT_MIN_RELEVANCE,
@@ -174,7 +172,14 @@ def test_predict_returns_probability_label_and_model_version(client):
 def test_what_if_and_evidence_trail_are_returned_with_citations(client):
     body = client.post(
         "/v1/predict",
-        json={"age": 45, "height_cm": 170, "weight_kg": 95, "bp": 145, "glucose": 90, "smoker": True},
+        json={
+            "age": 45,
+            "height_cm": 170,
+            "weight_kg": 95,
+            "bp": 145,
+            "glucose": 90,
+            "smoker": True,
+        },
     ).json()
 
     assert body["what_if"]["scenarios"]
@@ -189,7 +194,9 @@ def test_declined_question_is_not_asked_again_and_unknown_fields_are_rejected(cl
 
     again = client.post("/v1/predict", json={**profile, "skipped_fields": [first["field"]]}).json()
     assert again["followup"] is None or again["followup"]["field"] != first["field"]
-    assert client.post("/v1/predict", json={**profile, "skipped_fields": ["age"]}).status_code == 422
+    assert (
+        client.post("/v1/predict", json={**profile, "skipped_fields": ["age"]}).status_code == 422
+    )
 
 
 def test_grouped_followup_accepts_multiple_answers_and_skips_remaining_in_one_request(client):
@@ -213,7 +220,9 @@ def test_grouped_followup_accepts_multiple_answers_and_skips_remaining_in_one_re
 
 
 def test_chat_returns_cited_answer_and_trace(client):
-    response = client.post("/v1/chat", json={"question": "Triệu chứng sớm của đái tháo đường là gì?"})
+    response = client.post(
+        "/v1/chat", json={"question": "Triệu chứng sớm của đái tháo đường là gì?"}
+    )
 
     assert response.status_code == 200
     body = response.json()
@@ -226,7 +235,7 @@ def test_chat_rejects_empty_question(client):
 
 def test_kb_overview_and_entity_detail(client):
     body = client.get("/v1/kb").json()
-    assert body["source"] in ("neo4j", "file")
+    assert body["source"] == "neo4j"
     assert body["entities"] and body["relations"] and body["evidence_count"] > 0
 
     entity_id = body["relations"][0]["from"]

@@ -2,8 +2,7 @@ import copy
 
 import pytest
 
-from core.config import get_settings
-from tools.neo4j_kb import KnowledgeBaseError, KnowledgeGraph, load_kb_file, validate_kb
+from tools.neo4j_kb import KnowledgeBaseError, KnowledgeGraph, validate_kb
 
 
 class FakeRecord:
@@ -40,11 +39,11 @@ class FakeDriver:
 
 
 @pytest.fixture(scope="module")
-def kb():
-    return load_kb_file(get_settings().kb_path)
+def kb(knowledge_graph):
+    return knowledge_graph.export_kb()
 
 
-def test_shipped_kb_is_valid_and_every_relation_has_evidence(kb):
+def test_neo4j_kb_is_valid_and_every_relation_has_evidence(kb):
     validate_kb(kb)
     assert all(rel["evidence"] for rel in kb["relations"])
 
@@ -108,10 +107,9 @@ def test_cypher_literals_escape_quotes_backslashes_and_newlines():
     assert _cy(["a", "b'c"]) == "['a', 'b" + bs + "'c']"
 
 
-def test_to_cypher_covers_every_kb_item_and_is_idempotent_merge():
-    from tools.neo4j_kb import load_kb_file, to_cypher
+def test_to_cypher_covers_every_kb_item_and_is_idempotent_merge(kb):
+    from tools.neo4j_kb import to_cypher
 
-    kb = load_kb_file("data/snapshots/diabetes_kb_snapshot.json")
     script = to_cypher(kb)
     statements = [line for line in script.splitlines() if line.endswith(";")]
     assert sum(line.startswith("CREATE CONSTRAINT") for line in statements) == 3
@@ -122,10 +120,8 @@ def test_to_cypher_covers_every_kb_item_and_is_idempotent_merge():
     assert not any(line.startswith("CREATE (") for line in statements)
 
 
-def test_file_kb_graph_and_entity_evidence():
-    from tools.neo4j_kb import FileKnowledgeBase
-
-    kb = FileKnowledgeBase(load_kb_file(get_settings().kb_path))
+def test_neo4j_graph_and_entity_evidence(knowledge_graph):
+    kb = knowledge_graph
     graph = kb.graph()
     assert graph["entities"] and graph["relations"]
     assert graph["evidence_count"] > 0 and graph["source_count"] > 0

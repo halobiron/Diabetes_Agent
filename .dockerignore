@@ -6,6 +6,5 @@ __pycache__
 data/chroma
 data/train
 data/eval
-data/snapshots
 logs
 web

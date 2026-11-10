@@ -1,6 +1,12 @@
 import networkx as nx
 from collections import Counter
-kb = json.loads((ROOT / "data" / "snapshots" / "diabetes_kb_snapshot.json").read_text(encoding="utf-8-sig"))
+from dotenv import load_dotenv
+from core.config import get_settings
+from tools.neo4j_kb import KnowledgeGraph, create_driver
+load_dotenv(ROOT / ".env")
+settings = get_settings()
+with create_driver(settings) as driver:
+    kb = KnowledgeGraph(driver, settings.neo4j_database).export_kb()
 G = nx.DiGraph()
 for e in kb["entities"]:
     G.add_node(e["id"], name=e["name"], label=e["label"])

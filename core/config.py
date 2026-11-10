@@ -20,7 +20,6 @@ class Settings:
     neo4j_user: str
     neo4j_password: str
     neo4j_database: str
-    kb_path: Path  # Offline snapshot for tests/tools; not used by production retrieval.
     similarity_max_distance: float
     similarity_bp_scale: float
     data_quality_max_penalty: float
@@ -44,11 +43,6 @@ def get_settings():
         neo4j_user=os.getenv("NEO4J_USER", "neo4j"),
         neo4j_password=os.getenv("NEO4J_PASSWORD", ""),
         neo4j_database=os.getenv("NEO4J_DATABASE", "neo4j"),
-        kb_path=Path(
-            os.getenv(
-                "KB_PATH", str(project_root / "data" / "snapshots" / "diabetes_kb_snapshot.json")
-            )
-        ),
         # Similar cases: farther than this many spreads (RMS) are not "similar". Age and BMI
         # spreads come from the training data; systolic blood pressure has none there.
         similarity_max_distance=float(os.getenv("SIMILARITY_MAX_DISTANCE", "1.0")),
