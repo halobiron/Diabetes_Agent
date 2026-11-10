@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 MIN_RELEVANCE = 0.3  # cosine similarity below this is treated as off-topic
 STRONG_RELEVANCE = 0.45
 # Chat questions are free text, so unrelated ones must be refused; this floor was chosen on
-# evaluation/retrieval_questions.json (see docs/danh_gia_truy_xuat_va_do_tre.md). Questions
+# data/eval/rag_retrieval_questions.json (see docs/danh_gia_truy_xuat_va_do_tre.md). Questions
 # built from a patient profile score >= 0.6, so the 0.3 floor above is not what limits them.
 CHAT_MIN_RELEVANCE = 0.4
 GRAPH_BOOST = 0.15

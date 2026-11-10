@@ -1,7 +1,7 @@
 from sklearn.model_selection import train_test_split
 from models.training_pipeline import FEATURE_NAMES, TARGET_COLUMN, RANDOM_STATE, TEST_SIZE, VALIDATION_SIZE
 
-df = pd.read_csv(ROOT / "data" / "training" / "diabetes_binary_health_indicators_BRFSS2015.csv")
+df = pd.read_csv(ROOT / "data" / "train" / "diabetes_binary_health_indicators_BRFSS2015.csv")
 X, y = df[FEATURE_NAMES], df[TARGET_COLUMN].astype(int)
 X_dev, X_test, y_dev, y_test = train_test_split(X, y, test_size=TEST_SIZE, random_state=RANDOM_STATE, stratify=y)
 X_train, X_val, y_train, y_val = train_test_split(X_dev, y_dev, test_size=VALIDATION_SIZE, random_state=RANDOM_STATE, stratify=y_dev)

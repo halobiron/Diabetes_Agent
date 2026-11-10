@@ -5,8 +5,8 @@ __pycache__/
 logs/
 .coverage
 data/chroma/
-data/training/diabetes_binary_health_indicators_BRFSS2015.csv
-data/training/*.part
+data/train/diabetes_binary_health_indicators_BRFSS2015.csv
+data/train/*.part
 .env
 web/.env.local
 artifacts/*.log
@@ -31,4 +31,4 @@ graphify-out/
 # corpus download cache
 data/corpus/.cache/
 data/kb/*.bak
-tests/fixtures/*.bak
+data/snapshots/*.bak

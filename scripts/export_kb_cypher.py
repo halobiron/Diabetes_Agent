@@ -18,7 +18,7 @@ from tools.neo4j_kb import load_kb_file, to_cypher  # noqa: E402
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
-        "--kb", default=str(PROJECT_ROOT / "tests" / "fixtures" / "diabetes_kb.json")
+        "--kb", default=str(PROJECT_ROOT / "data" / "snapshots" / "diabetes_kb_snapshot.json")
     )
     parser.add_argument("--out", default=str(PROJECT_ROOT / "artifacts" / "kb_diabet.cypher"))
     args = parser.parse_args()

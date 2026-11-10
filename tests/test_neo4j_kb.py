@@ -111,7 +111,7 @@ def test_cypher_literals_escape_quotes_backslashes_and_newlines():
 def test_to_cypher_covers_every_kb_item_and_is_idempotent_merge():
     from tools.neo4j_kb import load_kb_file, to_cypher
 
-    kb = load_kb_file("tests/fixtures/diabetes_kb.json")
+    kb = load_kb_file("data/snapshots/diabetes_kb_snapshot.json")
     script = to_cypher(kb)
     statements = [line for line in script.splitlines() if line.endswith(";")]
     assert sum(line.startswith("CREATE CONSTRAINT") for line in statements) == 3

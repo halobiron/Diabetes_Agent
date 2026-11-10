@@ -5,16 +5,15 @@
 | `corpus/sources.json` | URL và cấu hình thu thập nguồn | Khi chạy `scripts/collect_corpus.py` |
 | `corpus/graph.json` | Thực thể, quan hệ tuyển chọn và ID bằng chứng | Khi chạy `scripts/collect_corpus.py` |
 | `corpus/.cache/` | HTML/PDF tải về, không đưa vào Git | Khi thu thập tài liệu |
-| `training/` | CSV BRFSS tải về, không đưa vào Git | Khi huấn luyện và tạo báo cáo |
+| `train/` | CSV BRFSS tải về, không đưa vào Git | Khi huấn luyện và tạo báo cáo |
 | `chroma/` | Chỉ mục vector và bộ nhớ ca, không đưa vào Git | Khi ứng dụng chạy |
-| `../evaluation/retrieval_questions.json` | Bộ câu hỏi có nhãn đánh giá RAG | Khi chạy `scripts/evaluate_retrieval.py` |
-| `../tests/fixtures/diabetes_kb.json` | Một bản chụp KB cố định dùng chung | Kiểm thử, đánh giá offline, báo cáo, khôi phục tùy chọn |
-| `../tests/fixtures/patients.csv` | CSV mẫu cho mô hình demo cũ | Khi chạy `scripts/evaluate_model.py` |
+| `eval/rag_retrieval_questions.json` | Bộ câu hỏi có nhãn đánh giá RAG | Khi chạy `scripts/evaluate_retrieval.py` |
+| `snapshots/diabetes_kb_snapshot.json` | Một bản chụp KB cố định dùng chung | Kiểm thử, đánh giá offline, báo cáo, khôi phục tùy chọn |
 | `../artifacts/` | Mô hình, policy, chỉ số và bản xuất Cypher | Ứng dụng nạp mô hình/policy; công cụ và báo cáo dùng các tệp còn lại |
 
 Luồng xây dựng KB: nguồn web/PDF → trích và chia đoạn trong bộ nhớ → ghép đồ thị tuyển chọn → kiểm tra → Neo4j. Pipeline không ghi `passages.jsonl` hay một tệp KB trung gian.
 
-Ứng dụng truy vấn Neo4j và ChromaDB; không đọc bản chụp KB hoặc CSV huấn luyện/demo. Khởi tạo nạp mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH` (mặc định `artifacts/risk_model.joblib`).
+Ứng dụng truy vấn Neo4j và ChromaDB; không đọc bộ câu hỏi đánh giá, bản chụp KB hoặc CSV huấn luyện. Khởi tạo nạp mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH` (mặc định `artifacts/risk_model.joblib`).
 
 Chạy từ thư mục gốc dự án:
 

@@ -8,7 +8,7 @@ Kết quả đo ngày 09/11/2026 trên máy phát triển (Windows, CPU, không 
 
 ## 2. Bộ câu hỏi đánh giá và cách gán nhãn
 
-Bộ câu hỏi: [evaluation/retrieval_questions.json](../evaluation/retrieval_questions.json), gồm 22 câu trong phạm vi, 8 câu ngoài phạm vi và 3 câu hỏi liều thuốc.
+Bộ câu hỏi: [data/eval/rag_retrieval_questions.json](../data/eval/rag_retrieval_questions.json), gồm 22 câu trong phạm vi, 8 câu ngoài phạm vi và 3 câu hỏi liều thuốc.
 
 - **Căn cứ của nhãn.** Một đoạn KB được coi là liên quan khi văn bản của chính đoạn đó chứa dữ kiện trả lời (ví dụ "HbA1c ≥ 6,5%", "tuổi 45", "150 phút", "LDL < 100"), kiểm bằng biểu thức chính quy trên nội dung KB. Câu hỏi nào không có đoạn nào khớp thì script dừng, nên mọi câu đều có ít nhất một đoạn đáp án thật (từ 1 đến 21 đoạn mỗi câu). Hai câu hỏi (thận, hạ đường huyết) được viết lại vì KB không chứa đáp án đúng ý câu ban đầu (cách *phát hiện* bệnh thận; định nghĩa và nguyên nhân hạ đường huyết), và các biểu thức quá hẹp được nới sau khi đọc các đoạn bị xếp hạng đầu nhưng không khớp (ví dụ đoạn "bắt đầu ở tuổi 45" cho câu tầm soát).
 - **Giới hạn.** Nhãn là xấp xỉ theo từ khóa: đoạn trả lời đúng nhưng không chứa từ khóa vẫn bị tính là không liên quan, nên **precision@3 là cận dưới**. Bộ câu hỏi nhỏ (30 câu) do nhóm tự soạn, chưa có chuyên gia y khoa duyệt; các con số dùng để so sánh ngưỡng và phát hiện điểm yếu, không phải đo chính xác chất lượng.

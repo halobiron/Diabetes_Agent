@@ -4,8 +4,8 @@ __pycache__
 .pytest_cache
 .git
 data/chroma
-data/training
-evaluation
-tests/fixtures
+data/train
+data/eval
+data/snapshots
 logs
 web

@@ -442,11 +442,11 @@ Một con số xác suất chưa đủ để tư vấn. Quanh mô hình, \code{R
 
 \section{Knowledge Base và RAG}
 \subsection{Nguồn tri thức và đồ thị Neo4j}
-Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}; các thực thể và quan hệ tuyển chọn nằm tại \code{data/corpus/graph.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng, ghép đồ thị trong bộ nhớ, kiểm tra nhất quán rồi nạp trực tiếp vào Neo4j bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Bản chụp cố định \code{tests/fixtures/diabetes_kb.json} phục vụ kiểm thử, đánh giá ngoại tuyến và báo cáo; \code{scripts/load_neo4j_kb.py} là công cụ khôi phục tùy chọn từ bản chụp này.
+Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}; các thực thể và quan hệ tuyển chọn nằm tại \code{data/corpus/graph.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng, ghép đồ thị trong bộ nhớ, kiểm tra nhất quán rồi nạp trực tiếp vào Neo4j bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Bản chụp cố định \code{data/snapshots/diabetes_kb_snapshot.json} phục vụ kiểm thử, đánh giá ngoại tuyến và báo cáo; \code{scripts/load_neo4j_kb.py} là công cụ khôi phục tùy chọn từ bản chụp này.
 
 Lược đồ gồm bốn nhãn thực thể (\code{Condition}, \code{RiskFactor}, \code{Test}, \code{Intervention}), nút \code{Evidence} và \code{Source}, và năm loại quan hệ: \code{INCREASES_RISK_OF}, \code{DIAGNOSES}, \code{REDUCES_RISK_OF}, \code{ADDRESSES}, \code{SHOULD_TEST_WITH}. Mỗi quan hệ mang \code{evidence_ids}; mỗi \code{Evidence} nối tới \code{Source} qua \code{FROM}, nên mọi khẳng định truy vấn ra đều đi kèm trích dẫn. Kết quả: 20 thực thể, 35 quan hệ nghiệp vụ, 21 đoạn bằng chứng, 5 nguồn; sau khi nạp, Neo4j có 46 nút và 56 quan hệ (gồm 21 quan hệ bằng chứng $\rightarrow$ nguồn), được xác minh ngày 03/11/2026 trên Neo4j 2026.10.1 chạy trong Docker.
 
-Hình~\ref{fig:kg} vẽ đồ thị tri thức từ bản chụp ngoại tuyến \code{tests/fixtures/diabetes_kb.json} bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
+Hình~\ref{fig:kg} vẽ đồ thị tri thức từ bản chụp ngoại tuyến \code{data/snapshots/diabetes_kb_snapshot.json} bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
 
 \begin{figure}[H]
 \centering
@@ -593,8 +593,7 @@ healthcare-agent-system/
 |-- tools/               rules.py, safety.py, neo4j_kb.py, explainability.py,
 |                        what_if.py, patient_guidance.py, audit_logger.py
 |-- memory/store.py      MemoryAgent (ChromaDB)
-|-- data/                corpus/, training/ (BRFSS 2015 CSV), chroma/
-|-- evaluation/          retrieval_questions.json
+|-- data/                corpus/, train/ (BRFSS 2015 CSV), snapshots/, eval/, chroma/
 |-- artifacts/           risk_model.joblib, metrics.json, support_policy.json
 |-- scripts/             download_training_data, train_diabetes_model,
 |                        train_support_policy, load_neo4j_kb, demo_step12

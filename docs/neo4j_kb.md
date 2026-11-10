@@ -1,6 +1,6 @@
 # Knowledge graph Neo4j về tiểu đường
 
-Pipeline `python scripts/collect_corpus.py` đọc nguồn web/PDF, chia đoạn, ghép với đồ thị viết tay, kiểm tra nhất quán rồi upsert thẳng vào Neo4j, không tạo tệp JSON trung gian. `--dry-run` chỉ kiểm tra. [tests/fixtures/diabetes_kb.json](../tests/fixtures/diabetes_kb.json) nay chỉ là bản chụp dùng cho test offline, `FileKnowledgeBase` và `load_neo4j_kb.py`, không còn là nguồn sự thật.
+Pipeline `python scripts/collect_corpus.py` đọc nguồn web/PDF, chia đoạn, ghép với đồ thị viết tay, kiểm tra nhất quán rồi upsert thẳng vào Neo4j, không tạo tệp JSON trung gian. `--dry-run` chỉ kiểm tra. [data/snapshots/diabetes_kb_snapshot.json](../data/snapshots/diabetes_kb_snapshot.json) nay chỉ là bản chụp dùng cho test offline, `FileKnowledgeBase` và `load_neo4j_kb.py`, không còn là nguồn sự thật.
 
 KB được xây từ: danh sách nguồn [data/corpus/sources.json](../data/corpus/sources.json) (web + PDF tiếng Việt: Bộ Y tế, Vinmec, WHO), các đoạn bằng chứng tự động trích và chia đoạn, và đồ thị thực thể/quan hệ viết tay trong [data/corpus/graph.json](../data/corpus/graph.json). Sửa nguồn hoặc đồ thị rồi chạy lại script; script kiểm tra mọi quan hệ đều trỏ tới đoạn bằng chứng còn tồn tại.
 
@@ -42,7 +42,7 @@ Python không tự nạp `.env`; cần nạp các biến môi trường trước
 
 ### Khôi phục bản chụp ngoại tuyến (tùy chọn)
 
-`tests/fixtures/diabetes_kb.json` là bản chụp cố định cho kiểm thử, đánh giá ngoại tuyến và báo cáo. Có thể dùng nó để dựng lại dữ liệu mẫu khi không thu thập web/PDF. `KB_PATH` chỉ chọn bản chụp cho các công cụ này; ứng dụng không đọc tệp đó khi xử lý yêu cầu.
+`data/snapshots/diabetes_kb_snapshot.json` là bản chụp cố định cho kiểm thử, đánh giá ngoại tuyến và báo cáo. Có thể dùng nó để dựng lại dữ liệu mẫu khi không thu thập web/PDF. `KB_PATH` chỉ chọn bản chụp cho các công cụ này; ứng dụng không đọc tệp đó khi xử lý yêu cầu.
 
 ```powershell
 .\.venv\Scripts\python.exe scripts/load_neo4j_kb.py --dry-run   # kiểm tra bản chụp
@@ -52,7 +52,7 @@ Python không tự nạp `.env`; cần nạp các biến môi trường trước
 Hoặc xuất bản chụp thành Cypher rồi nạp bằng `cypher-shell`:
 
 ```powershell
-.\.venv\Scripts\python.exe scripts/export_kb_cypher.py        # sinh artifacts/kb_diabet.cypher từ diabetes_kb.json
+.\.venv\Scripts\python.exe scripts/export_kb_cypher.py        # sinh artifacts/kb_diabet.cypher từ diabetes_kb_snapshot.json
 Get-Content artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p <mật khẩu>
 ```
 
@@ -70,7 +70,7 @@ nạp được 46 nút, 56 quan hệ; truy xuất 21 bằng chứng; luồng API
 và [cách kiểm tra lại](kiem_thu_va_demo.md). Đây là kết quả trên phiên bản đã
 chạy; cấu hình Compose vẫn khai báo `neo4j:5-community`.
 
-**Lưu ý số liệu:** lần xác minh ngày 03/11/2026 (46 nút, 56 quan hệ, 21 bằng chứng) được thực hiện trên bản KB cũ. Bản KB hiện tại (`tests/fixtures/diabetes_kb.json`, version 17) có 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng và 12 nguồn, nên các con số trên không còn đúng với KB hiện tại. Ngày 09/11/2026 KB hiện tại đã được nạp lại vào Neo4j 5.26.32: **178 nút, 181 quan hệ, 146 đoạn bằng chứng**; demo `--require-neo4j` (không gồm web) đạt 16/16 ca. Xem [neo4j_verification.json](neo4j_verification.json) và [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md).
+**Lưu ý số liệu:** lần xác minh ngày 03/11/2026 (46 nút, 56 quan hệ, 21 bằng chứng) được thực hiện trên bản KB cũ. Bản KB hiện tại (`data/snapshots/diabetes_kb_snapshot.json`, version 17) có 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng và 12 nguồn, nên các con số trên không còn đúng với KB hiện tại. Ngày 09/11/2026 KB hiện tại đã được nạp lại vào Neo4j 5.26.32: **178 nút, 181 quan hệ, 146 đoạn bằng chứng**; demo `--require-neo4j` (không gồm web) đạt 16/16 ca. Xem [neo4j_verification.json](neo4j_verification.json) và [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md).
 
 `tools/neo4j_kb.py` → `KnowledgeGraph`:
 

@@ -45,7 +45,9 @@ def get_settings():
         neo4j_password=os.getenv("NEO4J_PASSWORD", ""),
         neo4j_database=os.getenv("NEO4J_DATABASE", "neo4j"),
         kb_path=Path(
-            os.getenv("KB_PATH", str(project_root / "tests" / "fixtures" / "diabetes_kb.json"))
+            os.getenv(
+                "KB_PATH", str(project_root / "data" / "snapshots" / "diabetes_kb_snapshot.json")
+            )
         ),
         # Similar cases: farther than this many spreads (RMS) are not "similar". Age and BMI
         # spreads come from the training data; systolic blood pressure has none there.
