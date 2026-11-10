@@ -2,34 +2,34 @@
   "feedback": "simulated (see rl/environment.py for every assumption)",
   "q_learning": {
     "episodes": 20000,
-    "mean_reward": 1.0048,
-    "ci95": 0.0057,
-    "mean_steps": 1.689,
-    "under_triage_rate": 0.0095,
-    "over_escalation_rate": 0.0283
+    "mean_reward": 1.0593,
+    "ci95": 0.0018,
+    "mean_steps": 1.459,
+    "under_triage_rate": 0.0,
+    "over_escalation_rate": 0.0
   },
   "fixed_full_checklist": {
     "episodes": 20000,
-    "mean_reward": 0.9973,
-    "ci95": 0.0067,
-    "mean_steps": 2.101,
-    "under_triage_rate": 0.0234,
+    "mean_reward": 1.0534,
+    "ci95": 0.0018,
+    "mean_steps": 1.603,
+    "under_triage_rate": 0.0,
     "over_escalation_rate": 0.0
   },
   "fixed_risk_only": {
     "episodes": 20000,
-    "mean_reward": 0.803,
-    "ci95": 0.011,
+    "mean_reward": 1.0287,
+    "ci95": 0.0018,
     "mean_steps": 1.0,
-    "under_triage_rate": 0.0742,
+    "under_triage_rate": 0.0,
     "over_escalation_rate": 0.0
   },
   "random": {
     "episodes": 20000,
-    "mean_reward": -0.3544,
-    "ci95": 0.0162,
-    "mean_steps": 1.276,
-    "under_triage_rate": 0.2647,
-    "over_escalation_rate": 0.2009
+    "mean_reward": -0.2056,
+    "ci95": 0.0144,
+    "mean_steps": 1.15,
+    "under_triage_rate": 0.1648,
+    "over_escalation_rate": 0.2476
   }
 }

@@ -18,9 +18,6 @@ export type PatientInput = {
   height_cm: number;
   weight_kg: number;
   bp: number;
-  glucose: number | null;
-  glucose_context?: "unspecified" | "fasting" | "random" | "after_meal" | "unknown";
-  glucose_unavailable?: boolean;
   high_chol: boolean | null;
   chol_check: boolean;
   smoker: boolean | null;
@@ -48,10 +45,6 @@ export type PreparedPatient = {
   weight_kg: number | null;
   bmi: number;
   bp: number;
-  glucose: number;
-  glucose_measured: boolean;
-  glucose_context?: PatientInput["glucose_context"];
-  glucose_unavailable?: boolean;
   high_bp?: number;
   age_bucket?: number;
   sex?: number;
@@ -86,7 +79,6 @@ export type RuleResult = {
 
 export type SupportPolicyResult = {
   next_step:
-    | "request_glucose"
     | "retrieve_more_evidence"
     | "recommend_routine"
     | "recommend_followup"
@@ -95,11 +87,8 @@ export type SupportPolicyResult = {
   steps: { action: string; state: number[]; source: string; evidence_status_after?: string }[];
   state_tracker?: {
     risk: string;
-    glucose: "unmeasured" | "normal" | "elevated";
     evidence: string;
-    asked_glucose: boolean;
     retrieved_more: boolean;
-    need_entropy_bits: number;
     actions: string[];
   };
   q_values: Record<string, number> | null;
@@ -212,7 +201,6 @@ export type SimilarCase = {
     age?: number;
     bmi?: number;
     bp?: number;
-    glucose?: number;
     outcome_confirmed?: boolean;
   };
   distance: number;
@@ -288,10 +276,10 @@ export type MeasurementScale = {
 
 export type FollowupQuestion = {
   id: string;
-  kind: "glucose" | "risk_factor";
-  source: "policy" | "data_quality" | "model_sensitivity";
+  kind: "risk_factor";
+  source: "model_sensitivity";
   /** Request field a risk_factor question fills in. */
-  field?: AskableField;
+  field: AskableField;
   question: string;
   reason: string;
   model_note: string;

@@ -18,8 +18,6 @@ class AuditLogger:
                 "age": patient.get("age"),
                 "bmi": patient.get("bmi"),
                 "bp": patient.get("bp"),
-                "glucose": patient.get("glucose"),
-                "glucose_measured": patient.get("glucose_measured"),
             },
             "result": {
                 "risk": result.get("risk"),

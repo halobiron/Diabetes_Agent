@@ -1,52 +1,27 @@
-"""Simulated environment for choosing the next support step.
+"""Simulated support-step environment using model risk and retrieved evidence.
 
-There is NO real user or clinician feedback in this project. Everything below, including
-patient mix, how often a patient supplies glucose, how often a broader search finds more
-evidence, and the reward values, is a design assumption written down here. Policies
-trained and compared on this environment show how they behave under these assumptions,
-not how they would perform with real patients.
-
-State (what the Orchestrator can observe):
-    risk            model band: Low / Medium / High
-    glucose         unmeasured / normal / elevated (measured >= 200 mg/dL)
-    evidence        none / limited / sufficient (RetrievalAgent's evidence_status)
-    asked_glucose   whether a glucose request was already made
-    retrieved_more  whether a broadened evidence search was already done
-
-Reward: terminal steps get the triage reward below. Information-gathering steps cost
-STEP_COST and earn ENTROPY_WEIGHT times the entropy reduction (bits) of the belief about
-whether the patient needs escalation, the idea of reward by entropy reduction used in
-hierarchical diagnosis agents. Measuring glucose can remove that uncertainty; a wider
-evidence search does not change the belief, so it earns no entropy reward.
-
-Actions: two information-gathering steps (request glucose, retrieve more evidence) and
-three terminal steps (routine advice, follow-up advice, escalate to a clinician).
+Patient mix, broader-search success and rewards are project assumptions, not real
+patient or clinician feedback. The state is (risk, evidence, retrieved_more).
+A broader search can improve evidence once; terminal actions choose a support level.
 """
 
-import math
 import random
 
 RISKS = ["Low", "Medium", "High"]
-GLUCOSE = ["unmeasured", "normal", "elevated"]
 EVIDENCE = ["none", "limited", "sufficient"]
 ACTIONS = [
-    "request_glucose",
     "retrieve_more_evidence",
     "recommend_routine",
     "recommend_followup",
     "escalate_to_clinician",
 ]
-TERMINAL_ACTIONS = ACTIONS[2:]
+TERMINAL_ACTIONS = ACTIONS[1:]
 
 # Simulation assumptions.
 RISK_PRIOR = [0.4, 0.35, 0.25]
-P_ELEVATED_GIVEN_RISK = [0.1, 0.3, 0.6]  # chance the true glucose is >= 200 mg/dL
-P_GLUCOSE_ALREADY_MEASURED = 0.5
 EVIDENCE_PRIOR = [0.2, 0.4, 0.4]
-P_PATIENT_SUPPLIES_GLUCOSE = 0.7
 P_BROADER_SEARCH_HELPS = 0.6  # evidence improves one level
 STEP_COST = 0.05
-ENTROPY_WEIGHT = 0.3  # reward per bit of uncertainty removed about "needs escalation"
 EVIDENCE_BONUS = {"none": -0.2, "limited": 0.0, "sufficient": 0.2}  # non-escalation advice only
 
 # REWARD[need][terminal action]: under-triage is penalised hardest, over-triage mildly.
@@ -69,36 +44,20 @@ REWARD = {
 }
 
 
-def encode_state(risk, glucose, evidence, asked_glucose=False, retrieved_more=False):
-    return (
-        RISKS.index(risk),
-        GLUCOSE.index(glucose),
-        EVIDENCE.index(evidence),
-        int(asked_glucose),
-        int(retrieved_more),
-    )
+def encode_state(risk, evidence, retrieved_more=False):
+    return (RISKS.index(risk), EVIDENCE.index(evidence), int(retrieved_more))
 
 
 def valid_actions(state):
-    _, glucose, evidence, asked, retrieved = state
+    _, evidence, retrieved = state
     actions = []
-    if GLUCOSE[glucose] == "unmeasured" and not asked:
-        actions.append("request_glucose")
     if EVIDENCE[evidence] != "sufficient" and not retrieved:
         actions.append("retrieve_more_evidence")
     return actions + TERMINAL_ACTIONS
 
 
-def need_entropy(risk, glucose):
-    """Entropy (bits) of "needs escalation" given the observed risk band and glucose status."""
-    if risk == "High" or glucose != "unmeasured":
-        return 0.0  # already escalated, or glucose is measured so the need is known
-    p = P_ELEVATED_GIVEN_RISK[RISKS.index(risk)]
-    return -(p * math.log2(p) + (1 - p) * math.log2(1 - p))
-
-
-def true_need(risk, elevated):
-    if elevated or risk == "High":
+def true_need(risk):
+    if risk == "High":
         return "escalate"
     return "followup" if risk == "Medium" else "routine"
 
@@ -117,35 +76,22 @@ class SupportEnv:
     def reset(self):
         rng = self.rng
         self.risk = rng.choices(RISKS, RISK_PRIOR)[0]
-        self.elevated = rng.random() < P_ELEVATED_GIVEN_RISK[RISKS.index(self.risk)]
-        measured = rng.random() < P_GLUCOSE_ALREADY_MEASURED
-        self.glucose = ("elevated" if self.elevated else "normal") if measured else "unmeasured"
         self.evidence = rng.choices(EVIDENCE, EVIDENCE_PRIOR)[0]
-        self.asked = False
         self.retrieved = False
         return self.state
 
     @property
     def state(self):
-        return encode_state(self.risk, self.glucose, self.evidence, self.asked, self.retrieved)
+        return encode_state(self.risk, self.evidence, self.retrieved)
 
     def step(self, action):
         if action not in valid_actions(self.state):
             raise ValueError(f"Action {action!r} is not valid in state {self.state}")
         if action in TERMINAL_ACTIONS:
-            need = true_need(self.risk, self.elevated)
+            need = true_need(self.risk)
             return self.state, terminal_reward(action, need, self.evidence), True, {"need": need}
 
-        reward, gain = -STEP_COST, 0.0
-        if action == "request_glucose":
-            before = need_entropy(self.risk, self.glucose)
-            self.asked = True
-            if self.rng.random() < P_PATIENT_SUPPLIES_GLUCOSE:
-                self.glucose = "elevated" if self.elevated else "normal"
-            gain = before - need_entropy(self.risk, self.glucose)
-            reward += ENTROPY_WEIGHT * gain
-        else:
-            self.retrieved = True
-            if self.rng.random() < P_BROADER_SEARCH_HELPS:
-                self.evidence = EVIDENCE[min(EVIDENCE.index(self.evidence) + 1, 2)]
-        return self.state, reward, False, {"entropy_reduction": gain}
+        self.retrieved = True
+        if self.rng.random() < P_BROADER_SEARCH_HELPS:
+            self.evidence = EVIDENCE[min(EVIDENCE.index(self.evidence) + 1, 2)]
+        return self.state, -STEP_COST, False, {}

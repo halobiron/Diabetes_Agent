@@ -1,7 +1,6 @@
 "use client";
 
-import { ArrowRight, Loader2 } from "lucide-react";
-import { useState, type FormEvent } from "react";
+import { Loader2 } from "lucide-react";
 
 import { ESCALATION_LABELS } from "@/lib/labels";
 import type { AskableField, FollowupQuestion, PatientInput, PredictionResult } from "@/types/healthcare";
@@ -27,7 +26,7 @@ export function NextQuestion({ question, pending, error, onAnswer }: {
             <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> Mình đang nhờ cả đội tính lại…
           </p>
         ) : null}
-        {question.kind === "risk_factor" && question.field ? <YesNoAnswer field={question.field} pending={pending} onAnswer={onAnswer} /> : <GlucoseAnswer pending={pending} onAnswer={onAnswer} />}
+        <YesNoAnswer field={question.field} pending={pending} onAnswer={onAnswer} />
         <p className="mt-4 text-xs leading-5 text-muted">{question.model_note} Cập nhật áp dụng cho hồ sơ vừa đánh giá.</p>
         {error ? <p role="alert" className="mt-3 text-sm text-danger">{error.message} Bạn có thể thử cập nhật lại.</p> : null}
       </div>
@@ -45,44 +44,6 @@ function YesNoAnswer({ field, pending, onAnswer }: { field: AskableField; pendin
   );
 }
 
-function GlucoseAnswer({ pending, onAnswer }: { pending: boolean; onAnswer: (answer: Partial<PatientInput>) => void }) {
-  const [glucose, setGlucose] = useState("");
-  const [context, setContext] = useState<NonNullable<PatientInput["glucose_context"]>>("unspecified");
-
-  function answer(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onAnswer({ glucose: Number(glucose), glucose_unavailable: false, glucose_context: context });
-  }
-
-  return (
-    <form onSubmit={answer} className="mt-4">
-      <fieldset disabled={pending} className="flex min-w-0 flex-col gap-3 disabled:opacity-60 sm:flex-row sm:flex-wrap sm:items-end">
-        <label className="block sm:w-44">
-          <span className="mb-1 block text-sm">Kết quả đường huyết (mg/dL)</span>
-          <input autoComplete="off" required type="number" min="0" max="500" step="any" value={glucose} onChange={(event) => setGlucose(event.target.value)} className="field-input tabular-nums" placeholder="Nhập số đo thực tế" />
-        </label>
-        <label className="block min-w-0 sm:max-w-sm sm:flex-1">
-          <span className="mb-1 block text-sm">Bối cảnh đo</span>
-          <select required className="field-input" value={context} onChange={(event) => setContext(event.target.value as typeof context)}>
-            <option value="unspecified" disabled>Chọn bối cảnh đo</option>
-            <option value="fasting">Lúc đói (nhịn ăn ít nhất 8 giờ)</option>
-            <option value="random">Ngẫu nhiên</option>
-            <option value="after_meal">Sau ăn thông thường</option>
-            <option value="unknown">Không nhớ / không rõ</option>
-          </select>
-        </label>
-        <button type="submit" disabled={pending || context === "unspecified"} className="btn-primary">
-          {pending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <ArrowRight aria-hidden="true" className="h-4 w-4" />}Cập nhật đánh giá
-        </button>
-        <button type="button" disabled={pending} onClick={() => onAnswer({ glucose: null, glucose_context: "unspecified", glucose_unavailable: true })} className="btn-secondary">
-          Chưa có kết quả đo
-        </button>
-      </fieldset>
-    </form>
-  );
-}
-
-/** Ông Mô báo kết quả vừa đổi thế nào sau khi bạn trả lời. */
 export function FollowupChange({ before, after }: { before: PredictionResult; after: PredictionResult }) {
   const delta = (after.probability - before.probability) * 100;
   const mood = delta < -0.05 ? "happy" : delta > 0.05 ? "worried" : "think";
@@ -100,7 +61,6 @@ export function FollowupChange({ before, after }: { before: PredictionResult; af
         <Seal id="chung" tilt={2}>Bằng chứng {before.retrieved_context.length} → {after.retrieved_context.length}</Seal>
         <Seal id="luat" tilt={-1}>{ESCALATION_LABELS[after.safety.escalation]}</Seal>
       </div>
-      <p className="mt-3 text-xs leading-5 text-muted md:pl-[84px]">Glucose không trực tiếp thay đổi xác suất MLP BRFSS.</p>
     </section>
   );
 }

@@ -422,7 +422,6 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
         "model": final_models[selected_name],
         "feature_names": FEATURE_NAMES,
         "default_values": X_train.median(numeric_only=True).to_dict(),
-        "default_glucose": 100.0,
         "training_frame": training_frame,
         "metadata": metadata,
     }

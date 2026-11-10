@@ -4,29 +4,29 @@ import json
 import random
 from pathlib import Path
 
-from rl.environment import ACTIONS, GLUCOSE, RISKS, SupportEnv, valid_actions
+from rl.environment import ACTIONS, RISKS, SupportEnv, valid_actions
 
-POLICY_VERSION = "support-policy-v2"
+POLICY_VERSION = "support-policy-v3"
+STATE_ORDER = ["risk", "evidence", "retrieved_more"]
 
 
 def _terminal_by_risk(state):
-    risk, glucose = RISKS[state[0]], GLUCOSE[state[1]]
-    if glucose == "elevated" or risk == "High":
+    risk = RISKS[state[0]]
+    if risk == "High":
         return "escalate_to_clinician"
     return "recommend_followup" if risk == "Medium" else "recommend_routine"
 
 
 def fixed_risk_policy(state):
-    """Current pipeline: no extra steps; advice level follows the risk band (and measured glucose)."""
+    """Current pipeline: no extra steps; advice level follows the risk band."""
     return _terminal_by_risk(state)
 
 
 def fixed_full_policy(state):
     """Hand-written checklist: always gather what is missing, then answer by risk band."""
     actions = valid_actions(state)
-    for step in ("request_glucose", "retrieve_more_evidence"):
-        if step in actions:
-            return step
+    if "retrieve_more_evidence" in actions:
+        return "retrieve_more_evidence"
     return _terminal_by_risk(state)
 
 
@@ -67,7 +67,7 @@ class QPolicy:
         payload = {
             "version": POLICY_VERSION,
             "actions": ACTIONS,
-            "state_order": ["risk", "glucose", "evidence", "asked_glucose", "retrieved_more"],
+            "state_order": STATE_ORDER,
             "q": {_key(state): [round(v, 5) for v in values] for state, values in self.q.items()},
             "metadata": self.metadata,
         }
@@ -78,6 +78,8 @@ class QPolicy:
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
         if payload["actions"] != ACTIONS:
             raise ValueError("Policy artifact was trained with a different action set.")
+        if payload.get("version") != POLICY_VERSION or payload.get("state_order") != STATE_ORDER:
+            raise ValueError("Policy artifact has an incompatible state schema; retrain it.")
         q = {tuple(int(p) for p in key.split(",")): v for key, v in payload["q"].items()}
         return cls(q, {**payload.get("metadata", {}), "version": payload["version"]})
 
@@ -114,7 +116,7 @@ def train_q_learning(episodes=60000, alpha=0.1, epsilon_start=1.0, epsilon_end=0
             "gamma": 1.0,
             "seed": seed,
             "feedback": "simulated",
-            "reward": "triage reward + entropy reduction",
+            "reward": "support-level reward + evidence bonus - retrieval cost",
         },
     )
 

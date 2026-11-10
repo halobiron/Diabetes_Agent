@@ -125,11 +125,6 @@ export function AgentTrace({ result }: { result: PredictionResult }) {
                   <Bubble id={meta?.cast ?? "mo"} className="text-sm text-muted">
                     {step.detail}
                     {degraded && errors.get(step.component) ? ` (${errors.get(step.component)})` : ""}
-                    {step.component === "support_policy" && result.policy?.state_tracker ? (
-                      <span className="mt-1 block text-xs">
-                        Độ bất định còn lại về việc cần chuyển tuyến: {result.policy.state_tracker.need_entropy_bits.toLocaleString("vi-VN")} bit.
-                      </span>
-                    ) : null}
                   </Bubble>
                 </div>
               </details>

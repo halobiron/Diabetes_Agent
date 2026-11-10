@@ -23,7 +23,6 @@ export const FEATURE_LABELS: Record<string, string> = {
   age: "Tuổi",
   bmi: "BMI",
   bp: "Huyết áp",
-  glucose: "Đường huyết",
 };
 
 export const BINARY_FEATURES = new Set([

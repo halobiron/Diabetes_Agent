@@ -5,9 +5,6 @@ export const DEFAULT_INPUT: PatientInput = {
   height_cm: 170,
   weight_kg: 82.4,
   bp: 130,
-  // Mô hình BRFSS không dùng đường huyết; không thu thập và không để backend hỏi lại.
-  glucose: null,
-  glucose_unavailable: true,
   high_chol: null,
   chol_check: true,
   smoker: null,

@@ -10,7 +10,7 @@ HIGH_BP_SYSTOLIC_CUTOFF = 130
 
 
 class RiskModel:
-    LEGACY_FEATURE_NAMES = ["age", "bmi", "bp", "glucose"]
+    BASIC_FEATURE_NAMES = ["age", "bmi", "bp"]
     BRFSS_FEATURE_NAMES = [
         "HighBP",
         "HighChol",
@@ -34,7 +34,7 @@ class RiskModel:
         "Education",
         "Income",
     ]
-    INPUT_NAMES = ["age", "height_cm", "weight_kg", "bp", "glucose"]
+    INPUT_NAMES = ["age", "height_cm", "weight_kg", "bp"]
     BINARY_FIELDS = {
         "high_chol": "HighChol",
         "chol_check": "CholCheck",
@@ -63,7 +63,6 @@ class RiskModel:
         "age": (("age", 1.0), ("Age", 5.0)),  # Age is a 5-year BRFSS bucket
         "bmi": (("bmi", 1.0), ("BMI", 1.0)),
         "bp": (("bp", 1.0), ("HighBP", None)),
-        "glucose": (("glucose", 1.0),),
     }
     # Optional model inputs outside BINARY_FIELDS: feature name -> accepted request keys.
     OPTIONAL_FIELD_KEYS = {
@@ -77,9 +76,8 @@ class RiskModel:
 
     def __init__(self):
         self.model = LogisticRegression(max_iter=1000)
-        self.feature_names = list(self.LEGACY_FEATURE_NAMES)
+        self.feature_names = list(self.BASIC_FEATURE_NAMES)
         self.is_trained = False
-        self.default_glucose = None
         self.default_values = {}
         self.training_frame = None
         self.artifact_metadata = {}
@@ -98,8 +96,7 @@ class RiskModel:
                 lambda row: self.calculate_bmi(row["height_cm"], row["weight_kg"]), axis=1
             )
 
-        self.default_glucose = float(df["glucose"].median())
-        self.feature_names = list(self.LEGACY_FEATURE_NAMES)
+        self.feature_names = list(self.BASIC_FEATURE_NAMES)
         X = df[self.feature_names]
         y = df["target"]
         self.model.fit(X, y)
@@ -116,11 +113,13 @@ class RiskModel:
         artifact = joblib.load(artifact_path)
 
         self.model = artifact["model"]
-        self.feature_names = list(artifact.get("feature_names", self.LEGACY_FEATURE_NAMES))
+        self.feature_names = list(artifact["feature_names"])
+        supported = set(self.BRFSS_FEATURE_NAMES + self.BASIC_FEATURE_NAMES)
+        if not set(self.feature_names) <= supported:
+            raise ValueError("Model artifact contains unsupported input features; retrain it.")
         self.default_values = {
             key: float(value) for key, value in artifact.get("default_values", {}).items()
         }
-        self.default_glucose = artifact.get("default_glucose", self.default_values.get("glucose"))
         self.artifact_metadata = artifact.get("metadata", {})
 
         training_frame = artifact.get("training_frame")
@@ -187,10 +186,6 @@ class RiskModel:
         if missing:
             raise ValueError(f"Missing required patient fields: {', '.join(missing)}")
 
-        glucose_measured = patient.get("glucose") is not None
-        glucose = float(patient["glucose"]) if glucose_measured else self.default_glucose
-        if glucose is None:
-            glucose = 0.0
         bmi = (
             self.calculate_bmi(float(patient["height_cm"]), float(patient["weight_kg"]))
             if has_height_weight
@@ -220,13 +215,6 @@ class RiskModel:
             ),
             "bmi": round(bmi, 1),
             "bp": int(bp) if bp is not None else int(self._default_for("bp", 0)),
-            "glucose": glucose,
-            "glucose_measured": glucose_measured,
-            "glucose_context": patient.get("glucose_context", "unspecified")
-            if glucose_measured
-            else "unspecified",
-            "glucose_unavailable": bool(patient.get("glucose_unavailable", False))
-            and not glucose_measured,
             "high_bp": self._coerce_binary(high_bp, self._default_for("HighBP")),
             "age_bucket": int(age_bucket),
             "sex": sex,
@@ -242,7 +230,7 @@ class RiskModel:
         return [name for name in names if self._uses_feature(name)]
 
     def inputs_not_in_model(self, patient):
-        """Measured request inputs that no model feature consumes (glucose for the BRFSS model)."""
+        """Accepted measurements that no model feature consumes directly."""
         unused = []
         for name, consumers in self.INPUT_FEATURES.items():
             measured = patient.get(f"{name}_measured", patient.get(name) is not None)
@@ -253,7 +241,7 @@ class RiskModel:
     def input_spreads(self):
         """Standard deviation of age (years), BMI and other continuous inputs in the training data.
 
-        Inputs the model was not trained on (e.g. blood pressure in mmHg, glucose) are absent.
+        Inputs the model was not trained on (e.g. blood pressure in mmHg) are absent.
         """
         spreads = {}
         if self.training_frame is None:
@@ -293,8 +281,6 @@ class RiskModel:
             return patient["bmi"]
         if feature == "bp":
             return patient["bp"]
-        if feature == "glucose":
-            return patient["glucose"]
         if feature == "HighBP":
             return patient["high_bp"]
         if feature == "BMI":

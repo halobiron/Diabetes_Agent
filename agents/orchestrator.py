@@ -20,8 +20,8 @@ from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS
 
 logger = logging.getLogger(__name__)
 
-MAX_POLICY_STEPS = 3
-AGENT_VERSION = "agents-v1"
+MAX_POLICY_STEPS = 2
+AGENT_VERSION = "agents-v2"
 
 # Which agent owns each traced component (the orchestrator owns everything not listed).
 AGENT_OF = {
@@ -241,7 +241,7 @@ class Orchestrator:
             "measurement_scales": measurement_scales(patient),
             "evidence_trail": evidence_trail(feature_explanation, retrieved_context),
             "what_if": what_if,
-            "followup": build_followup(patient, safety, policy, unknown_input),
+            "followup": build_followup(safety, unknown_input),
         }
 
     @staticmethod
@@ -380,13 +380,12 @@ class Orchestrator:
     ):
         """Let the support policy pick the next step; only evidence retrieval is acted on here.
 
-        Requesting glucose cannot be done inside one API call, so it is reported as the
-        next step. The rules keep precedence: a policy answer below the rules' escalation
+        The rules keep precedence: a policy answer below the rules' escalation
         is replaced by escalation.
         """
         retrieved_context, status, safety, recommendation = current
         steps = []
-        tracker = StateTracker(patient, risk, retrieved_more=retrieved_more)
+        tracker = StateTracker(risk, retrieved_more=retrieved_more)
         for _ in range(MAX_POLICY_STEPS):
             state = tracker.update(safety, status)
             decision = self.support_policy.decide(state)

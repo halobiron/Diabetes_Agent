@@ -15,7 +15,7 @@ function bandRange(band: MeasurementBand) {
 }
 
 export function MeasurementScales({ scales }: { scales: MeasurementScale[] }) {
-  const shown = scales.filter((scale) => scale.key !== "glucose");
+  const shown = scales;
   if (!shown.length) return null;
   return (
     <section aria-labelledby="measurement-heading" className="min-w-0">

@@ -29,10 +29,9 @@ def build_agent():
 
     explainer = ExplanationAgent()
     recommender = RecommendationAgent()
-    # Age/BMI spreads come from the training data; bp and glucose have none, so use settings.
+    # Age/BMI spreads come from the training data; bp has none, so use settings.
     scales = {
         "bp": settings.similarity_bp_scale,
-        "glucose": settings.similarity_glucose_scale,
         **model.input_spreads(),
     }
     memory = MemoryAgent(CHROMA_PATH, scales=scales, max_distance=settings.similarity_max_distance)
@@ -63,7 +62,6 @@ if __name__ == "__main__":
         "height_cm": 170,
         "weight_kg": 82.4,
         "bp": 130,
-        "glucose": 180,
     }
     result = build_agent().run(patient)
     print(json.dumps(result, indent=2))

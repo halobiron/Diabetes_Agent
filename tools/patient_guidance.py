@@ -1,7 +1,6 @@
 """Source-backed reference displays and one actionable follow-up question.
 
-Reference bands explain measurements, not model probability or diagnoses. Fasting
-glucose references apply to non-pregnant adults; unknown context stays neutral.
+Reference bands explain BMI and blood pressure, not model probability or diagnoses.
 """
 
 BMI_SOURCE = {
@@ -11,14 +10,6 @@ BMI_SOURCE = {
 BP_SOURCE = {
     "title": "AHA — Blood pressure readings",
     "url": "https://www.heart.org/en/health-topics/high-blood-pressure/understanding-blood-pressure-readings",
-}
-GLU_SOURCE = {
-    "title": "NIDDK — Diabetes tests",
-    "url": "https://www.niddk.nih.gov/health-information/diabetes/overview/tests-diagnosis",
-}
-LOW_GLU_SOURCE = {
-    "title": "CDC — Low blood sugar",
-    "url": "https://www.cdc.gov/diabetes/about/low-blood-sugar-hypoglycemia.html",
 }
 
 
@@ -101,37 +92,7 @@ def measurement_scales(patient):
         else "Không áp dụng mốc huyết áp người lớn cho người dưới 18 tuổi.",
         [BP_SOURCE],
     )
-    measured = patient.get("glucose_measured", True)
-    context = patient.get("glucose_context", "unspecified")
-    glucose_bands = []
-    note = "Chưa đo: không hiển thị giá trị tự điền như số đo thật."
-    if measured:
-        note = "Chưa biết bối cảnh đo; không gán vùng bình thường hay ngưỡng chẩn đoán."
-        if context == "fasting" and age >= 18:
-            glucose_bands = [
-                _band(None, 70, "Dưới 70: đường huyết thấp", "danger"),
-                _band(70, 100, "70 đến dưới 100", "success"),
-                _band(100, 126, "100 đến dưới 126", "warning"),
-                _band(126, None, "Từ 126: cần xác nhận", "danger"),
-            ]
-            note = "Mốc tham khảo lúc đói ≥8 giờ cho người lớn không mang thai. Kết quả máy đo tại nhà không dùng để chẩn đoán; bác sĩ thường cần xét nghiệm xác nhận."
-        elif context == "random":
-            note = "Đo ngẫu nhiên không có vùng bình thường chung trên thang này. Ngưỡng xét nghiệm ≥200 cần đặt trong bối cảnh triệu chứng và đánh giá của bác sĩ."
-        elif context == "after_meal":
-            note = "Đo sau ăn thông thường không tương đương nghiệm pháp dung nạp glucose; không áp dụng mốc OGTT."
-        elif context == "fasting":
-            note = "Không áp dụng thang tham khảo người lớn cho người dưới 18 tuổi."
-    glucose = _scale(
-        "glucose",
-        "Đường huyết",
-        "mg/dL",
-        patient["glucose"] if measured else None,
-        (40, 300),
-        glucose_bands,
-        note,
-        [GLU_SOURCE, LOW_GLU_SOURCE],
-    )
-    return [bmi, bp, glucose]
+    return [bmi, bp]
 
 
 RISK_FACTOR_QUESTIONS = {
@@ -164,24 +125,9 @@ def _risk_factor_question(unknown):
     }
 
 
-def build_followup(patient, safety, policy=None, unknown=None):
-    """One next question: glucose first (it drives the safety rules), then the missing model
-    input whose answer could move the estimate most (`unknown`).
-
-    The glucose measurement context is not asked here: the form collects it next to the value.
-    """
+def build_followup(safety, unknown=None):
+    """Ask for the missing model input with the largest estimated effect."""
     # Never put a data-entry task ahead of a clinician escalation or a failed safety check.
     if safety["escalation"] != "routine_followup":
         return None
-    measured = patient.get("glucose_measured", True)
-    if not measured and not patient.get("glucose_unavailable"):
-        source = "policy" if policy and policy["next_step"] == "request_glucose" else "data_quality"
-        return {
-            "id": "glucose",
-            "kind": "glucose",
-            "source": source,
-            "question": "Bạn có kết quả đo đường huyết để bổ sung không?",
-            "reason": "Số đo này giúp bộ luật kiểm tra cảnh báo và truy xuất bằng chứng phù hợp hơn. Bạn có thể chọn chưa có kết quả; hệ thống sẽ không hỏi lặp trong hồ sơ này.",
-            "model_note": "Glucose không tham gia MLP BRFSS hiện tại; bổ sung số đo không trực tiếp đổi xác suất của mô hình.",
-        }
     return _risk_factor_question(unknown) if unknown else None

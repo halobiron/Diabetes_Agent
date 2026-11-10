@@ -72,7 +72,7 @@ class ExplanationAgent:
 
         return (
             f"Mô hình ước tính nguy cơ {prob:.1%} với BMI tính được là {bmi:.1f}. "
-            f"{driver_text}{self._glucose_text(patient_data, feature_explanation)}"
+            f"{driver_text}"
             f"{self._defaults_text(patient_data)}{memory_text}"
             f"{self._safety_text(safety)}{self._evidence_text(evidence_status)}"
         )
@@ -107,15 +107,6 @@ class ExplanationAgent:
                 "Chưa có giải thích từ mô hình; phần lớn số đo nằm trong khoảng nguy cơ thấp hơn. "
             )
         return f"Chưa có giải thích từ mô hình; các yếu tố đáng chú ý: {', '.join(notable)}. "
-
-    def _glucose_text(self, patient_data, feature_explanation):
-        not_in_model = (feature_explanation or {}).get("inputs_not_in_model", [])
-        if "glucose" in not_in_model:
-            return (
-                "Đường huyết không phải đầu vào của mô hình này; chỉ số đo thực tế mới được"
-                " kiểm tra bằng các luật an toàn. "
-            )
-        return ""
 
     def _defaults_text(self, patient_data):
         defaulted = patient_data.get("defaulted_fields", [])

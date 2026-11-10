@@ -9,8 +9,8 @@ from tools.vietnamese import RISK_LABELS
 
 class MemoryAgent:
     def __init__(self, chroma_path, scales=None, max_distance=1.0):
-        """`scales`: per-field spread (age, bmi, bp, glucose) that sets how far apart is "different"."""
-        self.scales = dict(scales or {})
+        """`scales`: per-field spread (age, bmi, bp) that sets how far apart is "different"."""
+        self.scales = {key: value for key, value in (scales or {}).items() if key in ("age", "bmi", "bp")}
         self.max_distance = max_distance
         self.embedding_model = LocalEmbeddingModel()
         self.client = create_persistent_client(chroma_path)
@@ -41,8 +41,8 @@ class MemoryAgent:
             records.append(
                 {
                     "id": record_id,
-                    "summary": document,
-                    "metadata": metadata,
+                    "summary": self._patient_summary(metadata, metadata.get("probability"), metadata.get("risk")),
+                    "metadata": self._public_metadata(metadata),
                 }
             )
 
@@ -50,7 +50,7 @@ class MemoryAgent:
         return records[:limit]
 
     def find_similar(self, patient_data, n_results=3):
-        """Stored cases closest in age, BMI, blood pressure and (when both measured) glucose.
+        """Stored cases closest in age, BMI and blood pressure.
 
         Ranked by numeric distance over the saved values rather than text embeddings, so a
         58-year-old matches a 59-year-old. Every match is an earlier model prediction; none
@@ -66,9 +66,9 @@ class MemoryAgent:
                 continue
             matches.append(
                 {
-                    "summary": document,
+                    "summary": self._patient_summary(metadata, metadata.get("probability"), metadata.get("risk")),
                     "metadata": {
-                        **metadata,
+                        **self._public_metadata(metadata),
                         "outcome_confirmed": bool(metadata.get("outcome_confirmed", False)),
                     },
                     "distance": distance,
@@ -80,10 +80,6 @@ class MemoryAgent:
     def _distance(self, patient_data, metadata):
         squares = []
         for field, scale in self.scales.items():
-            if field == "glucose" and not (
-                patient_data.get("glucose_measured") and metadata.get("glucose_measured")
-            ):
-                continue
             current, stored = patient_data.get(field), metadata.get(field)
             if current is None or stored is None:
                 continue
@@ -97,8 +93,7 @@ class MemoryAgent:
         risk_text = RISK_LABELS.get(risk, "chưa rõ")
         return (
             f"Tuổi {patient_data.get('age')}, BMI {patient_data.get('bmi')}, "
-            f"huyết áp {patient_data.get('bp')}, đường huyết {patient_data.get('glucose')}, "
-            f"đã đo đường huyết: {'có' if patient_data.get('glucose_measured') else 'không'}, "
+            f"huyết áp {patient_data.get('bp')}, "
             f"nguy cơ {risk_text}, xác suất {probability}"
         )
 
@@ -112,8 +107,6 @@ class MemoryAgent:
             "age": int(patient_data.get("age")),
             "bmi": float(patient_data.get("bmi")),
             "bp": int(patient_data.get("bp")),
-            "glucose": float(patient_data.get("glucose")),
-            "glucose_measured": bool(patient_data.get("glucose_measured")),
             "patient_json": json.dumps(patient_data),
         }
 
@@ -123,3 +116,8 @@ class MemoryAgent:
             metadata["weight_kg"] = float(patient_data["weight_kg"])
 
         return metadata
+
+    @staticmethod
+    def _public_metadata(metadata):
+        fields = ("timestamp", "outcome_confirmed", "risk", "probability", "age", "bmi", "bp", "height_cm", "weight_kg")
+        return {key: metadata[key] for key in fields if key in metadata}

@@ -25,7 +25,7 @@ const ESCALATION_TITLE = {
   urgent_clinician_review: "Cần được khám khẩn",
 } as const;
 
-const RULE_SCALE: Record<string, string> = { GLU: "glucose", BP: "bp" };
+const RULE_SCALE: Record<string, string> = { BP: "bp" };
 
 type EvidenceItem = { text: string; n: number; source?: { title: string; url?: string } };
 

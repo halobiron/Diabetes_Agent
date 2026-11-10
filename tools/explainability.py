@@ -75,7 +75,7 @@ class FeatureExplainer:
             "method": self.method,
             "method_note": METHOD_NOTES[self.method],
             "features": impacts,
-            # Inputs the patient supplied that this model does not use (e.g. glucose, BRFSS model).
+            # Accepted measurements that no feature consumes directly (e.g. bp in mmHg).
             "inputs_not_in_model": self.risk_model.inputs_not_in_model(patient),
         }
 

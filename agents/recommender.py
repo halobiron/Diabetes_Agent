@@ -61,8 +61,6 @@ class RecommendationAgent:
         safety=None,
         feature_explanation=None,
     ):
-        glucose_note = ""
-
         if risk == "High":
             recommendation = "Nên sớm khám bác sĩ, đo lại các chỉ số và xét nghiệm; lập kế hoạch chăm sóc tập trung vào huyết áp, đường huyết, dinh dưỡng, vận động và tuân thủ dùng thuốc."
         elif risk == "Medium":
@@ -86,7 +84,6 @@ class RecommendationAgent:
         return (
             recommendation
             + driver_note
-            + glucose_note
             + context_note
             + memory_note
             + safety_note

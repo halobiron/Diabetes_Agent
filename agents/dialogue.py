@@ -15,12 +15,6 @@ CONFLICT_REPLIES = {
         "Tôi chỉ thấy các yếu tố lối sống nên không thấy số đo nguy hiểm này; "
         "chấp nhận nâng nguy cơ hiệu lực lên Cao theo số đo.",
     ),
-    "CF-PRED-HIGH-GLUCOSE-NORMAL": (
-        "risk_model",
-        "propose",
-        "Glucose không phải đặc trưng của tôi nên một lần đo bình thường không bác được dự đoán; "
-        "giữ mức Cao và đề nghị xét nghiệm A1C để xác nhận.",
-    ),
     "CF-PRED-HIGH-LOW-QUALITY": (
         "risk_model",
         "accept",

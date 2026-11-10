@@ -6,7 +6,7 @@ quality; *conflict* rules then look at how those results disagree with each othe
 the retrieved evidence) and say how the disagreement is resolved.
 
 Resolution policy, in order of precedence:
-1. Measured values (BP, glucose) override the model prediction: a Low model risk never
+1. Measured blood pressure override the model prediction: a Low model risk never
    cancels a measured danger value, and the recommendation is written for `effective_risk`.
 2. Escalation is the most severe level among fired rules; nothing lowers it, so missing
    guideline evidence or a reassuring prediction cannot downgrade an escalation.
@@ -20,7 +20,7 @@ ESCALATION_LEVELS = ["routine_followup", "prompt_clinician_followup", "urgent_cl
 RISK_LEVELS = ["Low", "Medium", "High"]
 
 HIGH_PROBABILITY = 0.85  # model probability treated as "very high predicted risk"
-NORMAL_GLUCOSE_MAX = 100  # mg/dL; below this a measured glucose is not elevated
+
 
 
 @dataclass
@@ -32,14 +32,6 @@ class RuleContext:
     confidence_label: Optional[str] = None
     fired: dict = field(default_factory=dict)  # code -> Rule, filled between the two phases
     escalation: str = ESCALATION_LEVELS[0]
-
-    @property
-    def glucose_measured(self):
-        return self.patient.get("glucose_measured", True)
-
-    @property
-    def glucose(self):
-        return self.patient["glucose"] if self.glucose_measured else None
 
     def fired_category(self, category):
         return [rule for rule in self.fired.values() if rule.category == category]
@@ -76,21 +68,7 @@ def _bp_between(low, high):
     return lambda ctx: low <= ctx.patient["bp"] < high
 
 
-def _glucose_between(low, high):
-    return lambda ctx: ctx.glucose is not None and low <= ctx.glucose < high
-
-
 BASE_RULES = [
-    Rule(
-        code="GLU-300",
-        name="Đường huyết đo được rất cao",
-        category="measurement",
-        priority=100,
-        condition=_glucose_between(300, float("inf")),
-        message="Đường huyết rất cao; cần được đánh giá y tế khẩn cấp.",
-        basis="Ngưỡng của dự án: đường huyết đo được >= 300 mg/dL.",
-        escalation="urgent_clinician_review",
-    ),
     Rule(
         code="BP-180",
         name="Huyết áp tăng nghiêm trọng",
@@ -100,16 +78,6 @@ BASE_RULES = [
         message="Huyết áp tăng nghiêm trọng; cần khám khẩn trong ngày.",
         basis="Ngưỡng của dự án: huyết áp tâm thu >= 180 mmHg (khoảng cơn tăng huyết áp theo ACC/AHA).",
         escalation="urgent_clinician_review",
-    ),
-    Rule(
-        code="GLU-200",
-        name="Đường huyết đo được cao",
-        category="measurement",
-        priority=80,
-        condition=_glucose_between(200, 300),
-        message=("Phát hiện đường huyết cao; cần sớm xét nghiệm xác nhận và khám bác sĩ."),
-        basis="Ngưỡng của dự án: đường huyết đo được 200–299 mg/dL (ADA: từ 200 mg/dL thuộc khoảng đái tháo đường).",
-        escalation="prompt_clinician_followup",
     ),
     Rule(
         code="BP-160",
@@ -145,23 +113,6 @@ CONFLICT_RULES = [
         ),
         basis="Nguyên tắc: số đo lâm sàng thực tế được ưu tiên hơn dự đoán thống kê.",
         resolution="measurement_overrides_prediction",
-    ),
-    Rule(
-        code="CF-PRED-HIGH-GLUCOSE-NORMAL",
-        name="Mô hình dự đoán cao nhưng đường huyết bình thường",
-        category="conflict",
-        priority=55,
-        condition=lambda ctx: (
-            ctx.risk == "High"
-            and ctx.glucose is not None
-            and ctx.glucose < NORMAL_GLUCOSE_MAX
-            and not ctx.fired_category("measurement")
-        ),
-        message=(
-            "Mô hình dự đoán nguy cơ cao dù đường huyết đo được bình thường; một số đo bình thường không loại trừ nguy cơ, vì vậy giữ mức nguy cơ cao và khuyến nghị xét nghiệm A1C."
-        ),
-        basis="Nguyên tắc: không hạ nguy cơ mô hình chỉ vì một số đo đường huyết bình thường.",
-        resolution="prediction_kept_confirm_with_a1c",
     ),
     Rule(
         code="CF-PRED-HIGH-LOW-QUALITY",

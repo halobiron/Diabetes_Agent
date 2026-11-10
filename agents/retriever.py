@@ -293,11 +293,6 @@ class RetrievalAgent:
             feature = item["feature"]
             if feature in self.factor_names and item["impact"] > 0 and feature not in factors:
                 factors.append(feature)
-        # Glucose is not a model input, so it is judged from the raw value.
-        if "glucose" not in factors and (
-            not patient_data.get("glucose_measured", True) or patient_data.get("glucose", 0) >= 100
-        ):
-            factors.append("glucose")
         return factors
 
     def _graph_links(self, factors):
@@ -320,7 +315,5 @@ class RetrievalAgent:
             parts.append(
                 "Yếu tố nguy cơ: " + ", ".join(self.factor_names[f].lower() for f in factors) + "."
             )
-        if not patient_data.get("glucose_measured", True):
-            parts.append("Chưa đo đường huyết nên cần xét nghiệm.")
         parts.append("Nên tầm soát, xét nghiệm, thay đổi lối sống hoặc can thiệp y khoa nào?")
         return " ".join(parts)

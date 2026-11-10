@@ -3,7 +3,7 @@ import sys
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from threading import Lock
-from typing import Literal, Optional
+from typing import Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException
@@ -68,11 +68,6 @@ class PatientRequest(BaseModel):
     weight_kg: Optional[float] = Field(None, ge=2, le=300)
     bmi: Optional[float] = Field(None, gt=0, le=80)
     bp: int = Field(..., ge=0, le=260)
-    glucose: Optional[float] = Field(None, ge=0, le=500)
-    glucose_context: Literal["unspecified", "fasting", "random", "after_meal", "unknown"] = (
-        "unspecified"
-    )
-    glucose_unavailable: bool = False
     high_chol: Optional[bool] = None
     chol_check: Optional[bool] = None
     smoker: Optional[bool] = None
