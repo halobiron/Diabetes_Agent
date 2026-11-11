@@ -29,10 +29,9 @@ def integration_client(tmp_path, monkeypatch, knowledge_graph):
     monkeypatch.setattr(
         main.RetrievalAgent,
         "from_settings",
-        lambda settings, path: RetrievalAgent(
+        lambda settings: RetrievalAgent(
             knowledge_graph,
             SemanticEmbeddingModel(),
-            path,
             ask_min_relevance=CHAT_MIN_RELEVANCE,
         ),
     )

@@ -1,0 +1,245 @@
+{
+  "description": "Bộ câu hỏi kiểm tra độc lập cho chat: 40 câu do một agent riêng viết ngày 11/11/2026 mà không đọc mã nguồn, KB hay danh sách alias. Nhãn `factor` là yếu tố nguy cơ câu hỏi nhắc tới (id thực thể RiskFactor trong Neo4j), null nếu không có; `intent` là risk (hỏi ảnh hưởng/nguy cơ) hoặc action (hỏi nên làm gì). Alias trong KB được viết trước khi đọc bộ này và không được chỉnh theo nó. Dùng để đo việc nhận yếu tố nguy cơ (scripts/evaluate_retrieval.py) và cho lần chấm mù top 3 đoạn (docs/danh_gia_truy_xuat_va_do_tre.md, mục 3c).",
+  "questions": [
+    {
+      "id": "h01",
+      "question": "Tôi nặng 85kg mà cao có 1m60, vậy có dễ bị tiểu đường không bác sĩ?",
+      "factor": "high_bmi",
+      "intent": "risk"
+    },
+    {
+      "id": "h02",
+      "question": "Bụng tôi to, vòng eo gần 100 phân, nghe nói mỡ bụng nhiều thì dễ bị bệnh đường, có đúng không?",
+      "factor": "high_bmi",
+      "intent": "risk"
+    },
+    {
+      "id": "h03",
+      "question": "Mình đang bị thừa cân, muốn giảm ký để phòng tiểu đường thì nên bắt đầu từ đâu?",
+      "factor": "high_bmi",
+      "intent": "action"
+    },
+    {
+      "id": "h04",
+      "question": "Con gái tôi mới 15 tuổi mà đã 70 ký, người tròn quay, có cần đưa cháu đi khám tiểu đường không?",
+      "factor": "high_bmi",
+      "intent": "action"
+    },
+    {
+      "id": "h05",
+      "question": "Người béo phì cần giảm khoảng bao nhiêu cân thì nguy cơ đái tháo đường mới giảm rõ rệt?",
+      "factor": "high_bmi",
+      "intent": "action"
+    },
+    {
+      "id": "h06",
+      "question": "Tôi làm văn phòng ngồi lì 8-9 tiếng một ngày, về nhà lại nằm lướt điện thoại, vậy có làm tăng nguy cơ tiểu đường không?",
+      "factor": "physical_inactivity",
+      "intent": "risk"
+    },
+    {
+      "id": "h07",
+      "question": "Lười tập thể dục cả chục năm nay thì có dính dáng gì tới bệnh tiểu đường không?",
+      "factor": "physical_inactivity",
+      "intent": "risk"
+    },
+    {
+      "id": "h08",
+      "question": "Mỗi ngày nên đi bộ bao nhiêu phút, tuần mấy buổi thì mới ngừa được bệnh đường?",
+      "factor": "physical_inactivity",
+      "intent": "action"
+    },
+    {
+      "id": "h09",
+      "question": "Người ít vận động như tôi giờ muốn tập để phòng tiểu đường thì nên chọn môn gì cho hợp?",
+      "factor": "physical_inactivity",
+      "intent": "action"
+    },
+    {
+      "id": "h10",
+      "question": "Mẹ tôi năm nay 68 tuổi rồi, già vậy thì có dễ mắc tiểu đường hơn người trẻ không?",
+      "factor": "older_age",
+      "intent": "risk"
+    },
+    {
+      "id": "h11",
+      "question": "Ngoài 45 tuổi rồi có cần đi thử đường máu định kỳ không, bao lâu làm một lần?",
+      "factor": "older_age",
+      "intent": "action"
+    },
+    {
+      "id": "h12",
+      "question": "Càng lớn tuổi thì nguy cơ đái tháo đường típ 2 tăng lên như thế nào?",
+      "factor": "older_age",
+      "intent": "risk"
+    },
+    {
+      "id": "h13",
+      "question": "Ông nội tôi hơn 70, ăn uống vẫn bình thường, có nên đưa ông đi kiểm tra bệnh đường không?",
+      "factor": "older_age",
+      "intent": "action"
+    },
+    {
+      "id": "h14",
+      "question": "Tôi bị cao máu, uống thuốc mấy năm nay rồi, vậy có dễ bị tiểu đường kèm theo không?",
+      "factor": "high_bp",
+      "intent": "risk"
+    },
+    {
+      "id": "h15",
+      "question": "Đo máy ở nhà thấy toàn 150/95, như vậy có ảnh hưởng gì tới nguy cơ bị bệnh đường không?",
+      "factor": "high_bp",
+      "intent": "risk"
+    },
+    {
+      "id": "h16",
+      "question": "Người tăng huyết áp nên làm gì để không bị đái tháo đường luôn?",
+      "factor": "high_bp",
+      "intent": "action"
+    },
+    {
+      "id": "h17",
+      "question": "Ba tôi bị cao huyết áp lâu năm, có cần cho ổng đi xét nghiệm đường huyết thêm không?",
+      "factor": "high_bp",
+      "intent": "action"
+    },
+    {
+      "id": "h18",
+      "question": "Ba tôi bị tiểu đường, vậy tôi có bị di truyền không?",
+      "factor": "family_history",
+      "intent": "risk"
+    },
+    {
+      "id": "h19",
+      "question": "Nhà tôi cả mẹ với dì đều phải chích insulin, tôi mới 30 tuổi thì nên làm gì để khỏi bị giống vậy?",
+      "factor": "family_history",
+      "intent": "action"
+    },
+    {
+      "id": "h20",
+      "question": "Bệnh tiểu đường có truyền từ cha mẹ sang con không, tỉ lệ con bị là bao nhiêu?",
+      "factor": "family_history",
+      "intent": "risk"
+    },
+    {
+      "id": "h21",
+      "question": "Người có tiền sử gia đình bị đái tháo đường thì nên bắt đầu đi xét nghiệm từ năm bao nhiêu tuổi?",
+      "factor": "family_history",
+      "intent": "action"
+    },
+    {
+      "id": "h22",
+      "question": "Anh ruột tôi mới phát hiện bị bệnh đường, tôi có cần đi thử máu luôn không?",
+      "factor": "family_history",
+      "intent": "action"
+    },
+    {
+      "id": "h23",
+      "question": "Tôi hút gần một gói một ngày, nghe nói hút thuốc lá làm tăng nguy cơ tiểu đường có đúng không?",
+      "factor": "smoking",
+      "intent": "risk"
+    },
+    {
+      "id": "h24",
+      "question": "Chồng tôi rít thuốc lào mấy chục năm nay, cái đó có liên quan gì tới bệnh đường không?",
+      "factor": "smoking",
+      "intent": "risk"
+    },
+    {
+      "id": "h25",
+      "question": "Bỏ thuốc rồi thì nguy cơ bị tiểu đường có giảm lại không, phải bao lâu mới giảm?",
+      "factor": "smoking",
+      "intent": "action"
+    },
+    {
+      "id": "h26",
+      "question": "Tôi muốn cai thuốc để ngừa tiểu đường mà sợ cai xong lại mập lên, phải làm sao?",
+      "factor": "smoking",
+      "intent": "action"
+    },
+    {
+      "id": "h27",
+      "question": "Đi khám thử máu lúc đói ra 6,5 mmol/L, vậy có phải tôi sắp bị tiểu đường không?",
+      "factor": "high_glucose",
+      "intent": "risk"
+    },
+    {
+      "id": "h28",
+      "question": "Bác sĩ nói tôi bị tiền đái tháo đường, giờ phải làm sao để không thành bệnh thật?",
+      "factor": "high_glucose",
+      "intent": "action"
+    },
+    {
+      "id": "h29",
+      "question": "Kết quả HbA1c của tôi là 6,1% thì có đáng lo không?",
+      "factor": "high_glucose",
+      "intent": "risk"
+    },
+    {
+      "id": "h30",
+      "question": "Đường trong máu tôi hơi nhỉnh, chưa tới mức bệnh, có cần uống thuốc chưa hay chỉ cần ăn kiêng?",
+      "factor": "high_glucose",
+      "intent": "action"
+    },
+    {
+      "id": "h31",
+      "question": "Dạo này tôi khát nước liên tục, đêm đi tiểu mấy lần, có phải dấu hiệu tiểu đường không?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h32",
+      "question": "Người bị tiểu đường ăn trái cây được không, loại nào nên ăn loại nào nên tránh?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h33",
+      "question": "Bị tiểu đường mà tê bì hai bàn chân là biến chứng gì, có chữa được không?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h34",
+      "question": "Uống metformin bị đau bụng, đi ngoài hoài thì có sao không, có nên ngưng thuốc không?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h35",
+      "question": "Nghiệm pháp dung nạp glucose là gì, trước khi làm phải nhịn ăn bao lâu?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h36",
+      "question": "Bệnh tiểu đường có làm hại mắt không, bao lâu thì nên đi khám mắt một lần?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h37",
+      "question": "Tiểu đường típ 1 với típ 2 khác nhau chỗ nào?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h38",
+      "question": "Bị tiểu đường rồi có được uống cà phê sữa buổi sáng không?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h39",
+      "question": "Vết thương ở chân người tiểu đường lâu lành quá thì nên chăm sóc thế nào?",
+      "factor": null,
+      "intent": null
+    },
+    {
+      "id": "h40",
+      "question": "Chích insulin thì nên chích ở chỗ nào trên người, còn bút insulin bảo quản ra sao?",
+      "factor": null,
+      "intent": null
+    }
+  ]
+}

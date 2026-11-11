@@ -13,7 +13,6 @@ import argparse
 import json
 import re
 import sys
-import tempfile
 from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -26,13 +25,15 @@ from tools.neo4j_kb import KnowledgeGraph, create_driver  # noqa: E402
 from tools.semantic_embeddings import SemanticEmbeddingModel  # noqa: E402
 
 DATASET = PROJECT_ROOT / "data/eval/rag_retrieval_questions.json"
-THRESHOLDS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55]
+# Independent held-out chat questions labelled with the risk factor they mention.
+HELDOUT = PROJECT_ROOT / "data/eval/chat_heldout_questions.json"
+THRESHOLDS = [0.2, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65]
 TOP_K = ANSWER_PASSAGES
 
 
-def build_retriever(knowledge_graph, chroma_path):
+def build_retriever(knowledge_graph):
     # min_relevance=0 so one search yields every score; thresholds are applied afterwards.
-    return RetrievalAgent(knowledge_graph, SemanticEmbeddingModel(), chroma_path, min_relevance=0.0)
+    return RetrievalAgent(knowledge_graph, SemanticEmbeddingModel(), min_relevance=0.0)
 
 
 def ranked(retriever, question):
@@ -90,6 +91,7 @@ def evaluate(retriever, data):
         if is_dosing_text(c["text"])
     ]
     return {
+        "factor_detection": factor_detection(retriever),
         "kb_source": retriever.kb_source,
         "embedding_model": retriever.embedding_model.name,
         "passages": len(retriever.evidence),
@@ -106,6 +108,31 @@ def evaluate(retriever, data):
     }
 
 
+def factor_detection(retriever):
+    """How well chat finds the risk factor a held-out question mentions (KB names + aliases)."""
+    questions = json.loads(HELDOUT.read_text(encoding="utf-8"))["questions"]
+    found = exact = extra = 0
+    mismatches = []
+    for item in questions:
+        detected = set(retriever._question_factors(item["question"]))
+        gold = {item["factor"]} if item["factor"] else set()
+        found += bool(gold & detected)
+        exact += detected == gold
+        extra += bool(detected - gold)
+        if detected != gold:
+            mismatches.append(
+                {"id": item["id"], "gold": item["factor"], "detected": sorted(detected)}
+            )
+    with_factor = sum(1 for item in questions if item["factor"])
+    return {
+        "questions": len(questions),
+        "gold_factor_found": f"{found}/{with_factor}",
+        "exact_match": f"{exact}/{len(questions)}",
+        "questions_with_an_extra_factor": f"{extra}/{len(questions)}",
+        "mismatches": mismatches,
+    }
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=PROJECT_ROOT / "logs/retrieval-eval.json")
@@ -115,8 +142,7 @@ def main():
     with create_driver(settings) as driver:
         graph = KnowledgeGraph(driver, settings.neo4j_database)
         graph.export_kb()  # Fail clearly if the required database has not been populated.
-        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmp:
-            result = evaluate(build_retriever(graph, tmp), data)
+        result = evaluate(build_retriever(graph), data)
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
     print(json.dumps(result, ensure_ascii=False, indent=1))

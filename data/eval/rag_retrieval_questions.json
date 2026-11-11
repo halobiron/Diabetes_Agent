@@ -113,6 +113,36 @@
       "id": "q22",
       "question": "Tiền đái tháo đường có tiến triển thành đái tháo đường được không?",
       "relevant_if": "tiến triển|progressing to"
+    },
+    {
+      "id": "q23",
+      "question": "Béo phì ảnh hưởng đến nguy cơ tiểu đường thế nào?",
+      "relevant_if": "(mô mỡ|béo phì|thừa cân|vòng eo).{0,150}(kháng insulin|đề kháng)|(kháng insulin|đề kháng)[^.]{0,150}(béo phì|thừa cân|vòng eo|mô mỡ)|thừa cân là yếu tố nguy cơ|being overweight"
+    },
+    {
+      "id": "q24",
+      "question": "Ít vận động ảnh hưởng thế nào đến nguy cơ đái tháo đường?",
+      "relevant_if": "ít vận động|lười vận động|thiếu hoạt động thể chất|tĩnh tại|not getting enough exercise|hạn chế hoạt động thể lực"
+    },
+    {
+      "id": "q25",
+      "question": "Tuổi tác có liên quan đến nguy cơ mắc tiểu đường không?",
+      "relevant_if": "tuổi\\s*≥\\s*45|(trên|sau|từ) 45 tuổi|45 tuổi trở lên|người cao tuổi|lớn tuổi"
+    },
+    {
+      "id": "q26",
+      "question": "Huyết áp cao có làm tăng nguy cơ đái tháo đường không?",
+      "relevant_if": "(tăng huyết áp|huyết áp cao|huyết áp trên)[^.]{0,80}(nguy cơ|yếu tố)|(nguy cơ|yếu tố)[^.]{0,200}(tăng huyết áp|huyết áp (cao|trên|>))"
+    },
+    {
+      "id": "q27",
+      "question": "Tiền sử gia đình có làm tăng nguy cơ tiểu đường không?",
+      "relevant_if": "(gia đình|cha mẹ|bố mẹ|anh chị em)[^.]{0,120}(đái tháo đường|tiểu đường)|family history|genetics"
+    },
+    {
+      "id": "q28",
+      "question": "Vì sao người thừa cân dễ bị tiểu đường type 2?",
+      "relevant_if": "(mô mỡ|béo phì|thừa cân|vòng eo).{0,150}(kháng insulin|đề kháng)|(kháng insulin|đề kháng)[^.]{0,150}(béo phì|thừa cân|vòng eo|mô mỡ)|thừa cân là yếu tố nguy cơ|being overweight"
     }
   ],
   "out_of_scope": [

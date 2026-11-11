@@ -31,6 +31,12 @@ def validate_kb(kb):
     for entity in kb.get("entities", []):
         if entity.get("label") not in ENTITY_LABELS:
             errors.append(f"entity {entity.get('id')}: unknown label {entity.get('label')}")
+        aliases = entity.get("aliases")
+        if aliases is not None and (
+            not isinstance(aliases, list)
+            or not all(isinstance(a, str) and a.strip() for a in aliases)
+        ):
+            errors.append(f"entity {entity.get('id')}: aliases must be a list of non-empty strings")
     for item in kb.get("evidence", []):
         if item.get("source") not in source_ids:
             errors.append(f"evidence {item['id']}: unknown source {item.get('source')}")
@@ -134,6 +140,8 @@ def to_cypher(kb):
     out += ["", "// --- Entities (conditions, risk factors, tests, interventions) ---"]
     for item in kb["entities"]:
         key = f", n.key = {_cy(item['key'])}" if item.get("key") else ""
+        if item.get("aliases"):
+            key += f", n.aliases = {_cy(item['aliases'])}"
         out.append(
             f"MERGE (n:Entity {{id: {_cy(item['id'])}}}) SET n:{item['label']}, "
             f"n.name = {_cy(item['name'])}, n.description = {_cy(item.get('description'))}{key}, "
@@ -210,7 +218,7 @@ class KnowledgeGraph:
             self._run(
                 "UNWIND $rows AS row MERGE (n:Entity {id: row.id}) "
                 f"SET n:{label}, n.name = row.name, n.description = row.description, "
-                "n.key = row.key, n.kb_version = $version",
+                "n.key = row.key, n.aliases = row.aliases, n.kb_version = $version",
                 rows=rows,
                 version=version,
             )
@@ -267,7 +275,7 @@ class KnowledgeGraph:
             "RETURN collect(s { .id, .title, .publisher, .year, .url }) AS sources, "
             "collect(DISTINCT s.kb_version) AS versions } "
             "CALL () { MATCH (n:Entity) WITH n ORDER BY n.id "
-            "RETURN collect(n { .id, .name, .description, .key, "
+            "RETURN collect(n { .id, .name, .description, .key, .aliases, "
             "label: [l IN labels(n) WHERE l IN $labels][0] }) AS entities } "
             "CALL () { MATCH (e:Evidence)-[:FROM]->(s:Source) WITH e, s ORDER BY e.id "
             "RETURN collect(e { .id, .text, .section, source: s.id }) AS evidence } "
@@ -337,10 +345,21 @@ class KnowledgeGraph:
             "source_count": counts["sources"],
         }
 
-    def support_for_risk_factors(self, factor_keys, limit=20):
-        """Interventions and tests linked to risk factors (by model feature key), with evidence."""
+    def risk_factor_terms(self):
+        """Every risk factor with the words people use for it (name + `aliases`), keyed by id.
+
+        Synonyms are KB data, not code, so they are versioned and reviewed with the knowledge.
+        Factors without a model `key` (e.g. family history) are included too.
+        """
+        rows = self._run(
+            "MATCH (f:RiskFactor) RETURN f.id AS id, f.key AS key, f.name AS name, "
+            "coalesce(f.aliases, []) AS aliases ORDER BY id"
+        )
+        return {row["id"]: row for row in rows}
+
+    def _support(self, match, values, limit):
         return self._run(
-            "MATCH (f:RiskFactor) WHERE f.key IN $keys "
+            f"MATCH (f:RiskFactor) WHERE {match} "
             "MATCH (x:Entity)-[r]-(f) WHERE (x:Intervention OR x:Test) "
             "AND type(r) IN ['ADDRESSES', 'SHOULD_TEST_WITH'] "
             "UNWIND r.evidence_ids AS evidence_id "
@@ -349,6 +368,28 @@ class KnowledgeGraph:
             "labels(x) AS support_labels, type(r) AS relation, e.id AS evidence_id, "
             "e.text AS evidence, s.id AS source_id, s.title AS source_title, s.url AS url "
             "ORDER BY risk_factor, support_name LIMIT $limit",
-            keys=list(factor_keys),
+            values=list(values),
+            limit=limit,
+        )
+
+    def support_for_risk_factors(self, factor_keys, limit=20):
+        """Interventions and tests linked to risk factors (by model feature key), with evidence."""
+        return self._support("f.key IN $values", factor_keys, limit)
+
+    def support_for_factor_ids(self, factor_ids, limit=50):
+        """Same as `support_for_risk_factors`, by entity id (covers factors without a key)."""
+        return self._support("f.id IN $values", factor_ids, limit)
+
+    def risk_evidence_for_factors(self, factor_ids, limit=50):
+        """Conditions each risk factor (by entity id) raises the risk of, with the evidence."""
+        return self._run(
+            "MATCH (f:RiskFactor) WHERE f.id IN $ids "
+            "MATCH (f)-[r:INCREASES_RISK_OF]->(c:Entity) "
+            "UNWIND r.evidence_ids AS evidence_id "
+            "MATCH (e:Evidence {id: evidence_id}) "
+            "RETURN f.id AS factor_id, f.name AS factor_name, c.id AS condition_id, "
+            "c.name AS condition_name, e.id AS evidence_id "
+            "ORDER BY factor_id, condition_id, evidence_id LIMIT $limit",
+            ids=list(factor_ids),
             limit=limit,
         )

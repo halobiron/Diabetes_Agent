@@ -99,7 +99,7 @@ def test_relations_query_passes_entity_and_returns_rows():
 def test_support_query_uses_feature_keys():
     driver = FakeDriver()
     KnowledgeGraph(driver).support_for_risk_factors(["BMI", "HighBP"])
-    assert driver.calls[0][1]["keys"] == ["BMI", "HighBP"]
+    assert driver.calls[0][1]["values"] == ["BMI", "HighBP"] and "f.key IN" in driver.calls[0][0]
 
 
 def test_cypher_literals_escape_quotes_backslashes_and_newlines():
@@ -164,3 +164,32 @@ def test_rebase_relations_keeps_present_evidence_and_reports_the_rest():
     assert dropped == {"a-INCREASES_RISK_OF->b": ["ev-gone"], "c-ADDRESSES->a": ["ev-gone"]}
     assert unsupported == [relations[1]]
     assert relations[0]["evidence"] == ["ev-1", "ev-gone"]  # input is not mutated
+
+
+def test_risk_query_follows_increases_risk_links_by_feature_key():
+    driver = FakeDriver()
+    KnowledgeGraph(driver).risk_evidence_for_factors(["high_bmi"])
+    query, params = driver.calls[0]
+    assert params["ids"] == ["high_bmi"] and "INCREASES_RISK_OF" in query and "f.id IN" in query
+
+
+def test_aliases_are_validated_and_exported(kb):
+    import copy
+
+    from tools.neo4j_kb import to_cypher
+
+    with_aliases = copy.deepcopy(kb)
+    entity = with_aliases["entities"][0]
+    entity["aliases"] = ["mập", "béo"]
+    assert "n.aliases = ['mập', 'béo']" in to_cypher(validate_kb(with_aliases))
+
+    entity["aliases"] = ["mập", " "]
+    with pytest.raises(KnowledgeBaseError, match="aliases"):
+        validate_kb(with_aliases)
+
+
+def test_chat_support_query_uses_entity_ids():
+    driver = FakeDriver()
+    KnowledgeGraph(driver).support_for_factor_ids(["family_history"])
+    query, params = driver.calls[0]
+    assert params["values"] == ["family_history"] and "f.id IN" in query

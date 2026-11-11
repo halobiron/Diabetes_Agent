@@ -22,10 +22,9 @@ def client(tmp_path_factory, knowledge_graph):
         patch.setattr(
             main.RetrievalAgent,
             "from_settings",
-            lambda settings, path: RetrievalAgent(
+            lambda settings: RetrievalAgent(
                 knowledge_graph,
                 SemanticEmbeddingModel(),
-                path,
                 ask_min_relevance=CHAT_MIN_RELEVANCE,
             ),
         )

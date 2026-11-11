@@ -48,7 +48,7 @@ flowchart TD
 
     subgraph KBS["Cơ sở tri thức"]
         NEO[("Neo4j: 20 thực thể, 35 quan hệ, 146 đoạn, 12 nguồn")]
-        CHR[("ChromaDB: vector 146 đoạn")]
+        CHR[("Ma trận vector bge-m3 (trong bộ nhớ): 146 đoạn")]
     end
 
     RET <-->|"đoạn bằng chứng, liên kết yếu tố nguy cơ"| NEO
@@ -90,7 +90,7 @@ flowchart LR
     NEO -->|"thực thể và quan hệ hiện có"| COL
     COL -->|"146 đoạn, ID theo nội dung"| NEO
     NEO -->|"export_kb_cypher.py"| SEED
-    NEO --> EMB["Mô hình nhúng đa ngôn ngữ"] --> CHR[("ChromaDB")]
+    NEO --> EMB["bge-m3 (GPU nếu có)"] --> CHR
 ```
 
 ## Các thành phần
@@ -102,9 +102,9 @@ flowchart LR
 | **Agent tư vấn** | `agents/advisor_agent.py`. Gọi `RetrievalAgent` (RAG + KB), `RecommendationAgent`, `ExplanationAgent`. Lỗi truy xuất thì giữ bằng chứng trước đó; lỗi tạo văn bản thì dùng nội dung cố định. |
 | **Agent điều phối** | `agents/orchestrator.py`. Gọi lần lượt hai agent, truyền kết quả giữa chúng, chạy `SafetyGuard`, cho các thành phần bất đồng trao đổi (`agents/dialogue.py`), chạy `QPolicy` tối đa 3 bước, và ghi lỗi thành phần vào `degraded`. Mỗi bước trong `trace.steps` có trường `agent` cho biết agent nào thực hiện. |
 | RiskModel | `models/risk_model.py` nạp `artifacts/risk_model.joblib`: MLP đã hiệu chuẩn, trả xác suất, nhãn theo ngưỡng và mức rủi ro. Glucose không thuộc đầu vào mô hình BRFSS. |
-| RetrievalAgent | `agents/retriever.py` dùng `paraphrase-multilingual-MiniLM-L12-v2`, ChromaDB và liên kết đồ thị để xếp hạng bằng chứng. Hàm `retrieve` phục vụ luồng chẩn đoán; hàm `ask` phục vụ chat và trả cả vết truy xuất. Chi tiết: [giải thích RAG](rag_giai_thich.md). |
+| RetrievalAgent | `agents/retriever.py` dùng `BAAI/bge-m3` (fp16 khi có GPU), chỉ mục vector numpy trong bộ nhớ và liên kết đồ thị để xếp hạng bằng chứng. Hàm `retrieve` phục vụ luồng chẩn đoán; hàm `ask` phục vụ chat và trả cả vết truy xuất. Chi tiết: [giải thích RAG](rag_giai_thich.md). |
 | KB | `tools/neo4j_kb.py`: `KnowledgeGraph` truy vấn Neo4j cho ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo. Neo4j là nguồn sự thật; `collect_corpus.py` làm mới nguồn và đoạn bằng chứng từ web/PDF, giữ thực thể và quan hệ tuyển chọn trong Neo4j. KB gồm 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng, 12 nguồn tiếng Việt. `artifacts/kb_diabet.cypher` là bản seed trong Git để dựng/nạp lại KB; `export_kb_cypher.py` cập nhật nó từ Neo4j. |
-| Chat RAG | `POST /v1/chat` trong `api/app.py` và panel "Hỏi đáp" trong `web/components/risk-console/chat.tsx`. Trả câu trả lời có trích dẫn, và từ chối khi không đoạn nào đạt ngưỡng liên quan 0,4 (`CHAT_MIN_RELEVANCE`; luồng đánh giá bệnh nhân dùng 0,3, xem [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md)). |
+| Chat RAG | `POST /v1/chat` trong `api/app.py` và panel "Hỏi đáp" trong `web/components/risk-console/chat.tsx`. Trả câu trả lời có trích dẫn, và từ chối khi không đoạn nào đạt ngưỡng liên quan 0,55 (`CHAT_MIN_RELEVANCE`; luồng đánh giá bệnh nhân dùng 0,5, xem [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md)). |
 | SafetyGuard và luật | `tools/safety.py`, `tools/rules.py`: cảnh báo, mức chuyển tuyến, xử lý xung đột và điểm chất lượng dữ liệu. Luật có quyền ưu tiên so với dự đoán và policy RL. |
 | QPolicy và StateTracker | `rl/policy.py`, `rl/environment.py`, `rl/state_tracker.py`: Q-learning lưu tại `artifacts/support_policy.json`; chọn hỏi glucose, truy xuất thêm, khuyến nghị hoặc chuyển bác sĩ. Reward gồm điểm phân loại mức xử trí và phần thưởng giảm entropy khi thu thập thông tin; `StateTracker` gom trạng thái cho policy. Huấn luyện bằng phản hồi mô phỏng. |
 | RecommendationAgent | `agents/recommender.py` nhận bằng chứng, ca tương tự, tác động đặc trưng và kết quả luật để tạo khuyến nghị có trích dẫn; dùng OpenAI khi có key, văn bản dự phòng khi không có key hoặc lỗi LLM. |

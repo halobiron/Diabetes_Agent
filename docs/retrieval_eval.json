@@ -1,9 +1,115 @@
 {
+  "factor_detection": {
+    "questions": 40,
+    "gold_factor_found": "22/30",
+    "exact_match": "25/40",
+    "questions_with_an_extra_factor": "8/40",
+    "mismatches": [
+      {
+        "id": "h01",
+        "gold": "high_bmi",
+        "detected": []
+      },
+      {
+        "id": "h04",
+        "gold": "high_bmi",
+        "detected": [
+          "older_age"
+        ]
+      },
+      {
+        "id": "h06",
+        "gold": "physical_inactivity",
+        "detected": []
+      },
+      {
+        "id": "h10",
+        "gold": "older_age",
+        "detected": [
+          "family_history",
+          "older_age"
+        ]
+      },
+      {
+        "id": "h11",
+        "gold": "older_age",
+        "detected": [
+          "high_glucose",
+          "older_age"
+        ]
+      },
+      {
+        "id": "h13",
+        "gold": "older_age",
+        "detected": []
+      },
+      {
+        "id": "h14",
+        "gold": "high_bp",
+        "detected": []
+      },
+      {
+        "id": "h15",
+        "gold": "high_bp",
+        "detected": []
+      },
+      {
+        "id": "h17",
+        "gold": "high_bp",
+        "detected": [
+          "family_history",
+          "high_bp",
+          "high_glucose"
+        ]
+      },
+      {
+        "id": "h19",
+        "gold": "family_history",
+        "detected": [
+          "family_history",
+          "older_age"
+        ]
+      },
+      {
+        "id": "h21",
+        "gold": "family_history",
+        "detected": [
+          "family_history",
+          "older_age"
+        ]
+      },
+      {
+        "id": "h22",
+        "gold": "family_history",
+        "detected": []
+      },
+      {
+        "id": "h26",
+        "gold": "smoking",
+        "detected": [
+          "high_bmi",
+          "smoking"
+        ]
+      },
+      {
+        "id": "h27",
+        "gold": "high_glucose",
+        "detected": []
+      },
+      {
+        "id": "h35",
+        "gold": null,
+        "detected": [
+          "high_glucose"
+        ]
+      }
+    ]
+  },
   "kb_source": "KnowledgeGraph",
-  "embedding_model": "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2",
+  "embedding_model": "BAAI/bge-m3",
   "passages": 146,
   "passages_withheld_dosing": 17,
-  "in_scope_questions": 22,
+  "in_scope_questions": 28,
   "out_of_scope_questions": 8,
   "relevant_passages_per_question": {
     "q01": 3,
@@ -27,115 +133,145 @@
     "q19": 6,
     "q20": 3,
     "q21": 2,
-    "q22": 19
+    "q22": 19,
+    "q23": 10,
+    "q24": 8,
+    "q25": 9,
+    "q26": 8,
+    "q27": 13,
+    "q28": 10
   },
   "by_threshold": [
     {
       "threshold": 0.2,
-      "hit@3": 0.727,
-      "precision@3": 0.348,
-      "recall@3": 0.394,
-      "mrr": 0.576,
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
       "answered_in_scope": 1.0,
-      "wrongly_answered_out_of_scope": 0.375
+      "wrongly_answered_out_of_scope": 1.0
     },
     {
       "threshold": 0.25,
-      "hit@3": 0.727,
-      "precision@3": 0.348,
-      "recall@3": 0.394,
-      "mrr": 0.576,
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
       "answered_in_scope": 1.0,
-      "wrongly_answered_out_of_scope": 0.375
+      "wrongly_answered_out_of_scope": 1.0
     },
     {
       "threshold": 0.3,
-      "hit@3": 0.727,
-      "precision@3": 0.348,
-      "recall@3": 0.394,
-      "mrr": 0.576,
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 1.0
+    },
+    {
+      "threshold": 0.35,
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.875
+    },
+    {
+      "threshold": 0.4,
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
       "answered_in_scope": 1.0,
       "wrongly_answered_out_of_scope": 0.375
     },
     {
-      "threshold": 0.35,
-      "hit@3": 0.727,
-      "precision@3": 0.348,
-      "recall@3": 0.394,
-      "mrr": 0.576,
-      "answered_in_scope": 1.0,
-      "wrongly_answered_out_of_scope": 0.25
-    },
-    {
-      "threshold": 0.4,
-      "hit@3": 0.727,
-      "precision@3": 0.348,
-      "recall@3": 0.394,
-      "mrr": 0.576,
-      "answered_in_scope": 1.0,
-      "wrongly_answered_out_of_scope": 0.25
-    },
-    {
       "threshold": 0.45,
-      "hit@3": 0.682,
-      "precision@3": 0.303,
-      "recall@3": 0.348,
-      "mrr": 0.53,
-      "answered_in_scope": 0.955,
-      "wrongly_answered_out_of_scope": 0.25
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.375
     },
     {
       "threshold": 0.5,
-      "hit@3": 0.682,
-      "precision@3": 0.303,
-      "recall@3": 0.348,
-      "mrr": 0.53,
-      "answered_in_scope": 0.955,
-      "wrongly_answered_out_of_scope": 0.0
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.25
     },
     {
       "threshold": 0.55,
-      "hit@3": 0.682,
-      "precision@3": 0.303,
-      "recall@3": 0.348,
-      "mrr": 0.53,
-      "answered_in_scope": 0.864,
+      "hit@3": 0.929,
+      "precision@3": 0.536,
+      "recall@3": 0.607,
+      "mrr": 0.786,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.0
+    },
+    {
+      "threshold": 0.6,
+      "hit@3": 0.893,
+      "precision@3": 0.524,
+      "recall@3": 0.595,
+      "mrr": 0.774,
+      "answered_in_scope": 1.0,
+      "wrongly_answered_out_of_scope": 0.0
+    },
+    {
+      "threshold": 0.65,
+      "hit@3": 0.75,
+      "precision@3": 0.548,
+      "recall@3": 0.488,
+      "mrr": 0.673,
+      "answered_in_scope": 0.786,
       "wrongly_answered_out_of_scope": 0.0
     }
   ],
   "best_score_out_of_scope": {
-    "Thủ đô của nước Pháp là thành phố nào?": 0.097,
-    "Hướng dẫn nấu phở bò ngon tại nhà": 0.304,
-    "Giá vàng hôm nay là bao nhiêu?": 0.159,
-    "Cách cài đặt Python trên Windows": 0.091,
-    "Kết quả trận bóng đá tối qua thế nào?": 0.157,
-    "Làm sao để học tiếng Anh nhanh?": 0.163,
-    "Triệu chứng của bệnh cúm mùa là gì?": 0.472,
-    "Cách điều trị ung thư phổi giai đoạn đầu": 0.463
+    "Thủ đô của nước Pháp là thành phố nào?": 0.355,
+    "Hướng dẫn nấu phở bò ngon tại nhà": 0.393,
+    "Giá vàng hôm nay là bao nhiêu?": 0.396,
+    "Cách cài đặt Python trên Windows": 0.315,
+    "Kết quả trận bóng đá tối qua thế nào?": 0.378,
+    "Làm sao để học tiếng Anh nhanh?": 0.451,
+    "Triệu chứng của bệnh cúm mùa là gì?": 0.522,
+    "Cách điều trị ung thư phổi giai đoạn đầu": 0.509
   },
   "best_score_in_scope": {
-    "q01": 0.786,
-    "q02": 0.816,
-    "q03": 0.791,
-    "q04": 0.825,
-    "q05": 0.847,
-    "q06": 0.445,
-    "q07": 0.843,
-    "q08": 0.706,
-    "q09": 0.675,
-    "q10": 0.532,
-    "q11": 0.757,
-    "q12": 0.615,
-    "q13": 0.749,
-    "q14": 0.799,
-    "q15": 0.819,
-    "q16": 0.813,
-    "q17": 0.743,
-    "q18": 0.676,
-    "q19": 0.533,
-    "q20": 0.724,
-    "q21": 0.703,
-    "q22": 0.645
+    "q01": 0.751,
+    "q02": 0.771,
+    "q03": 0.768,
+    "q04": 0.737,
+    "q05": 0.749,
+    "q06": 0.71,
+    "q07": 0.763,
+    "q08": 0.645,
+    "q09": 0.714,
+    "q10": 0.668,
+    "q11": 0.721,
+    "q12": 0.613,
+    "q13": 0.793,
+    "q14": 0.659,
+    "q15": 0.649,
+    "q16": 0.701,
+    "q17": 0.641,
+    "q18": 0.698,
+    "q19": 0.645,
+    "q20": 0.631,
+    "q21": 0.751,
+    "q22": 0.755,
+    "q23": 0.661,
+    "q24": 0.666,
+    "q25": 0.686,
+    "q26": 0.69,
+    "q27": 0.699,
+    "q28": 0.691
   },
   "dosing_questions": 3,
   "dosing_passages_returned": [],

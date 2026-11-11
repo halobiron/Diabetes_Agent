@@ -60,6 +60,11 @@ resource "aws_iam_role_policy_attachment" "apprunner_ecr_access" {
 resource "aws_apprunner_service" "api" {
   service_name = "${var.project_name}-api"
 
+  instance_configuration {
+    cpu    = var.api_cpu
+    memory = var.api_memory
+  }
+
   source_configuration {
     auto_deployments_enabled = var.auto_deployments_enabled
 

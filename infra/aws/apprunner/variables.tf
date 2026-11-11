@@ -60,6 +60,18 @@ variable "openai_api_key" {
   default     = ""
 }
 
+variable "api_cpu" {
+  description = "API instance vCPU. The bge-m3 embedding model runs on CPU here (no GPU on App Runner)."
+  type        = string
+  default     = "2 vCPU"
+}
+
+variable "api_memory" {
+  description = "API instance memory. bge-m3 needs ~3.4 GB peak, so 2 GB is not enough."
+  type        = string
+  default     = "4 GB"
+}
+
 variable "force_delete_ecr" {
   description = "Allow Terraform to delete the ECR repository even if it contains images."
   type        = bool

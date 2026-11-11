@@ -32,7 +32,7 @@ def build_agent():
     }
     memory = MemoryAgent(CHROMA_PATH, scales=scales, max_distance=settings.similarity_max_distance)
     feature_explainer = FeatureExplainer(model)
-    retriever = RetrievalAgent.from_settings(settings, CHROMA_PATH)
+    retriever = RetrievalAgent.from_settings(settings)
     safety_guard = SafetyGuard(max_defaulted_penalty=settings.data_quality_max_penalty)
 
     support_policy = None

@@ -77,7 +77,7 @@ FastAPI  ──►  BRFSS risk model (local artifact)
 Orchestrator
    ├── MLP feature explainability (sensitivity; SHAP for linear models)
    ├── Safety guardrails + escalation
-   ├── KB/RAG (required Neo4j + semantic embeddings + ChromaDB)
+   ├── KB/RAG (required Neo4j + bge-m3 embeddings, in-memory vector index)
    ├── ChromaDB memory (similar cases)
    ├── Explanation (OpenAI optional → rule-based fallback)
    ├── Recommendation (OpenAI optional → rule-based fallback)
