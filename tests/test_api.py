@@ -41,41 +41,28 @@ def test_health_endpoint(client):
     assert response.json()["status"] == "ok"
 
 
-def test_followup_answer_updates_guidance_without_changing_mlp_probability(client):
-    profile = {"age": 45, "bmi": 27, "bp": 120, "glucose": None}
+def test_followup_answer_feeds_the_model_and_is_not_asked_again(client):
+    profile = {"age": 60, "bmi": 33, "bp": 150}
     before = client.post("/v1/predict", json=profile).json()
-    assert before["followup"]["kind"] == "glucose"
-    assert before["measurement_scales"][2]["value"] is None
+    question = before["followup"]
+    assert question["kind"] == "risk_factor" and question["source"] == "model_sensitivity"
+    assert [scale["key"] for scale in before["measurement_scales"]] == ["bmi", "bp"]
 
-    after = client.post(
-        "/v1/predict", json={**profile, "glucose": 126, "glucose_context": "fasting"}
-    ).json()
-    assert after["patient"]["glucose_context"] == "fasting"
-    assert after["probability"] == before["probability"]
-    assert after["measurement_scales"][2]["status"] == "Từ 126: cần xác nhận"
-    assert after["followup"] is None  # no unknown input could move this low estimate by 2 points
-    # Glucose changes clinical guidance, but is not a deduction in the input-quality score.
-    assert after["safety"]["confidence_score"] == before["safety"]["confidence_score"]
-    assert after["safety"]["confidence_reasons"] == before["safety"]["confidence_reasons"]
+    answered = client.post("/v1/predict", json={**profile, question["field"]: 1}).json()
+    assert answered["probability"] != before["probability"]  # the answer is a model input
+    assert answered["followup"] is None or answered["followup"]["field"] != question["field"]
 
 
-def test_unavailable_answer_suppresses_question_and_policy_reask(client):
-    response = client.post(
-        "/v1/predict", json={"age": 45, "bmi": 27, "bp": 120, "glucose_unavailable": True}
-    )
-    assert response.status_code == 200
-    body = response.json()
-    assert body["followup"] is None
-    assert body["patient"]["glucose_unavailable"] is True
-    assert all(step["action"] != "request_glucose" for step in body["policy"]["steps"])
+def test_fields_outside_the_request_schema_do_not_change_the_prediction(client):
+    profile = {"age": 45, "bmi": 27, "bp": 120}
+    plain = client.post("/v1/predict", json=profile).json()
+    with_glucose = client.post("/v1/predict", json={**profile, "glucose": 300}).json()
+    assert with_glucose["probability"] == plain["probability"]
+    assert with_glucose["safety"]["escalation"] == plain["safety"]["escalation"]
 
 
-def test_glucose_context_validation_and_urgent_question_suppression(client):
-    base = {"age": 45, "bmi": 27, "bp": 190}
-    assert (
-        client.post("/v1/predict", json={**base, "glucose_context": "invalid"}).status_code == 422
-    )
-    body = client.post("/v1/predict", json=base).json()
+def test_urgent_escalation_suppresses_the_followup_question(client):
+    body = client.post("/v1/predict", json={"age": 45, "bmi": 27, "bp": 190}).json()
     assert body["followup"] is None
     assert body["safety"]["escalation"] == "urgent_clinician_review"
 
@@ -94,7 +81,6 @@ def test_predict_summary_contains_safety(client):
         "height_cm": 168,
         "weight_kg": 92,
         "bp": 172,
-        "glucose": 245,
     }
     response = client.post("/predict/summary", json=payload)
     assert response.status_code == 200
@@ -115,7 +101,6 @@ def test_predict_summary_v1_contains_request_id(client):
         "height_cm": 172,
         "weight_kg": 79,
         "bp": 130,
-        "glucose": 110,
     }
     response = client.post("/v1/predict/summary", json=payload)
     assert response.status_code == 200
@@ -177,7 +162,6 @@ def test_what_if_and_evidence_trail_are_returned_with_citations(client):
             "height_cm": 170,
             "weight_kg": 95,
             "bp": 145,
-            "glucose": 90,
             "smoker": True,
         },
     ).json()
@@ -188,7 +172,7 @@ def test_what_if_and_evidence_trail_are_returned_with_citations(client):
 
 
 def test_declined_question_is_not_asked_again_and_unknown_fields_are_rejected(client):
-    profile = {"age": 55, "bmi": 32, "bp": 145, "glucose": 90, "glucose_context": "fasting"}
+    profile = {"age": 55, "bmi": 32, "bp": 145}
     first = client.post("/v1/predict", json=profile).json()["followup"]
     assert first["kind"] == "risk_factor"
 
@@ -202,7 +186,7 @@ def test_declined_question_is_not_asked_again_and_unknown_fields_are_rejected(cl
 def test_grouped_followup_accepts_multiple_answers_and_skips_remaining_in_one_request(client):
     from tools.what_if import ASKABLE_FIELDS
 
-    profile = {"age": 45, "bmi": 28.5, "bp": 130, "glucose_unavailable": True}
+    profile = {"age": 45, "bmi": 28.5, "bp": 130}
     before = client.post("/v1/predict", json=profile).json()
     skipped = [field for field in ASKABLE_FIELDS if field not in {"high_chol", "smoker"}]
     response = client.post(

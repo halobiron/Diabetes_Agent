@@ -1,13 +1,18 @@
-"""Pipeline nạp tri thức: web/PDF -> đoạn bằng chứng -> Neo4j, không qua tệp JSON trung gian.
+"""Làm mới nguồn và đoạn bằng chứng của KB trong Neo4j từ web/PDF.
 
-Đọc data/corpus/sources.json (danh sách nguồn) và data/corpus/graph.json (thực thể/quan hệ
-viết tay, trỏ tới evidence id), tải từng nguồn (cache HTML/PDF ở data/corpus/.cache), làm sạch,
-chia đoạn, ghép thành KB trong bộ nhớ, kiểm tra nhất quán rồi MERGE thẳng vào Neo4j.
+Neo4j là nguồn sự thật của tri thức; artifacts/kb_diabet.cypher là bản seed trong Git.
+Script đọc data/corpus/sources.json, tải từng nguồn (cache HTML/PDF ở data/corpus/.cache),
+làm sạch và chia đoạn. Mỗi đoạn có ID ổn định theo nội dung: ev-<nguồn>-<8 ký tự sha256>.
+Thực thể và quan hệ tuyển chọn được đọc lại từ Neo4j và giữ nguyên. Quan hệ trỏ tới đoạn
+không còn tồn tại được báo cáo. Nếu quan hệ nào mất hết bằng chứng thì script dừng, không nạp.
 
 Dùng:
   python scripts/collect_corpus.py                       # tải + xử lý + nạp Neo4j
-  python scripts/collect_corpus.py --dry-run             # chỉ xử lý và kiểm tra
+  python scripts/collect_corpus.py --dry-run             # xử lý và kiểm tra với KB trong Neo4j
   python scripts/collect_corpus.py --only who-diabetes   # thử một nguồn, không nạp
+  python scripts/collect_corpus.py --drop-unsupported    # bỏ quan hệ mất hết bằng chứng rồi nạp
+
+Sau khi nạp, chạy scripts/export_kb_cypher.py để cập nhật artifacts/kb_diabet.cypher.
 """
 
 import argparse
@@ -23,7 +28,15 @@ from bs4 import BeautifulSoup
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from core.config import get_settings  # noqa: E402
-from tools.neo4j_kb import KnowledgeBaseError, KnowledgeGraph, create_driver, validate_kb  # noqa: E402
+from tools.neo4j_kb import (  # noqa: E402
+    KnowledgeBaseError,
+    KnowledgeGraph,
+    create_driver,
+    evidence_id,
+    rebase_relations,
+    relation_name,
+    validate_kb,
+)
 
 ROOT = Path(__file__).resolve().parent.parent
 CORPUS_DIR = ROOT / "data" / "corpus"
@@ -250,23 +263,35 @@ def process(source):
         blocks = pdf_blocks(fetch(source["url"], cache_name, binary=True))
     else:
         blocks = web_blocks(fetch(source["url"], cache_name), source.get("selector"))
-    passages = to_passages(blocks)
-    return [
-        {
-            "id": f"ev-{source['id']}-{index:03d}",
-            "source": source["id"],
-            "section": section or source["title"],
-            "text": text,
-            "lang": source["lang"],
-        }
-        for index, (section, text) in enumerate(passages, start=1)
-    ]
+    evidence, seen = [], set()
+    for section, text in to_passages(blocks):
+        item_id = evidence_id(source["id"], text)
+        if item_id in seen:  # đoạn trùng nội dung trong cùng nguồn
+            continue
+        seen.add(item_id)
+        evidence.append(
+            {
+                "id": item_id,
+                "source": source["id"],
+                "section": section or source["title"],
+                "text": text,
+                "lang": source["lang"],
+            }
+        )
+    return evidence
 
 
 def main():
-    parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawTextHelpFormatter)
+    parser = argparse.ArgumentParser(
+        description=__doc__, formatter_class=argparse.RawTextHelpFormatter
+    )
     parser.add_argument("--only", nargs="*", help="chỉ xử lý các source id này (không nạp Neo4j)")
     parser.add_argument("--dry-run", action="store_true", help="xử lý và kiểm tra, không nạp Neo4j")
+    parser.add_argument(
+        "--drop-unsupported",
+        action="store_true",
+        help="bỏ các quan hệ không còn đoạn bằng chứng nào thay vì dừng",
+    )
     args = parser.parse_args()
 
     manifest = json.loads((CORPUS_DIR / "sources.json").read_text(encoding="utf-8"))
@@ -287,32 +312,65 @@ def main():
 
     # Nạp thiếu nguồn rồi prune sẽ xóa dữ liệu cũ của nguồn lỗi, nên dừng sớm.
     if args.only or failed or not passages:
-        print("Không nạp Neo4j (chạy một phần, có nguồn lỗi hoặc không có dữ liệu).", file=sys.stderr)
+        print(
+            "Không nạp Neo4j (chạy một phần, có nguồn lỗi hoặc không có dữ liệu).", file=sys.stderr
+        )
         return 1 if failed or not passages else 0
-
-    graph = json.loads((CORPUS_DIR / "graph.json").read_text(encoding="utf-8"))
-    kb = {
-        "version": "corpus-" + datetime.date.today().isoformat(),
-        "sources": [{k: s[k] for k in ("id", "title", "publisher", "year", "url") if k in s} for s in sources],
-        "entities": graph["entities"],
-        "evidence": [{k: p[k] for k in ("id", "source", "section", "text")} for p in passages],
-        "relations": graph["relations"],
-    }
-    try:
-        validate_kb(kb)  # evidence id trong graph.json phải còn tồn tại sau khi chia đoạn
-    except KnowledgeBaseError as exc:
-        print(f"[LỖI] KB không hợp lệ: {exc}", file=sys.stderr)
-        return 1
-    if args.dry_run:
-        print(f"KB hợp lệ: {len(passages)} đoạn. --dry-run: không nạp Neo4j.")
-        return 0
 
     settings = get_settings()
     driver = create_driver(settings)
     try:
         graph_db = KnowledgeGraph(driver, settings.neo4j_database)
+        try:
+            current = graph_db.export_kb()
+        except KnowledgeBaseError as exc:
+            print(f"[LỖI] {exc}", file=sys.stderr)
+            return 1
+
+        new_ids = {p["id"] for p in passages}
+        old_ids = {e["id"] for e in current["evidence"]}
+        print(
+            f"Đoạn bằng chứng: {len(new_ids)} ({len(new_ids - old_ids)} mới, {len(old_ids - new_ids)} bị bỏ)"
+        )
+
+        relations, dropped, unsupported = rebase_relations(current["relations"], new_ids)
+        for name, missing in dropped.items():
+            print(f"[CẢNH BÁO] {name}: mất bằng chứng {', '.join(missing)}", file=sys.stderr)
+        if unsupported:
+            names = ", ".join(relation_name(r) for r in unsupported)
+            if not args.drop_unsupported:
+                print(
+                    f"[LỖI] Quan hệ không còn bằng chứng: {names}. Gắn lại evidence_ids trong Neo4j "
+                    "hoặc chạy lại với --drop-unsupported.",
+                    file=sys.stderr,
+                )
+                return 1
+            print(f"[CẢNH BÁO] Bỏ quan hệ không còn bằng chứng: {names}", file=sys.stderr)
+
+        kb = {
+            "version": "corpus-" + datetime.date.today().isoformat(),
+            "sources": [
+                {k: s[k] for k in ("id", "title", "publisher", "year", "url") if k in s}
+                for s in sources
+            ],
+            "entities": current["entities"],
+            "evidence": [{k: p[k] for k in ("id", "source", "section", "text")} for p in passages],
+            "relations": relations,
+        }
+        try:
+            validate_kb(kb)
+        except KnowledgeBaseError as exc:
+            print(f"[LỖI] KB không hợp lệ: {exc}", file=sys.stderr)
+            return 1
+        if args.dry_run:
+            print(
+                f"KB hợp lệ: {len(passages)} đoạn, {len(relations)} quan hệ. --dry-run: không nạp Neo4j."
+            )
+            return 0
+
         graph_db.load(kb)
         print("Đã nạp vào Neo4j:", graph_db.stats())
+        print("Chạy scripts/export_kb_cypher.py để cập nhật artifacts/kb_diabet.cypher.")
     finally:
         driver.close()
     return 0

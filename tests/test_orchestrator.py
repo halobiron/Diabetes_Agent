@@ -1,7 +1,7 @@
 import pytest
 
 from agents.explainer import ExplanationAgent
-from agents.orchestrator import Orchestrator
+from agents.orchestrator import AGENT_VERSION, Orchestrator
 from agents.recommender import RecommendationAgent
 from tools.safety import SafetyGuard
 
@@ -13,7 +13,7 @@ FEATURES = {
         {"feature": "PhysActivity", "impact": -0.1, "direction": "lowers risk"},
     ],
 }
-STRONG = [{"relevance": 0.6, "text": "Test glucose.", "source_title": "ADA"}] * 2
+STRONG = [{"relevance": 0.6, "text": "Test evidence.", "source_title": "ADA"}] * 2
 
 
 class FakeModel:
@@ -23,7 +23,7 @@ class FakeModel:
     artifact_metadata = {"selected_model": "fake"}
 
     def assess(self, data):
-        return 0.6, {"age": 50, "bmi": 31.0, "bp": data["bp"], "glucose": 90.0}
+        return 0.6, {"age": 50, "bmi": 31.0, "bp": data["bp"]}
 
 
 class FakeMemory:
@@ -139,7 +139,7 @@ def test_agents_receive_each_others_results():
 
 
 def test_fallback_texts_use_drivers_safety_and_evidence_status():
-    patient = {"age": 50, "bmi": 31.0, "bp": 190, "glucose": 90.0}
+    patient = {"age": 50, "bmi": 31.0, "bp": 190}
     safety = SafetyGuard().assess(patient, 0.6, "High", evidence_status="none")
 
     explanation = ExplanationAgent().explain(
@@ -300,7 +300,7 @@ def test_trace_carries_request_id_and_component_versions():
     assert all(step["request_id"] == "req-123" for step in trace["steps"])
     steps = {step["component"]: step for step in trace["steps"]}
     assert steps["risk_model"]["version"] == "t"
-    assert steps["safety_guard"]["version"] == "agents-v1"
+    assert steps["safety_guard"]["version"] == AGENT_VERSION
     assert trace["versions"]["risk_model"] == "t"
 
 

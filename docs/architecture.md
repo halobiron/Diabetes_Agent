@@ -85,10 +85,11 @@ Dự án lấy cảm hứng từ kiến trúc Main Agent, Work-Agents và State 
 
 ```mermaid
 flowchart LR
+    SEED["artifacts/kb_diabet.cypher: bản seed trong Git"] -->|"cypher-shell"| NEO[("Neo4j: 20 thực thể, 35 quan hệ tuyển chọn")]
     SRC["data/corpus/sources.json: 12 nguồn (Bộ Y tế, WHO, Vinmec)"] --> COL["scripts/collect_corpus.py: tải, làm sạch, chia đoạn"]
-    GRAPH["data/corpus/graph.json: 20 thực thể, 35 quan hệ (viết tay)"] --> MERGE
-    COL -->|"146 đoạn, trong bộ nhớ"| MERGE["Hợp nhất và kiểm tra hợp lệ"]
-    MERGE -->|"MERGE trực tiếp"| NEO[("Neo4j")]
+    NEO -->|"thực thể và quan hệ hiện có"| COL
+    COL -->|"146 đoạn, ID theo nội dung"| NEO
+    NEO -->|"export_kb_cypher.py"| SEED
     NEO --> EMB["Mô hình nhúng đa ngôn ngữ"] --> CHR[("ChromaDB")]
 ```
 
@@ -102,7 +103,7 @@ flowchart LR
 | **Agent điều phối** | `agents/orchestrator.py`. Gọi lần lượt hai agent, truyền kết quả giữa chúng, chạy `SafetyGuard`, cho các thành phần bất đồng trao đổi (`agents/dialogue.py`), chạy `QPolicy` tối đa 3 bước, và ghi lỗi thành phần vào `degraded`. Mỗi bước trong `trace.steps` có trường `agent` cho biết agent nào thực hiện. |
 | RiskModel | `models/risk_model.py` nạp `artifacts/risk_model.joblib`: MLP đã hiệu chuẩn, trả xác suất, nhãn theo ngưỡng và mức rủi ro. Glucose không thuộc đầu vào mô hình BRFSS. |
 | RetrievalAgent | `agents/retriever.py` dùng `paraphrase-multilingual-MiniLM-L12-v2`, ChromaDB và liên kết đồ thị để xếp hạng bằng chứng. Hàm `retrieve` phục vụ luồng chẩn đoán; hàm `ask` phục vụ chat và trả cả vết truy xuất. Chi tiết: [giải thích RAG](rag_giai_thich.md). |
-| KB | `tools/neo4j_kb.py`: `KnowledgeGraph` truy vấn Neo4j cho ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo. Pipeline `collect_corpus.py` nạp trực tiếp từ web/PDF và đồ thị tuyển chọn. KB gồm 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng, 12 nguồn tiếng Việt. `artifacts/kb_diabet.cypher` là script dựng/nạp lại KB; công cụ xuất Cypher cập nhật script này từ dữ liệu trong Neo4j. |
+| KB | `tools/neo4j_kb.py`: `KnowledgeGraph` truy vấn Neo4j cho ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo. Neo4j là nguồn sự thật; `collect_corpus.py` làm mới nguồn và đoạn bằng chứng từ web/PDF, giữ thực thể và quan hệ tuyển chọn trong Neo4j. KB gồm 20 thực thể, 35 quan hệ, 146 đoạn bằng chứng, 12 nguồn tiếng Việt. `artifacts/kb_diabet.cypher` là bản seed trong Git để dựng/nạp lại KB; `export_kb_cypher.py` cập nhật nó từ Neo4j. |
 | Chat RAG | `POST /v1/chat` trong `api/app.py` và panel "Hỏi đáp" trong `web/components/risk-console/chat.tsx`. Trả câu trả lời có trích dẫn, và từ chối khi không đoạn nào đạt ngưỡng liên quan 0,4 (`CHAT_MIN_RELEVANCE`; luồng đánh giá bệnh nhân dùng 0,3, xem [đánh giá truy xuất](danh_gia_truy_xuat_va_do_tre.md)). |
 | SafetyGuard và luật | `tools/safety.py`, `tools/rules.py`: cảnh báo, mức chuyển tuyến, xử lý xung đột và điểm chất lượng dữ liệu. Luật có quyền ưu tiên so với dự đoán và policy RL. |
 | QPolicy và StateTracker | `rl/policy.py`, `rl/environment.py`, `rl/state_tracker.py`: Q-learning lưu tại `artifacts/support_policy.json`; chọn hỏi glucose, truy xuất thêm, khuyến nghị hoặc chuyển bác sĩ. Reward gồm điểm phân loại mức xử trí và phần thưởng giảm entropy khi thu thập thông tin; `StateTracker` gom trạng thái cho policy. Huấn luyện bằng phản hồi mô phỏng. |
@@ -126,7 +127,7 @@ Lỗi thành phần tùy chọn có nội dung dự phòng và được công b�
 
 ## Cấu hình và đánh giá
 
-- Bắt buộc cấu hình `NEO4J_PASSWORD` và kết nối được Neo4j theo `NEO4J_URI`. Script `scripts/collect_corpus.py` nạp dữ liệu trước khi chạy ứng dụng, đánh giá hoặc kiểm thử tích hợp. Biến môi trường phải được nạp từ `.env` trước khi chạy script; kiểm thử và notebook báo cáo tự nạp `.env` của dự án.
+- Bắt buộc cấu hình `NEO4J_PASSWORD` và kết nối được Neo4j theo `NEO4J_URI`. Nạp `artifacts/kb_diabet.cypher` vào Neo4j trước khi chạy ứng dụng, đánh giá hoặc kiểm thử tích hợp. Biến môi trường phải được nạp từ `.env` trước khi chạy script; kiểm thử và notebook báo cáo tự nạp `.env` của dự án.
 - Bắt buộc có mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH`. Thiếu artifact thì khởi tạo báo lỗi. Dữ liệu BRFSS nằm ở `data/train/`, câu hỏi đánh giá RAG ở `data/eval/`; tri thức đã xử lý nằm trong Neo4j.
 - Không có `OPENAI_API_KEY`: vẫn chạy được dự đoán, KB/RAG, chat, luật, policy, memory và hai agent tạo văn bản bằng nội dung dự phòng.
 - MLP hiện tại: test ROC AUC 0,82581, F1 0,46543; xem [model card](../artifacts/model_card.md).

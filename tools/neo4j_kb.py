@@ -1,3 +1,5 @@
+import hashlib
+
 ENTITY_LABELS = {"Condition", "RiskFactor", "Test", "Intervention"}
 RELATION_TYPES = {
     "INCREASES_RISK_OF",
@@ -50,6 +52,40 @@ def validate_kb(kb):
     if errors:
         raise KnowledgeBaseError("; ".join(errors))
     return kb
+
+
+def evidence_id(source_id, text):
+    """Stable evidence id from the passage content, so ids survive re-chunking of other passages.
+
+    Whitespace is normalised so the id matches whether the text came from the collector or
+    back from Neo4j / the Cypher script (which collapse newlines).
+    """
+    digest = hashlib.sha256(" ".join(text.split()).encode("utf-8")).hexdigest()[:8]
+    return f"ev-{source_id}-{digest}"
+
+
+def relation_name(rel):
+    return f"{rel['from']}-{rel['type']}->{rel['to']}"
+
+
+def rebase_relations(relations, evidence_ids):
+    """Point curated relations at a freshly collected evidence set.
+
+    Returns (kept, dropped, unsupported): relations with only the evidence ids that still
+    exist, {relation name: [missing ids]}, and the relations left with no evidence at all
+    (these are not in `kept`).
+    """
+    kept, dropped, unsupported = [], {}, []
+    for rel in relations:
+        present = [i for i in rel["evidence"] if i in evidence_ids]
+        missing = [i for i in rel["evidence"] if i not in evidence_ids]
+        if missing:
+            dropped[relation_name(rel)] = missing
+        if present:
+            kept.append({**rel, "evidence": present})
+        else:
+            unsupported.append(rel)
+    return kept, dropped, unsupported
 
 
 def _cy(value):

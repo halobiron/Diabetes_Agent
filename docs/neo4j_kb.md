@@ -1,8 +1,10 @@
 # Knowledge graph Neo4j về tiểu đường
 
-Pipeline `python scripts/collect_corpus.py` thu thập web/PDF, chia đoạn, ghép đồ thị tuyển chọn và nạp trực tiếp vào Neo4j. Có thể dựng KB từ script có sẵn `artifacts/kb_diabet.cypher` mà không cần thu thập lại tài liệu. Ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo truy vấn dữ liệu trong Neo4j.
+Neo4j là nguồn sự thật của tri thức; `artifacts/kb_diabet.cypher` là bản seed trong Git (CI nạp file này). Ứng dụng, đánh giá RAG, kiểm thử tích hợp và báo cáo truy vấn dữ liệu trong Neo4j.
 
-KB được xây từ: danh sách nguồn [data/corpus/sources.json](../data/corpus/sources.json) (web + PDF tiếng Việt: Bộ Y tế, Vinmec, WHO), các đoạn bằng chứng tự động trích và chia đoạn, và đồ thị thực thể/quan hệ viết tay trong [data/corpus/graph.json](../data/corpus/graph.json). Sửa nguồn hoặc đồ thị rồi chạy lại script; script kiểm tra mọi quan hệ đều trỏ tới đoạn bằng chứng còn tồn tại.
+KB gồm: nguồn trong [data/corpus/sources.json](../data/corpus/sources.json) (web + PDF tiếng Việt: Bộ Y tế, Vinmec, WHO), các đoạn bằng chứng tự động trích và chia đoạn, và thực thể/quan hệ tuyển chọn thủ công lưu trong Neo4j. Mỗi quan hệ mang `evidence_ids` trỏ tới đoạn bằng chứng.
+
+ID đoạn bằng chứng ổn định theo nội dung: `ev-<nguồn>-<8 ký tự sha256 của văn bản đã chuẩn hóa khoảng trắng>` (`evidence_id` trong [tools/neo4j_kb.py](../tools/neo4j_kb.py)). Trang nguồn thêm hoặc bớt đoạn khác không làm đổi ID của đoạn còn nguyên.
 
 ## Lược đồ
 
@@ -34,8 +36,6 @@ Quy ước của dự án: KB và phần giải thích bằng chứng dùng ngư
 ```powershell
 Copy-Item .env.example .env          # đặt NEO4J_PASSWORD
 docker compose up -d neo4j           # Browser: http://localhost:7474 (NEO4J_PASSWORD phải từ 8 ký tự trở lên, nếu không container thoát ngay)
-.\.venv\Scripts\python.exe scripts/collect_corpus.py --dry-run # trích nội dung và kiểm tra
-.\.venv\Scripts\python.exe scripts/collect_corpus.py           # nạp / cập nhật trực tiếp
 ```
 
 Python không tự nạp `.env`; cần nạp các biến môi trường trước khi chạy script.
@@ -50,6 +50,26 @@ Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T n
 
 Script gồm ràng buộc, nguồn, thực thể, bằng chứng và quan hệ; dùng `MERGE` để nạp lại không nhân đôi dữ liệu. Script có bước dọn phiên bản KB cũ, nên chỉ nạp vào database dành cho KB của dự án.
 
+### Sửa thực thể và quan hệ
+
+Sửa trực tiếp trong Neo4j Browser, ví dụ gắn thêm bằng chứng cho một quan hệ:
+
+```cypher
+MATCH (:Entity {id: 'high_bmi'})-[r:INCREASES_RISK_OF]->(:Entity {id: 'type2_diabetes'})
+SET r.evidence_ids = r.evidence_ids + 'ev-who-diabetes-6dcdf201'
+```
+
+Thực thể hoặc quan hệ mới cần đủ thuộc tính như trong `kb_diabet.cypher` (`id`, nhãn, `name`, `evidence_ids`…). Sau khi sửa, chạy `export_kb_cypher.py` để cập nhật bản seed; `export_kb` kiểm tra mọi quan hệ đều trỏ tới đoạn bằng chứng còn tồn tại.
+
+### Làm mới bằng chứng từ web/PDF
+
+```powershell
+.\.venv\Scripts\python.exe scripts/collect_corpus.py --dry-run # trích, so với KB trong Neo4j, không nạp
+.\.venv\Scripts\python.exe scripts/collect_corpus.py           # nạp nguồn và bằng chứng mới
+```
+
+Script đọc thực thể và quan hệ từ Neo4j và giữ nguyên, chỉ thay nguồn và đoạn bằng chứng. Nó in số đoạn mới và số đoạn bị bỏ, cảnh báo quan hệ mất một phần bằng chứng, và dừng nếu quan hệ nào mất hết bằng chứng (gắn lại `evidence_ids` rồi chạy lại, hoặc dùng `--drop-unsupported` để bỏ quan hệ đó). Script chỉ nạp khi thu thập đủ mọi nguồn.
+
 ### Cập nhật script Cypher từ Neo4j
 
 ```powershell
@@ -58,7 +78,7 @@ Script gồm ràng buộc, nguồn, thực thể, bằng chứng và quan hệ; 
 
 Công cụ đọc Neo4j và cập nhật `artifacts/kb_diabet.cypher` để dùng khi triển khai hoặc khôi phục KB.
 
-Cập nhật KB: sửa `data/corpus/sources.json` hoặc `data/corpus/graph.json`, rồi chạy `collect_corpus.py`. Script chỉ nạp khi thu thập đủ nguồn và dữ liệu hợp lệ.
+Sau khi sửa tri thức hoặc thu thập lại, chạy công cụ này rồi commit `artifacts/kb_diabet.cypher`.
 
 ## Truy vấn từ code
 

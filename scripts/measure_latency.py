@@ -22,10 +22,9 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 PROFILES = {
-    "thieu_glucose": {"age": 45, "bmi": 27, "bp": 120, "glucose": None},
-    "nguy_co_thap": {"age": 30, "bmi": 22, "bp": 110, "glucose": 85},
-    "nguy_co_cao": {"age": 55, "bmi": 33, "bp": 150, "glucose": 110},
-    "glucose_cao": {"age": 65, "bmi": 36, "bp": 160, "glucose": 240},
+    "nguy_co_thap": {"age": 30, "bmi": 22, "bp": 110},
+    "nguy_co_cao": {"age": 55, "bmi": 33, "bp": 150},
+    "huyet_ap_cao": {"age": 65, "bmi": 36, "bp": 160},
 }
 QUESTIONS = [
     "HbA1c bao nhiêu thì được chẩn đoán là đái tháo đường?",

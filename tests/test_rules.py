@@ -4,8 +4,8 @@ from tools.rules import ALL_RULES, ESCALATION_LEVELS, Rule, RuleContext, RuleEng
 from tools.safety import SafetyGuard
 
 
-def patient(bp=120, glucose=90.0, measured=True, bmi=25.0):
-    return {"bp": bp, "glucose": glucose, "glucose_measured": measured, "bmi": bmi}
+def patient(bp=120, bmi=25.0):
+    return {"bp": bp, "bmi": bmi}
 
 
 def assess(p, risk="Low", prob=0.1, evidence=None):
@@ -31,21 +31,20 @@ def test_duplicate_codes_rejected():
 
 
 @pytest.mark.parametrize(
-    ("bp", "glucose", "code", "level"),
+    ("bp", "code", "level"),
     [
-        (159, 90, None, "routine_followup"),
-        (179, 90, "BP-160", "prompt_clinician_followup"),
-        (160, 90, "BP-160", "prompt_clinician_followup"),
-        (180, 90, "BP-180", "urgent_clinician_review"),
-        (120, 199, None, "routine_followup"),
-        (120, 200, "GLU-200", "prompt_clinician_followup"),
-        (120, 300, "GLU-300", "urgent_clinician_review"),
+        (159, None, "routine_followup"),
+        (160, "BP-160", "prompt_clinician_followup"),
+        (179, "BP-160", "prompt_clinician_followup"),
+        (180, "BP-180", "urgent_clinician_review"),
     ],
 )
-def test_measurement_thresholds(bp, glucose, code, level):
-    result = assess(patient(bp, glucose), risk="High", prob=0.6)
-    if code and level != "routine_followup":
+def test_measurement_thresholds(bp, code, level):
+    result = assess(patient(bp), risk="High", prob=0.6)
+    if code:
         assert code in codes(result)
+    else:
+        assert not codes(result) & {"BP-160", "BP-180"}
     assert result["escalation"] == level
 
 
@@ -55,18 +54,12 @@ def test_bp_bands_are_exclusive():
 
 
 def test_escalation_is_most_severe_and_alerts_ordered_by_priority():
-    result = assess(patient(bp=165, glucose=320), risk="High", prob=0.9)
+    result = assess(patient(bp=185), risk="High", prob=0.9)
+    assert {"BP-180", "PRED-VERYHIGH"} <= codes(result)
     assert result["escalation"] == "urgent_clinician_review"
     priorities = [rule["priority"] for rule in result["rules"]]
     assert priorities == sorted(priorities, reverse=True)
-    assert result["alerts"][0].startswith("Đường huyết rất cao")
-
-
-def test_unmeasured_glucose_ignores_imputed_value():
-    result = assess(patient(glucose=250.0, measured=False))
-    assert "GLU-200" not in codes(result)
-    assert "DQ-GLU-MISSING" not in codes(result)
-    assert result["escalation"] == "routine_followup"
+    assert result["alerts"][0].startswith("Huyết áp tăng nghiêm trọng")
 
 
 def test_very_high_prediction_escalates():
@@ -77,7 +70,7 @@ def test_very_high_prediction_escalates():
 
 
 def test_low_prediction_does_not_override_measurement():
-    result = assess(patient(glucose=250.0), risk="Low", prob=0.05)
+    result = assess(patient(bp=165), risk="Low", prob=0.05)
     assert "CF-PRED-LOW-MEASURED-HIGH" in codes(result, "conflicts")
     assert result["escalation"] == "prompt_clinician_followup"
     assert result["effective_risk"] == "High"
@@ -89,21 +82,9 @@ def test_effective_risk_unchanged_without_measurement_rule():
     assert assess(patient(), risk="Low", prob=0.1)["effective_risk"] == "Low"
 
 
-def test_high_prediction_with_normal_glucose_keeps_risk():
-    result = assess(patient(glucose=85.0), risk="High", prob=0.7)
-    assert "CF-PRED-HIGH-GLUCOSE-NORMAL" in codes(result, "conflicts")
-    assert result["effective_risk"] == "High"
-
-
-def test_low_risk_without_glucose_is_flagged_unconfirmed():
-    result = assess(patient(measured=False), risk="Low", prob=0.1)
-    assert "CF-PRED-LOW-GLUCOSE-MISSING" not in codes(result, "conflicts")
-    assert result["escalation"] == "routine_followup"
-
-
 def test_high_risk_on_low_quality_data_is_provisional():
     incomplete = {
-        **patient(bp=225, measured=False, bmi=55.0),
+        **patient(bp=225, bmi=55.0),
         "defaulted_fields": ["Smoker", "HighChol"],
         "optional_field_count": 2,
     }

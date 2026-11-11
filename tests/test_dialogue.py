@@ -45,13 +45,6 @@ def test_measurement_beats_prediction_is_a_challenge_then_accept():
     assert requested_actions(messages) == []  # a concession asks for no work
 
 
-def test_model_holds_its_ground_against_a_normal_glucose():
-    messages = conflict_exchanges({"conflicts": [conflict("CF-PRED-HIGH-GLUCOSE-NORMAL")]})
-    assert [m["performative"] for m in messages] == ["challenge", "propose"]
-    assert "A1C" in messages[1]["content"]
-    assert requested_actions(messages) == []  # advice only; the recommendation already says it
-
-
 def test_retriever_proposal_carries_an_action():
     messages = conflict_exchanges({"conflicts": [conflict("CF-ESCALATION-NO-EVIDENCE")]})
     assert [m["performative"] for m in messages] == ["challenge", "propose"]

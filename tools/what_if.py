@@ -87,7 +87,7 @@ SCENARIOS = (
     Scenario(
         "weight_loss",
         _weight_label,
-        ("ev-vinmec-chan-doan-dieu-tri-009", "ev-vinmec-tien-dtd-tien-trien-009"),
+        ("ev-vinmec-chan-doan-dieu-tri-cf7a80ca", "ev-vinmec-tien-dtd-tien-trien-799a8df9"),
         lambda patient, sim: patient["bmi"] >= 25
         and any(name in sim.model.feature_names for name in ("BMI", "bmi")),
         _lose_weight,
@@ -95,21 +95,21 @@ SCENARIOS = (
     Scenario(
         "physical_activity",
         lambda patient: "Vận động thể chất đều đặn (khoảng 150 phút mỗi tuần)",
-        ("ev-who-diabetes-009", "ev-vinmec-tien-dtd-tien-trien-009"),
+        ("ev-who-diabetes-6dcdf201", "ev-vinmec-tien-dtd-tien-trien-799a8df9"),
         _supplied_equals("PhysActivity", 0),
         _set("PhysActivity", 1),
     ),
     Scenario(
         "smoking_cessation",
         lambda patient: "Bỏ thuốc lá",
-        ("ev-vinmec-tien-dtd-an-gi-008", "ev-vinmec-tien-dtd-tien-trien-009"),
+        ("ev-vinmec-tien-dtd-an-gi-ea43d279", "ev-vinmec-tien-dtd-tien-trien-799a8df9"),
         _supplied_equals("Smoker", 1),
         _set("Smoker", 0),
     ),
     Scenario(
         "blood_pressure",
         lambda patient: "Đưa huyết áp tâm thu xuống dưới 140 mmHg (mục tiêu của Bộ Y tế)",
-        ("ev-moh-qt-2017-005",),
+        ("ev-moh-qt-2017-abf7bd04",),
         lambda patient, sim: patient.get("high_bp") == 1
         and any(name in sim.model.feature_names for name in ("HighBP", "bp")),
         _lower_bp,

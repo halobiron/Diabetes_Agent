@@ -37,33 +37,25 @@ def model():
     return risk_model
 
 
-def patient(age=50, bmi=27.0, bp=120, glucose=None, **extra):
-    return {
-        "age": age,
-        "bmi": bmi,
-        "bp": bp,
-        "glucose": 100.0 if glucose is None else glucose,  # default fill, as prepare_patient does
-        "glucose_measured": glucose is not None,
-        **extra,
-    }
+def patient(age=50, bmi=27.0, bp=120, **extra):
+    return {"age": age, "bmi": bmi, "bp": bp, **extra}
 
 
 # ---- explanation matches the model's real inputs
 
 
-def test_glucose_is_reported_as_outside_the_model(model):
-    prepared = model.prepare_patient({"age": 50, "bmi": 30, "bp": 150, "glucose": 180})
+def test_explanation_covers_only_model_inputs(model):
+    prepared = model.prepare_patient({"age": 50, "bmi": 30, "bp": 150})
     explanation = FeatureExplainer(model).explain(prepared)
 
-    assert "glucose" not in {item["feature"] for item in explanation["features"]}
-    assert explanation["inputs_not_in_model"] == ["glucose"]
+    assert explanation["inputs_not_in_model"] == []
     assert explanation["method_note"]
+    assert {item["feature"] for item in explanation["features"]} <= set(model.feature_names)
 
     text = ExplanationAgent().explain(
         prepared, 0.3, feature_explanation=explanation, evidence_status="sufficient"
     )
-    assert "không phải đầu vào của mô hình này" in text
-    assert "đường huyết cao" not in text
+    assert "không phải đầu vào của mô hình này" not in text
 
 
 def test_zero_impact_feature_is_not_called_risk_lowering(model):
@@ -94,10 +86,8 @@ def test_explanation_does_not_claim_defaulted_inputs(model):
 
 def test_defaulted_fields_lower_the_data_quality_score(model):
     guard = SafetyGuard()
-    complete = model.prepare_patient(
-        {"age": 50, "bmi": 27, "bp": 120, "glucose": 90, **FULL_BINARY}
-    )
-    minimal = model.prepare_patient({"age": 50, "bmi": 27, "bp": 120, "glucose": 90})
+    complete = model.prepare_patient({"age": 50, "bmi": 27, "bp": 120, **FULL_BINARY})
+    minimal = model.prepare_patient({"age": 50, "bmi": 27, "bp": 120})
 
     assert complete["defaulted_fields"] == []
     assert len(minimal["defaulted_fields"]) > 10
@@ -112,7 +102,7 @@ def test_defaulted_fields_lower_the_data_quality_score(model):
 
 def test_penalty_scales_with_share_of_defaulted_inputs():
     guard = SafetyGuard(max_defaulted_penalty=0.2)
-    base = patient(glucose=90)
+    base = patient()
     everything = {**base, "defaulted_fields": list("abcd"), "optional_field_count": 4}
     half = {**base, "defaulted_fields": list("ab"), "optional_field_count": 4}
 
@@ -128,7 +118,7 @@ def test_input_spreads_come_from_training_data(model):
     spreads = model.input_spreads()
     assert spreads["bmi"] == pytest.approx(float(model.training_frame["BMI"].std()))
     assert spreads["age"] == pytest.approx(float(model.training_frame["Age"].std()) * 5)
-    assert "bp" not in spreads and "glucose" not in spreads
+    assert "bp" not in spreads
 
 
 # ---- similar cases: numeric closeness, and predictions are not outcomes
@@ -136,30 +126,24 @@ def test_input_spreads_come_from_training_data(model):
 
 @pytest.fixture
 def memory(tmp_path):
-    scales = {"age": 15.0, "bmi": 6.0, "bp": 25.0, "glucose": 40.0}
+    scales = {"age": 15.0, "bmi": 6.0, "bp": 25.0}
     return MemoryAgent(str(tmp_path / "chroma"), scales=scales, max_distance=1.0)
 
 
 def test_similar_cases_rank_by_numeric_closeness(memory):
-    memory.store(patient(age=58, bmi=31.0, bp=140, glucose=110), 0.4, "Medium")
-    memory.store(patient(age=25, bmi=19.0, bp=105, glucose=85), 0.05, "Low")
-    memory.store(patient(age=59, bmi=30.5, bp=138, glucose=115), 0.45, "Medium")
+    memory.store(patient(age=58, bmi=31.0, bp=140), 0.4, "Medium")
+    memory.store(patient(age=25, bmi=19.0, bp=105), 0.05, "Low")
+    memory.store(patient(age=59, bmi=30.5, bp=138), 0.45, "Medium")
 
-    matches = memory.find_similar(patient(age=57, bmi=31.0, bp=140, glucose=112))
+    matches = memory.find_similar(patient(age=57, bmi=31.0, bp=140))
 
     assert [m["metadata"]["age"] for m in matches] == [58, 59]  # the 25-year-old is excluded
     assert matches[0]["distance"] < matches[1]["distance"]
 
 
 def test_unrelated_cases_are_not_returned(memory):
-    memory.store(patient(age=25, bmi=19.0, bp=105, glucose=85), 0.05, "Low")
-    assert memory.find_similar(patient(age=70, bmi=38.0, bp=170, glucose=200)) == []
-
-
-def test_glucose_ignored_when_either_case_unmeasured(memory):
-    memory.store(patient(age=58, bmi=31.0, bp=140), 0.4, "Medium")
-    matches = memory.find_similar(patient(age=58, bmi=31.0, bp=140, glucose=300))
-    assert matches and matches[0]["distance"] == 0.0
+    memory.store(patient(age=25, bmi=19.0, bp=105), 0.05, "Low")
+    assert memory.find_similar(patient(age=70, bmi=38.0, bp=170)) == []
 
 
 def test_stored_cases_are_labelled_as_predictions(memory):

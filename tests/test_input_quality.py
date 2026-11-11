@@ -4,7 +4,7 @@ from tools.safety import SafetyGuard
 
 
 def assess(**overrides):
-    patient = {"bp": 130, "bmi": 28.5, "glucose": 90, "glucose_measured": True}
+    patient = {"bp": 130, "bmi": 28.5}
     return SafetyGuard().assess({**patient, **overrides}, 0.1, "Low")
 
 
@@ -44,7 +44,7 @@ def test_mixed_reasons_reconcile_with_score_and_keep_safety_alerts():
 
 def test_custom_default_penalty_still_matches_explanation():
     result = SafetyGuard(max_defaulted_penalty=0.4).assess(
-        {"bp": 130, "bmi": 28.5, "glucose": 90, "glucose_measured": True,
+        {"bp": 130, "bmi": 28.5,
          "defaulted_fields": ["Smoker"], "optional_field_count": 2},
         0.1,
         "Low",

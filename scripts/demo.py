@@ -25,11 +25,11 @@ CHAT_QUESTIONS = [
 
 PATIENTS = {
     "Hồ sơ nguy cơ cao": dict(
-        age=62, bmi=34, bp=150, glucose=135, high_chol=True, smoker=True, phys_activity=False,
+        age=62, bmi=34, bp=150, high_chol=True, smoker=True, phys_activity=False,
         general_health=4, diff_walk=True, heart_disease_or_attack=True, fruits=False, veggies=False,
     ),
     "Hồ sơ nguy cơ thấp": dict(
-        age=28, bmi=21, bp=112, glucose=88, high_chol=False, smoker=False, phys_activity=True,
+        age=28, bmi=21, bp=112, high_chol=False, smoker=False, phys_activity=True,
         general_health=1, fruits=True, veggies=True,
     ),
 }

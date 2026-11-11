@@ -258,7 +258,7 @@ Bảng~\ref{tab:map} ánh xạ từng khối trên sơ đồ sang mã nguồn.
 \textbf{Khối trên sơ đồ} & \textbf{Thành phần} & \textbf{Hiện thực}\\
 \midrule
 DB $\rightarrow$ Deep learning $\rightarrow$ Dự đoán, Phân loại & \code{models/}, \code{RiskModel} & Huấn luyện bằng \code{training_pipeline.py}; MLP PyTorch, suy luận bằng NumPy; ngưỡng và mức nguy cơ lưu trong artifact (Mục~4.1)\\
-Neo4j KB & \code{tools/neo4j_kb.py}, \code{scripts/collect_corpus.py} & Thu thập web/PDF, ghép đồ thị tuyển chọn trong bộ nhớ, kiểm tra rồi nạp (\code{MERGE}) trực tiếp vào Neo4j; ứng dụng bắt buộc dùng Neo4j (Mục~4.2)\\
+Neo4j KB & \code{tools/neo4j_kb.py}, \code{scripts/collect_corpus.py} & Neo4j là nguồn sự thật, \code{artifacts/kb_diabet.cypher} là bản seed; thu thập web/PDF làm mới đoạn bằng chứng, giữ thực thể và quan hệ tuyển chọn; ứng dụng bắt buộc dùng Neo4j (Mục~4.2)\\
 RAG $\rightarrow$ Agent & \code{RetrievalAgent} & Nhúng \code{all-MiniLM-L6-v2}, chỉ mục ChromaDB (cosine), cộng điểm cho đoạn gắn với yếu tố nguy cơ qua đồ thị\\
 Bộ luật & \code{SafetyGuard}, \code{RuleEngine} & 5 luật cơ sở và 4 luật xung đột (Mục~4.3)\\
 Reinforcement learning & \code{rl/environment.py}, \code{rl/policy.py} & Q-learning dạng bảng trên môi trường mô phỏng (Mục~4.3)\\
@@ -442,7 +442,7 @@ Một con số xác suất chưa đủ để tư vấn. Quanh mô hình, \code{R
 
 \section{Knowledge Base và RAG}
 \subsection{Nguồn tri thức và đồ thị Neo4j}
-Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}; các thực thể và quan hệ tuyển chọn nằm tại \code{data/corpus/graph.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng, ghép đồ thị trong bộ nhớ, kiểm tra nhất quán rồi nạp trực tiếp vào Neo4j bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Ứng dụng, công cụ đánh giá RAG, kiểm thử tích hợp và notebook báo cáo đều đọc tri thức đã xử lý từ Neo4j.
+Neo4j là nguồn sự thật của tri thức; bản seed \code{artifacts/kb_diabet.cypher} trong Git được xuất từ Neo4j và dùng để dựng lại cơ sở dữ liệu. Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng với ID ổn định theo nội dung (băm SHA-256 của văn bản), đọc thực thể và quan hệ tuyển chọn từ Neo4j, kiểm tra mọi quan hệ còn bằng chứng rồi nạp bằng \code{MERGE}. Nội dung y khoa \textbf{chưa được chuyên gia y khoa thẩm định}. Ứng dụng, công cụ đánh giá RAG, kiểm thử tích hợp và notebook báo cáo đều đọc tri thức đã xử lý từ Neo4j.
 
 Lược đồ gồm bốn nhãn thực thể (\code{Condition}, \code{RiskFactor}, \code{Test}, \code{Intervention}), nút \code{Evidence} và \code{Source}, và năm loại quan hệ: \code{INCREASES_RISK_OF}, \code{DIAGNOSES}, \code{REDUCES_RISK_OF}, \code{ADDRESSES}, \code{SHOULD_TEST_WITH}. Mỗi quan hệ mang \code{evidence_ids}; mỗi \code{Evidence} nối tới \code{Source} qua \code{FROM}, nên mọi khẳng định truy vấn ra đều đi kèm trích dẫn. Kết quả: 20 thực thể, 35 quan hệ nghiệp vụ, 21 đoạn bằng chứng, 5 nguồn; sau khi nạp, Neo4j có 46 nút và 56 quan hệ (gồm 21 quan hệ bằng chứng $\rightarrow$ nguồn), được xác minh ngày 03/11/2026 trên Neo4j 2026.10.1 chạy trong Docker.
 
@@ -650,12 +650,12 @@ safety = log.guard("safety_guard",
 .\.venv\Scripts\python.exe scripts/train_diabetes_model.py      # artifacts/
 .\.venv\Scripts\python.exe scripts/train_support_policy.py      # policy Q-learning
 docker compose up -d neo4j                                       # tuy chon
-.\.venv\Scripts\python.exe scripts/collect_corpus.py              # nap KB vao Neo4j
+Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD  # nap KB
 .\.venv\Scripts\python.exe -m uvicorn api.app:app --reload --env-file .env
 cd web; npm ci; npm run dev                                      # http://localhost:3000
 .\.venv\Scripts\python.exe -m pytest -q                          # kiem thu
 \end{lstlisting}
-Biến môi trường chính: \code{NEO4J_PASSWORD} (đặt thì dùng Neo4j, không thì đọc KB từ tệp), \code{OPENAI_API_KEY} (tùy chọn), \code{REQUIRE_API_TOKEN} và \code{API_TOKEN} (xác thực Bearer).
+Biến môi trường chính: \code{NEO4J_PASSWORD} (bắt buộc; ứng dụng không khởi động khi không kết nối được Neo4j), \code{OPENAI_API_KEY} (tùy chọn), \code{REQUIRE_API_TOKEN} và \code{API_TOKEN} (xác thực Bearer).
 
 \section{Demo: giao diện web}
 Giao diện web (Next.js) dẫn người dùng qua các câu hỏi ngắn rồi trình bày kết quả. Mỗi nhóm thành phần phía API được thể hiện bằng một ``nhân vật'' để người xem biết \emph{ai làm gì}: \textbf{Bé Tiếp} (tiếp đón, hỏi hồ sơ), \textbf{Ông Mô} (mô hình dự đoán, giải thích), \textbf{Bà Nhớ} (bộ nhớ hồ sơ tương tự), \textbf{Cô Chứng} (truy xuất bằng chứng), \textbf{Chú Luật} (luật an toàn) và \textbf{Bạn Gợi} (khuyến nghị, \emph{what-if}, policy). Phần cuối trang hiển thị \code{trace} của lượt xử lý dưới dạng dòng thời gian các bước; khi các thành phần bất đồng, cuộc trao đổi giữa các nhân vật xen vào ngay sau bước sinh ra nó (ảnh chụp dưới đây là bản giao diện trước khi thêm phần hội thoại). Hình~\ref{fig:ui1} là màn nhập hồ sơ, Hình~\ref{fig:ui2a}--\ref{fig:ui2d} là trang kết quả của hồ sơ mẫu (nữ 45 tuổi, 170 cm, 82,4 kg, huyết áp tâm thu 130 mmHg).

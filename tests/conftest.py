@@ -20,3 +20,9 @@ def knowledge_graph():
         graph = KnowledgeGraph(driver, settings.neo4j_database)
         graph.export_kb()
         yield graph
+
+
+@pytest.fixture(autouse=True)
+def no_llm(monkeypatch):
+    """Tests check the deterministic fallback texts; never call the real (paid) LLM API."""
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)

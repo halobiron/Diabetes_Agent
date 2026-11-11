@@ -2,7 +2,13 @@ import copy
 
 import pytest
 
-from tools.neo4j_kb import KnowledgeBaseError, KnowledgeGraph, validate_kb
+from tools.neo4j_kb import (
+    KnowledgeBaseError,
+    KnowledgeGraph,
+    evidence_id,
+    rebase_relations,
+    validate_kb,
+)
 
 
 class FakeRecord:
@@ -133,3 +139,28 @@ def test_neo4j_graph_and_entity_evidence(knowledge_graph):
     assert all(r["evidence"] and r["source_title"] for r in rows)
     assert {"type2_diabetes", "prediabetes"} <= {r["other_id"] for r in rows}
     assert kb.relations_with_evidence("no_such_entity") == []
+
+
+def test_evidence_id_depends_only_on_source_and_normalised_text():
+    a = evidence_id("who-diabetes", "Đái tháo đường típ 2  là bệnh mạn tính.")
+    assert a == evidence_id("who-diabetes", "Đái tháo đường típ 2 là bệnh mạn tính.")
+    assert a.startswith("ev-who-diabetes-") and len(a) == len("ev-who-diabetes-") + 8
+    assert a != evidence_id("who-diabetes", "Đái tháo đường típ 1 là bệnh mạn tính.")
+    assert a != evidence_id("moh-qt-2017", "Đái tháo đường típ 2 là bệnh mạn tính.")
+
+
+def test_kb_evidence_ids_match_their_content(kb):
+    assert all(e["id"] == evidence_id(e["source"], e["text"]) for e in kb["evidence"])
+
+
+def test_rebase_relations_keeps_present_evidence_and_reports_the_rest():
+    relations = [
+        {"from": "a", "type": "INCREASES_RISK_OF", "to": "b", "evidence": ["ev-1", "ev-gone"]},
+        {"from": "c", "type": "ADDRESSES", "to": "a", "evidence": ["ev-gone"]},
+        {"from": "c", "type": "DIAGNOSES", "to": "b", "evidence": ["ev-2"]},
+    ]
+    kept, dropped, unsupported = rebase_relations(relations, {"ev-1", "ev-2"})
+    assert [r["evidence"] for r in kept] == [["ev-1"], ["ev-2"]]
+    assert dropped == {"a-INCREASES_RISK_OF->b": ["ev-gone"], "c-ADDRESSES->a": ["ev-gone"]}
+    assert unsupported == [relations[1]]
+    assert relations[0]["evidence"] == ["ev-1", "ev-gone"]  # input is not mutated

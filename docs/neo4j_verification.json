@@ -21,7 +21,7 @@
           "Intervention"
         ],
         "relation": "ADDRESSES",
-        "evidence_id": "ev-who-diabetes-009",
+        "evidence_id": "ev-who-diabetes-6dcdf201",
         "evidence": "Lifestyle changes are the best way to prevent or delay the onset of type 2 diabetes. To help prevent type 2 diabetes and its complications, people should: reach and keep a health body weight; stay physically active with at least 150 minutes of moderate exercise each week; eat a healthy diet and avoid sugar and saturated fat; not smoke tobacco.",
         "source_id": "who-diabetes",
         "source_title": "Diabetes fact sheet",
@@ -37,7 +37,7 @@
           "Intervention"
         ],
         "relation": "ADDRESSES",
-        "evidence_id": "ev-vinmec-chan-doan-dieu-tri-008",
+        "evidence_id": "ev-vinmec-chan-doan-dieu-tri-69e1c903",
         "evidence": "Quản lý bệnh tiểu đường type 2 bao gồm: Giảm cân; Ăn uống lành mạnh; Tập thể dục thường xuyên; Có thể sử dụng thuốc trị tiểu đường hoặc liệu pháp insulin; Theo dõi lượng đường trong máu. Những bước này sẽ giúp giữ cho lượng đường trong máu của bạn gần với mức bình thường, có thể trì hoãn hoặc ngăn ngừa các biến chứng.",
         "source_id": "vinmec-chan-doan-dieu-tri",
         "source_title": "Chẩn đoán và điều trị đái tháo đường tuýp 2",
@@ -53,7 +53,7 @@
           "Intervention"
         ],
         "relation": "ADDRESSES",
-        "evidence_id": "ev-vinmec-chan-doan-dieu-tri-009",
+        "evidence_id": "ev-vinmec-chan-doan-dieu-tri-cf7a80ca",
         "evidence": "Giảm cân có thể làm giảm lượng đường trong máu của bạn. Giảm chỉ 5 đến 10% trọng lượng cơ thể của bạn có thể tạo ra sự khác biệt, mặc dù giảm cân bền vững từ 7% trở lên so với trọng lượng ban đầu của bạn là lý tưởng nhất. Điều đó có nghĩa là một người nặng 180 pound (82 kg) thì sẽ cần giảm ít nhất 13 pound (5,9 kg) thì mới có đủ để tác động lên lượng đường trong máu. Kiểm soát khẩu phần và ăn các thực phẩm lành mạnh là cách đơn giản để bắt đầu giảm cân.",
         "source_id": "vinmec-chan-doan-dieu-tri",
         "source_title": "Chẩn đoán và điều trị đái tháo đường tuýp 2",

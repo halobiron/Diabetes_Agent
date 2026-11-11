@@ -26,7 +26,7 @@ FEATURES = {"features": [{"feature": "BMI", "impact": 0.4}, {"feature": "HighBP"
 
 
 def test_retrieve_returns_cited_evidence(retriever):
-    contexts = retriever.retrieve({"glucose_measured": False}, "High", FEATURES)
+    contexts = retriever.retrieve({}, "High", FEATURES)
 
     assert contexts
     for item in contexts:
@@ -37,7 +37,7 @@ def test_retrieve_returns_cited_evidence(retriever):
 
 
 def test_graph_links_mark_evidence(retriever):
-    contexts = retriever.retrieve({"glucose": 90}, "High", FEATURES, n_results=10)
+    contexts = retriever.retrieve({"bp": 120}, "High", FEATURES, n_results=10)
 
     assert any(item["via"] == "graph+semantic" and item["supports"] for item in contexts)
 
@@ -117,7 +117,7 @@ def test_graph_error_at_query_time_degrades_to_semantic_only(knowledge_graph, tm
             raise ConnectionError("lost connection")
 
     agent = RetrievalAgent(FlakyKB(), WordEmbeddings(), tmp_path, min_relevance=0.1)
-    contexts = agent.retrieve({"glucose": 90}, "High", FEATURES)
+    contexts = agent.retrieve({"bp": 120}, "High", FEATURES)
 
     assert contexts and all(item["via"] == "semantic" for item in contexts)
 
@@ -147,7 +147,7 @@ def test_evidence_status_levels():
 
 
 def test_recommendation_cites_numbered_sources(retriever):
-    contexts = retriever.retrieve({"glucose": 90}, "High", FEATURES)
+    contexts = retriever.retrieve({"bp": 120}, "High", FEATURES)
     text = RecommendationAgent()._fallback_recommendation({}, "High", contexts)
 
     assert "[1]" in text and "Nguồn tham khảo:" in text and contexts[0]["source_title"] in text
@@ -197,7 +197,7 @@ def test_dosing_passages_are_detected_but_diagnostic_cutoffs_are_not():
 
 def test_dosing_passages_are_never_returned_to_users(retriever):
     assert retriever.withheld
-    patient = {"glucose_measured": False}
+    patient = {}
     contexts = retriever.retrieve(patient, "High", FEATURES, n_results=50, broaden=True)
     assert not {c["evidence_id"] for c in contexts} & retriever.withheld
 

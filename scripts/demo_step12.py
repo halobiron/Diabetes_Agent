@@ -29,7 +29,6 @@ COMPLETE = {
     "height_cm": 170,
     "weight_kg": 78,
     "bp": 120,
-    "glucose": 90,
     "high_chol": False,
     "chol_check": True,
     "smoker": False,
@@ -49,8 +48,8 @@ COMPLETE = {
     "education": 5,
     "income": 6,
 }
-MISSING = {"age": 50, "bmi": 27, "bp": 120, "glucose": None}
-WARNING = {**COMPLETE, "bp": 190, "glucose": 320}
+MISSING = {"age": 50, "bmi": 27, "bp": 120}
+WARNING = {**COMPLETE, "bp": 190}
 
 
 def record(name, response):
@@ -83,14 +82,13 @@ def run_api_scenarios(client, agent, audit_file):
         assert context["evidence_id"] and context["url"] and context["source_title"]
 
     sparse = predict("missing_optional_data", MISSING)
-    assert sparse["patient"]["glucose_measured"] is False
     assert sparse["patient"]["defaulted_fields"]
     assert sparse["safety"]["confidence_score"] < full["safety"]["confidence_score"]
-    assert "GLU-300" not in {r["code"] for r in sparse["safety"]["rules"]}
+    assert sparse["safety"]["escalation"] == "routine_followup"
 
     warning = predict("measurement_alerts", WARNING)
     codes = {r["code"] for r in warning["safety"]["rules"]}
-    assert {"GLU-300", "BP-180"} <= codes
+    assert "BP-180" in codes
     assert warning["safety"]["escalation"] == "urgent_clinician_review"
     assert warning["policy"]["next_step"] == "escalate_to_clinician"
 
@@ -246,7 +244,7 @@ def run_web_scenarios(env, work_dir, api_port, web_port):
                 assert result["request_id"] and result["degraded"] == []
                 assert result["prediction"]["model_version"] != "legacy-unversioned"
                 if name == "missing":
-                    assert result["patient"]["glucose_measured"] is False
+                    assert result["patient"]["defaulted_fields"]
                 if name == "warning":
                     assert result["safety"]["escalation"] == "urgent_clinician_review"
                 records.append(record(f"web_{name}", response))

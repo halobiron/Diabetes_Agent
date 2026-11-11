@@ -14,7 +14,7 @@ docker compose up -d neo4j
 Get-Content .env | ForEach-Object { if ($_ -match '^\s*([^#=\s]+)\s*=\s*(.*)$') { Set-Item "env:$($Matches[1])" $Matches[2] } }
 
 # 3. (Chỉ khi cần nạp lại KB)
-.\.venv\Scripts\python.exe scripts\collect_corpus.py
+Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD
 
 # 4. Chạy backend (cửa sổ này); giao diện chạy ở cửa sổ khác
 .\.venv\Scripts\python.exe -m uvicorn api.app:app --host 127.0.0.1 --port 8010
@@ -48,7 +48,7 @@ RETURN f.name AS yeu_to, type(r) AS quan_he, x.name AS dich, e.id AS bang_chung,
 
 ```cypher
 // Đọc nguyên văn một đoạn bằng chứng
-MATCH (e:Evidence {id:'ev-moh-qt-2017-017'}) RETURN e.text
+MATCH (e:Evidence {id:'ev-moh-qt-2017-cc3fdc82'}) RETURN e.text
 ```
 
 **Điểm cần nhấn:** mọi quan hệ đều có trích dẫn. Ngưỡng BMI ≥ 23 lấy từ văn bản Bộ Y tế; các bài Vinmec còn nêu 25 và 35 cho mục đích khác nên đồ thị không dùng làm bằng chứng cho ngưỡng này.

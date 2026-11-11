@@ -22,21 +22,15 @@ from rl.policy import (
 
 
 def test_valid_actions_mask_unavailable_steps():
-    unmeasured = encode_state("Medium", "unmeasured", "limited")
-    assert set(valid_actions(unmeasured)) == set(ACTIONS)
-
-    done_all = encode_state("Medium", "normal", "sufficient", asked_glucose=True)
-    assert valid_actions(done_all) == TERMINAL_ACTIONS
-    assert "request_glucose" not in valid_actions(encode_state("Low", "normal", "none"))
-    assert "retrieve_more_evidence" not in valid_actions(
-        encode_state("Low", "unmeasured", "none", retrieved_more=True)
-    )
+    assert set(valid_actions(encode_state("Medium", "limited"))) == set(ACTIONS)
+    assert valid_actions(encode_state("Medium", "sufficient")) == TERMINAL_ACTIONS
+    assert valid_actions(encode_state("Low", "none", retrieved_more=True)) == TERMINAL_ACTIONS
 
 
 def test_reward_penalises_under_triage_more_than_over_triage():
-    assert true_need("Low", elevated=True) == "escalate"
-    assert true_need("High", elevated=False) == "escalate"
-    assert true_need("Medium", elevated=False) == "followup"
+    assert true_need("High") == "escalate"
+    assert true_need("Medium") == "followup"
+    assert true_need("Low") == "routine"
     for need in REWARD:
         assert (
             max(REWARD[need], key=REWARD[need].get)
@@ -58,19 +52,19 @@ def test_environment_is_reproducible_and_rejects_invalid_actions():
 
     env = SupportEnv(1)
     env.reset()
-    env.glucose = "normal"
+    env.evidence = "sufficient"
     with pytest.raises(ValueError):
-        env.step("request_glucose")
+        env.step("retrieve_more_evidence")
 
 
-def test_episodes_terminate_within_three_steps():
+def test_episodes_terminate_within_two_steps():
     env = SupportEnv(3)
     for _ in range(200):
         state, done, steps = env.reset(), False, 0
         while not done:
             state, _, done, _ = env.step(fixed_full_policy(state))
             steps += 1
-        assert steps <= 3
+        assert steps <= 2
 
 
 @pytest.fixture(scope="module")
@@ -84,19 +78,19 @@ def test_trained_policy_beats_random_and_risk_only(trained):
     assert learned["mean_reward"] > evaluate(fixed_risk_policy, episodes=4000)["mean_reward"]
 
 
-def test_trained_policy_gathers_glucose_for_ambiguous_patients(trained):
-    state = encode_state("Medium", "unmeasured", "sufficient")
-    assert trained.decide(state)["action"] == "request_glucose"
-    assert trained.decide(encode_state("Low", "normal", "sufficient"))["action"] == (
-        "recommend_routine"
-    )
+def test_trained_policy_searches_for_evidence_before_non_urgent_advice(trained):
+    assert trained.decide(encode_state("Medium", "limited"))["action"] == "retrieve_more_evidence"
+    assert trained.decide(encode_state("Low", "sufficient"))["action"] == "recommend_routine"
+    assert trained.decide(encode_state("Medium", "sufficient"))["action"] == "recommend_followup"
+    # Escalation does not wait for more evidence.
+    assert trained.decide(encode_state("High", "none"))["action"] == "escalate_to_clinician"
 
 
 def test_policy_round_trip_and_fallback(trained, tmp_path):
     path = tmp_path / "policy.json"
     trained.save(path)
     loaded = QPolicy.load(path)
-    state = encode_state("High", "unmeasured", "none")
+    state = encode_state("High", "none")
     assert loaded.decide(state) == trained.decide(state)
 
     empty = QPolicy({})
@@ -111,7 +105,7 @@ class FakeModel:
     artifact_metadata = {"selected_model": "fake"}
 
     def assess(self, data):
-        return 0.1, {**data, "glucose_measured": False, "bp": data["bp"], "glucose": 90.0}
+        return 0.1, {**data, "bp": data["bp"]}
 
 
 class FakeMemory:
@@ -192,47 +186,18 @@ def test_no_policy_means_no_policy_block():
     assert retriever.calls == [False]
 
 
-def test_need_entropy_is_zero_once_known_and_positive_when_ambiguous():
-    from rl.environment import need_entropy
-
-    assert need_entropy("High", "unmeasured") == 0.0
-    assert need_entropy("Medium", "normal") == 0.0
-    assert need_entropy("Low", "unmeasured") > 0
-    assert need_entropy("Medium", "unmeasured") > need_entropy("Low", "unmeasured")
-
-
-def test_glucose_request_reward_includes_entropy_reduction():
-    from rl.environment import ENTROPY_WEIGHT, STEP_COST
-
-    env = SupportEnv(0)
-    env.reset()
-    env.risk, env.glucose, env.asked, env.elevated = "Medium", "unmeasured", False, False
-    env.rng.random = lambda: 0.0  # patient supplies glucose
-    _, reward, done, info = env.step("request_glucose")
-    assert not done and info["entropy_reduction"] > 0
-    assert reward == pytest.approx(-STEP_COST + ENTROPY_WEIGHT * info["entropy_reduction"])
-
-    env.rng.random = lambda: 0.99  # patient does not supply it
-    env.risk, env.glucose, env.asked = "Medium", "unmeasured", False
-    _, reward, _, info = env.step("request_glucose")
-    assert info["entropy_reduction"] == 0 and reward == pytest.approx(-STEP_COST)
-
-
 def test_state_tracker_builds_state_and_records_history():
     from rl.state_tracker import StateTracker
 
-    tracker = StateTracker({"glucose_measured": False}, "Medium")
-    state = tracker.update({"rules": []}, "limited")
-    assert state == encode_state("Medium", "unmeasured", "limited")
-    assert tracker.uncertainty > 0
+    tracker = StateTracker("Medium")
+    assert tracker.update({"rules": []}, "limited") == encode_state("Medium", "limited")
 
     tracker.record("retrieve_more_evidence")
-    elevated = tracker.update({"rules": [{"code": "GLU-200"}]}, "sufficient")
-    assert elevated == encode_state("Medium", "unmeasured", "sufficient", retrieved_more=True)
-
-    measured = StateTracker({"glucose_measured": True}, "Low")
-    assert measured.update({"rules": [{"code": "GLU-300"}]}, "none") == encode_state(
-        "Low", "elevated", "none"
-    )
-    snap = measured.snapshot()
-    assert snap["need_entropy_bits"] == 0 and snap["actions"] == []
+    after = tracker.update({"rules": [{"code": "BP-160"}]}, "sufficient")
+    assert after == encode_state("Medium", "sufficient", retrieved_more=True)
+    assert tracker.snapshot() == {
+        "risk": "Medium",
+        "evidence": "sufficient",
+        "retrieved_more": True,
+        "actions": ["retrieve_more_evidence"],
+    }

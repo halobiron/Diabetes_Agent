@@ -32,7 +32,7 @@ Linux/Docker đã cài dependencies, đặt `NEO4J_URI`, `NEO4J_USER`,
 `NEO4J_PASSWORD`, rồi chạy:
 
 ```bash
-python scripts/collect_corpus.py
+cypher-shell -u "$NEO4J_USER" -p "$NEO4J_PASSWORD" -f artifacts/kb_diabet.cypher
 python scripts/demo_step12.py --require-neo4j --with-web --output logs/neo4j-live-demo.json
 ```
 

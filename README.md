@@ -140,7 +140,9 @@ Copy-Item web/.env.example web/.env.local
 Neo4j is required at application startup. Set `NEO4J_PASSWORD` in `.env`, start
 `docker compose up -d neo4j`, and load the knowledge base following
 [the Neo4j setup guide](docs/neo4j_kb.md). Startup errors do not fall back to JSON;
-`python scripts/collect_corpus.py` ingests web/PDF sources straight into Neo4j. Application requests,
+Load the versioned seed `artifacts/kb_diabet.cypher`; Neo4j is the source of truth for entities,
+relations and evidence. `python scripts/collect_corpus.py` refreshes sources and evidence passages from
+web/PDF while keeping the curated entities and relations already in Neo4j. Application requests,
 RAG evaluation, integration tests and the report notebook all read the processed knowledge from Neo4j.
 
 ### 4. Run API + Next.js UI
@@ -198,7 +200,7 @@ Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 | `models/training_pipeline.py` | Training pipeline |
 | `artifacts/` | Model, metrics and model card |
 | `data/chroma/` | Knowledge index and case memory |
-| `data/corpus/sources.json`, `data/corpus/graph.json` | Source manifest and curated graph for direct ingestion into Neo4j |
+| `data/corpus/sources.json` | Source manifest for refreshing evidence passages in Neo4j |
 | `data/eval/rag_retrieval_questions.json` | Labeled RAG evaluation questions |
 | Neo4j (`NEO4J_URI`, `NEO4J_DATABASE`) | Processed knowledge for the application, evaluation, integration tests and reports |
 | `artifacts/kb_diabet.cypher` | Cypher script to populate or restore the Neo4j knowledge base |
