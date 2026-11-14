@@ -4,7 +4,7 @@ scikit-learn==1.6.1
 joblib
 lightgbm
 fastapi
-pydantic>=2,<3
+pydantic>=2.14.3,<3
 httpx
 uvicorn
 python-dotenv
