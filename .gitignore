@@ -30,3 +30,4 @@ graphify-out/
 
 # corpus download cache
 data/corpus/.cache/
+*.pdf

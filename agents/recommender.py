@@ -2,6 +2,7 @@ import os
 
 from openai import OpenAI
 
+from agents.llm_context import supplied_features, supplied_inputs, unknown_inputs_instruction
 from agents.retriever import evidence_status, excerpt
 from tools.vietnamese import ESCALATION_LABELS, feature_label
 
@@ -26,13 +27,14 @@ class RecommendationAgent:
             )
 
         prompt = f"""
-        Patient data: {patient_data}
+        Patient data (only what the patient supplied): {supplied_inputs(patient_data)}
+        Inputs the patient did not supply: {unknown_inputs_instruction(patient_data)}
         Risk level: {risk}
         Numbered guideline evidence:
         {self._evidence_block(retrieved_context)}
         Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
         Safety assessment: {safety}
-        Main model risk drivers: {self._drivers(feature_explanation)}
+        Main model risk drivers: {self._drivers(supplied_features(feature_explanation))}
 
         Suggest actionable health recommendations. Support each guideline-based
         recommendation with its evidence number in square brackets, e.g. [1]. Use only

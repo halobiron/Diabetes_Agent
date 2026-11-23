@@ -2,6 +2,7 @@ import os
 
 from openai import OpenAI
 
+from agents.llm_context import supplied_features, supplied_inputs, unknown_inputs_instruction
 from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS, METHOD_LABELS, feature_label
 
 
@@ -25,9 +26,10 @@ class ExplanationAgent:
             )
 
         prompt = f"""
-        Patient data: {patient_data}
+        Patient data (only what the patient supplied): {supplied_inputs(patient_data)}
+        Inputs the patient did not supply: {unknown_inputs_instruction(patient_data)}
         Risk probability: {prob}
-        Feature explanation: {feature_explanation}
+        Feature explanation (supplied inputs only): {supplied_features(feature_explanation)}
         Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
         Safety assessment (rules applied to the measurements): {safety}
         Guideline evidence status: {evidence_status}
