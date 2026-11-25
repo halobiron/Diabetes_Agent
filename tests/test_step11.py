@@ -1,6 +1,7 @@
 import pytest
 
 from agents.explainer import ExplanationAgent
+from memory.context import describe_memory
 from memory.store import MemoryAgent
 from models.risk_model import RiskModel
 from tools.explainability import FeatureExplainer
@@ -121,33 +122,38 @@ def test_input_spreads_come_from_training_data(model):
     assert "bp" not in spreads
 
 
-# ---- similar cases: numeric closeness, and predictions are not outcomes
+# ---- history: same patient, latest assessment, predictions are not outcomes
 
 
 @pytest.fixture
 def memory(tmp_path):
-    scales = {"age": 15.0, "bmi": 6.0, "bp": 25.0}
-    return MemoryAgent(str(tmp_path / "chroma"), scales=scales, max_distance=1.0)
+    return MemoryAgent(str(tmp_path / "chroma"))
 
 
-def test_similar_cases_rank_by_numeric_closeness(memory):
-    memory.store(patient(age=58, bmi=31.0, bp=140), 0.4, "Medium")
-    memory.store(patient(age=25, bmi=19.0, bp=105), 0.05, "Low")
-    memory.store(patient(age=59, bmi=30.5, bp=138), 0.45, "Medium")
+def test_history_uses_latest_assessment_of_same_patient(memory):
+    old = memory.store(patient(patient_id="a", bmi=30), 0.4, "Medium")
+    latest = memory.store(patient(patient_id="a", bmi=29), 0.3, "Medium")
+    memory.store(patient(patient_id="b", bmi=40), 0.8, "High")
+    memory.collection.update(ids=[old], metadatas=[{"timestamp": "2025-01-01T00:00:00+00:00"}])
+    memory.collection.update(ids=[latest], metadatas=[{"timestamp": "2025-02-01T00:00:00+00:00"}])
+    context = memory.recall(patient(patient_id="a", bmi=28, bp=115), 0.2, "Low", "v1")
+    assert context["previous"]["id"] == latest
+    assert context["assessment_count"] == 2
+    assert "BMI từ 29 thành 28" in describe_memory(context)
+    assert "Huyết áp tâm thu từ 120 thành 115" in describe_memory(context)
 
-    matches = memory.find_similar(patient(age=57, bmi=31.0, bp=140))
 
-    assert [m["metadata"]["age"] for m in matches] == [58, 59]  # the 25-year-old is excluded
-    assert matches[0]["distance"] < matches[1]["distance"]
-
-
-def test_unrelated_cases_are_not_returned(memory):
-    memory.store(patient(age=25, bmi=19.0, bp=105), 0.05, "Low")
-    assert memory.find_similar(patient(age=70, bmi=38.0, bp=170)) == []
+def test_new_profile_does_not_use_unlinked_or_other_patient_records(memory):
+    memory.store(patient(bmi=30), 0.4, "Medium")  # legacy record without a profile ID
+    memory.store(patient(patient_id="other", bmi=30), 0.4, "Medium")
+    assert (
+        memory.recall(patient(patient_id="new"), 0.2, "Low", "v1")["status"] == "first_assessment"
+    )
+    assert len(memory.get_all()) == 2  # old records remain intact
 
 
 def test_stored_cases_are_labelled_as_predictions(memory):
     memory.store(patient(age=58, bmi=31.0, bp=140), 0.4, "Medium")
-    metadata = memory.find_similar(patient(age=58, bmi=31.0, bp=140))[0]["metadata"]
+    metadata = memory.get_all()[0]["metadata"]
 
     assert metadata["outcome_confirmed"] is False

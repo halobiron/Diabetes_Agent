@@ -7,6 +7,9 @@ const API_BASE_URL = process.env.API_BASE_URL ?? "http://127.0.0.1:8000";
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const limit = searchParams.get("limit") ?? "25";
+  const query = new URLSearchParams({ limit });
+  const patientId = searchParams.get("patient_id");
+  if (patientId) query.set("patient_id", patientId);
   const headers: HeadersInit = {};
 
   if (process.env.API_TOKEN) {
@@ -14,7 +17,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const response = await fetch(`${API_BASE_URL}/history?limit=${encodeURIComponent(limit)}`, {
+    const response = await fetch(`${API_BASE_URL}/v1/history?${query}`, {
       headers,
       cache: "no-store",
     });

@@ -78,7 +78,7 @@ Orchestrator
    ├── MLP feature explainability (sensitivity; SHAP for linear models)
    ├── Safety guardrails + escalation
    ├── KB/RAG (required Neo4j + bge-m3 embeddings, in-memory vector index)
-   ├── ChromaDB memory (similar cases)
+   ├── ChromaDB memory (patient-scoped assessment history and measurement changes)
    ├── Explanation (OpenAI optional → rule-based fallback)
    ├── Recommendation (OpenAI optional → rule-based fallback)
    └── Q-learning support policy (simulated training; safety rules take precedence)
@@ -182,7 +182,7 @@ docker compose up --build
 | `GET /health`, `GET /v1/health` | Health check |
 | `POST /predict`, `POST /v1/predict` | Full multi-agent analysis |
 | `POST /predict/summary`, `POST /v1/predict/summary` | Condensed triage output |
-| `GET /history` | Recent memory records |
+| `GET /history`, `GET /v1/history` | Assessment history; filter by `patient_id`, `limit` (1–100) |
 
 Example:
 
@@ -192,6 +192,35 @@ curl -s http://127.0.0.1:8000/health
 
 Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 
+### Patient memory (ChromaDB)
+
+`POST /v1/predict` accepts an optional `patient_id` (1–64 ASCII letters, digits, dots,
+underscores or hyphens, starting with a letter or digit). Omit it or leave it blank to
+create a new profile. The response returns `patient_id`, `assessment_id`, `memory_saved`
+and structured `memory_context`. Reuse that exact profile ID for later assessments:
+
+```json
+{"patient_id": "demo-001", "age": 50, "bmi": 30, "bp": 130}
+```
+
+Submit again with the same ID and changed measurements, e.g. BMI 28 and BP 125.
+MemoryAgent filters Chroma metadata by `patient_id`, counts prior assessments and returns
+the five most recent, with measurement changes against the latest. The **Lịch sử** tab
+shows the profile ID, measurement comparison, probability difference and previous records.
+Probabilities are compared only for the same known model version; differences do not
+confirm clinical improvement or disease progression. Both advice agents receive the same
+history through a shared formatter, including their built-in fallbacks. Save the profile
+ID to reuse it after reloading; clear it with
+**Tạo mã mới** when assessing someone else. Existing records remain intact; records
+without a profile ID are never automatically linked to a new patient. The existing
+Chroma collection and embedding format are retained; history lookup uses metadata.
+
+`GET /v1/history?patient_id=demo-001&limit=25` returns only that profile's assessments.
+Profile IDs identify records; they are not authentication credentials or per-patient
+access controls. A failed history read returns `memory_context.status: unavailable`;
+a failed write returns `memory_saved: false`. The decision audit log includes
+`patient_id`, `assessment_id` and `memory_saved` for tracing each assessment.
+
 ## Local paths
 
 | Path | Contents |
@@ -199,7 +228,7 @@ Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 | `data/train/diabetes_binary_health_indicators_BRFSS2015.csv` | Full training dataset |
 | `models/training_pipeline.py` | Training pipeline |
 | `artifacts/` | Model, metrics and model card |
-| `data/chroma/` | Knowledge index and case memory |
+| `data/chroma/` | ChromaDB patient assessment history (KB evidence is indexed separately) |
 | `data/corpus/sources.json` | Source manifest for refreshing evidence passages in Neo4j |
 | `data/eval/rag_retrieval_questions.json` | Labeled RAG evaluation questions |
 | Neo4j (`NEO4J_URI`, `NEO4J_DATABASE`) | Processed knowledge for the application, evaluation, integration tests and reports |

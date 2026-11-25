@@ -14,6 +14,7 @@ export type AskableField = (typeof ASKABLE_FIELDS)[number];
 export type RiskLevel = "Low" | "Medium" | "High";
 
 export type PatientInput = {
+  patient_id?: string;
   age: number;
   height_cm: number;
   weight_kg: number;
@@ -40,6 +41,7 @@ export type PatientInput = {
 };
 
 export type PreparedPatient = {
+  patient_id?: string;
   age: number;
   height_cm: number | null;
   weight_kg: number | null;
@@ -141,7 +143,7 @@ export type EvidenceTrailItem = {
 
 export type TraceStep = {
   request_id?: string;
-  /** Agent thực hiện bước này (diagnosis, advisor hoặc orchestrator). */
+  /** Agent thực hiện bước này (diagnosis, advisor, memory hoặc orchestrator). */
   agent?: string;
   version?: string | null;
   component: string;
@@ -233,6 +235,10 @@ export type ModelMetadata = {
 };
 
 export type PredictionResult = {
+  patient_id?: string;
+  assessment_id?: string;
+  memory_saved?: boolean;
+  memory_context?: PatientMemory;
   request_id?: string;
   probability: number;
   risk: RiskLevel;
@@ -251,6 +257,45 @@ export type PredictionResult = {
   model?: ModelMetadata;
   measurement_scales?: MeasurementScale[];
   followup?: FollowupQuestion | null;
+};
+
+export type AssessmentRecord = {
+  id: string;
+  summary: string;
+  metadata: {
+    patient_id?: string;
+    assessment_id?: string;
+    timestamp: string;
+    model_version?: string;
+    outcome_confirmed: boolean;
+    age: number;
+    bmi: number;
+    bp: number;
+    weight_kg?: number;
+    height_cm?: number;
+    probability: number;
+    risk: RiskLevel;
+  };
+};
+
+export type PatientMemory = {
+  patient_id: string;
+  status: "available" | "first_assessment" | "unavailable";
+  assessment_count: number;
+  previous: AssessmentRecord | null;
+  recent_assessments: AssessmentRecord[];
+  changes: { field: string; previous: number; current: number; delta: number; unit: string }[];
+  prediction_comparison: {
+    comparable: boolean;
+    probability_delta: number | null;
+    previous_model_version: string | null;
+    current_model_version: string | null;
+    previous_probability: number | null;
+    current_probability: number;
+    previous_risk: RiskLevel | null;
+    current_risk: RiskLevel;
+    note: string;
+  } | null;
 };
 
 export type MeasurementBand = {

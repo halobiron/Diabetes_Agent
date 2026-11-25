@@ -5,7 +5,7 @@
 | `corpus/sources.json` | URL và cấu hình thu thập nguồn | Khi chạy `scripts/collect_corpus.py` |
 | `corpus/.cache/` | HTML/PDF tải về, không đưa vào Git | Khi thu thập tài liệu |
 | `train/` | CSV BRFSS tải về, không đưa vào Git | Khi huấn luyện và tạo báo cáo |
-| `chroma/` | Chỉ mục vector và bộ nhớ ca, không đưa vào Git | Khi ứng dụng chạy |
+| `chroma/` | Lịch sử đánh giá theo mã bệnh nhân trong ChromaDB, không đưa vào Git | Khi ứng dụng đọc lịch sử hoặc lưu lần đánh giá mới |
 | `eval/rag_retrieval_questions.json` | Bộ câu hỏi có nhãn đánh giá RAG | Khi chạy `scripts/evaluate_retrieval.py` |
 | Neo4j | Nguồn sự thật của tri thức: nguồn, đoạn bằng chứng, thực thể và quan hệ tuyển chọn | Ứng dụng, đánh giá RAG, kiểm thử tích hợp, báo cáo và `collect_corpus.py` |
 | `../artifacts/` | Mô hình, policy và chỉ số đánh giá | Ứng dụng nạp mô hình/policy; báo cáo dùng chỉ số |
@@ -13,7 +13,7 @@
 
 Luồng xây dựng KB: nạp `kb_diabet.cypher` vào Neo4j → sửa thực thể/quan hệ trực tiếp trong Neo4j khi cần → làm mới bằng chứng từ web/PDF bằng `collect_corpus.py` → xuất lại `kb_diabet.cypher` và commit. Đoạn bằng chứng có ID ổn định theo nội dung (`ev-<nguồn>-<8 ký tự sha256>`), nên đoạn không đổi thì quan hệ vẫn trỏ đúng sau mỗi lần thu thập lại.
 
-Ứng dụng truy vấn Neo4j và ChromaDB; không đọc bộ câu hỏi đánh giá hoặc CSV huấn luyện. Khởi tạo nạp mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH` (mặc định `artifacts/risk_model.joblib`). ChromaDB là chỉ mục tìm kiếm và bộ nhớ ca; tri thức nguồn được đọc từ Neo4j.
+Ứng dụng truy vấn Neo4j và ChromaDB; không đọc bộ câu hỏi đánh giá hoặc CSV huấn luyện. Khởi tạo nạp mô hình đã huấn luyện tại `MODEL_ARTIFACT_PATH` (mặc định `artifacts/risk_model.joblib`). ChromaDB lưu lịch sử theo `patient_id`, mã lần đánh giá, thời điểm, phiên bản mô hình, số đo và dự đoán. Bộ nhớ lọc metadata để so sánh số đo với lần gần nhất; chỉ so sánh xác suất khi cùng phiên bản mô hình đã biết. Bản ghi cũ thiếu mã hồ sơ được giữ nguyên, không tự gán cho người mới. Tri thức nguồn được đọc từ Neo4j; truy xuất bằng chứng dùng chỉ mục vector NumPy riêng.
 
 Chạy từ thư mục gốc dự án:
 

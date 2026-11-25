@@ -21,7 +21,7 @@ from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS
 logger = logging.getLogger(__name__)
 
 MAX_POLICY_STEPS = 2
-AGENT_VERSION = "agents-v2"
+AGENT_VERSION = "agents-v3"
 
 # Which agent owns each traced component (the orchestrator owns everything not listed).
 AGENT_OF = {
@@ -30,6 +30,8 @@ AGENT_OF = {
     "retriever": "advisor",
     "recommender": "advisor",
     "explainer": "advisor",
+    "memory_search": "memory",
+    "memory_store": "memory",
 }
 
 
@@ -138,21 +140,34 @@ class Orchestrator:
 
     def run(self, patient_data, request_id=None):
         log = RunLog(request_id, self._versions())
-        diagnosis = self.diagnosis_agent.diagnose(patient_data, log)
+        patient_id = patient_data.get("patient_id") or f"patient-{uuid4()}"
+        assessment_id = f"assessment-{uuid4()}"
+        diagnosis = self.diagnosis_agent.diagnose({**patient_data, "patient_id": patient_id}, log)
         prob, patient = diagnosis["probability"], diagnosis["patient"]
+        patient = {**patient, "patient_id": patient_id}
         risk, prediction = diagnosis["risk"], diagnosis["prediction"]
         feature_explanation = diagnosis["feature_explanation"]
-        similar_cases = log.guard(
+        memory_context = log.guard(
             "memory_search",
-            lambda: self.memory.find_similar(patient),
-            [],
-            detail=lambda value: f"{len(value)} hồ sơ tương tự",
-            on_failure="không dùng hồ sơ tương tự",
+            lambda: self.memory.recall(patient, prob, risk, self.model.model_version),
+            {
+                "patient_id": patient_id,
+                "status": "unavailable",
+                "assessment_count": 0,
+                "previous": None,
+                "recent_assessments": [],
+                "changes": [],
+                "prediction_comparison": None,
+            },
+            detail=lambda value: (
+                f"{value['assessment_count']} lần đánh giá trước của cùng mã hồ sơ"
+            ),
+            on_failure="không đọc được lịch sử của mã hồ sơ",
         )
         retrieved_context = self._retrieve(patient, risk, feature_explanation, log)
 
         status, safety, recommendation = self._advise(
-            patient, prob, risk, retrieved_context, similar_cases, feature_explanation, log
+            patient, prob, risk, retrieved_context, memory_context, feature_explanation, log
         )
         # Components that disagree talk first; a proposal such as "search wider" is acted on here.
         retrieved_context, status, safety, recommendation, dialogue, searched_wider = (
@@ -161,7 +176,7 @@ class Orchestrator:
                 prob,
                 risk,
                 feature_explanation,
-                similar_cases,
+                memory_context,
                 (retrieved_context, status, safety, recommendation),
                 log,
             )
@@ -175,7 +190,7 @@ class Orchestrator:
                     prob,
                     risk,
                     feature_explanation,
-                    similar_cases,
+                    memory_context,
                     (retrieved_context, status, safety, recommendation),
                     log,
                     retrieved_more=searched_wider,
@@ -201,11 +216,17 @@ class Orchestrator:
 
         # Explained last so it sees the final evidence status and safety outcome.
         explanation = self.advisor_agent.explain(
-            patient, prob, feature_explanation, similar_cases, safety, status, log
+            patient, prob, feature_explanation, memory_context, safety, status, log
         )
-        log.guard(
+        stored_id = log.guard(
             "memory_store",
-            lambda: self.memory.store(patient, prob, risk),
+            lambda: self.memory.store(
+                patient,
+                prob,
+                risk,
+                model_version=self.model.model_version,
+                assessment_id=assessment_id,
+            ),
             None,
             detail=lambda value: "đã lưu hồ sơ",
             on_failure="không lưu hồ sơ",
@@ -223,6 +244,9 @@ class Orchestrator:
             }
 
         return {
+            "patient_id": patient_id,
+            "assessment_id": assessment_id,
+            "memory_saved": stored_id is not None,
             "probability": prob,
             "risk": risk,
             "prediction": prediction,
@@ -230,7 +254,8 @@ class Orchestrator:
             "feature_explanation": feature_explanation,
             "retrieved_context": retrieved_context,
             "evidence_status": status,
-            "similar_cases": similar_cases,
+            "memory_context": memory_context,
+            "similar_cases": [],  # Compatibility only; other patients are never advice context.
             "safety": safety,
             "explanation": explanation,
             "recommendation": recommendation,
@@ -258,7 +283,7 @@ class Orchestrator:
             logger.warning("dialogue failed: %s", exc)
             return []
 
-    def _negotiate(self, patient, prob, risk, feature_explanation, similar_cases, current, log):
+    def _negotiate(self, patient, prob, risk, feature_explanation, memory_context, current, log):
         """Let components that disagree exchange messages, and act on what they propose.
 
         The safety guard challenges whatever its conflict rules contradict. The one proposal
@@ -290,7 +315,7 @@ class Orchestrator:
             )
             search_failed = len(log.degraded) > degraded_before
             status, safety, recommendation = self._advise(
-                patient, prob, risk, retrieved_context, similar_cases, feature_explanation, log
+                patient, prob, risk, retrieved_context, memory_context, feature_explanation, log
             )
             outcome = retrieval_outcome(
                 len(retrieved_context), EVIDENCE_LABELS[status], rule, failed=search_failed
@@ -324,7 +349,7 @@ class Orchestrator:
         prob,
         risk,
         retrieved_context,
-        similar_cases,
+        memory_context,
         feature_explanation,
         log,
     ):
@@ -363,7 +388,7 @@ class Orchestrator:
                 on_failure="chuyển hướng sang bác sĩ đánh giá",
             )
         recommendation = self.advisor_agent.recommend(
-            patient, safety, retrieved_context, similar_cases, feature_explanation, log
+            patient, safety, retrieved_context, memory_context, feature_explanation, log
         )
         return status, safety, recommendation
 
@@ -373,7 +398,7 @@ class Orchestrator:
         prob,
         risk,
         feature_explanation,
-        similar_cases,
+        memory_context,
         current,
         log,
         retrieved_more=False,
@@ -407,7 +432,7 @@ class Orchestrator:
                     prob,
                     risk,
                     retrieved_context,
-                    similar_cases,
+                    memory_context,
                     feature_explanation,
                     log,
                 )

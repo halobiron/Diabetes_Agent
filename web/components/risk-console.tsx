@@ -41,8 +41,10 @@ function RiskConsoleInner() {
   const mutation = useMutation({
     mutationFn: createPrediction,
     onSuccess: (result, input) => {
+      const savedInput = { ...input, patient_id: result.patient_id ?? input.patient_id };
       setLastResult(result);
-      setLastInput(input);
+      setLastInput(savedInput);
+      setForm(savedInput);
       setView("result");
       window.scrollTo({ top: 0 });
     },
@@ -156,7 +158,7 @@ function RiskConsoleInner() {
 
 const WORKING_STEPS: Array<{ id: CastId; line: string }> = [
   { id: "mo", line: "Tôi đang đọc hồ sơ và chấm điểm nguy cơ…" },
-  { id: "nho", line: "Tôi lục lại những hồ sơ giống bạn…" },
+  { id: "nho", line: "Tôi xem lại lịch sử của mã hồ sơ này…" },
   { id: "chung", line: "Tôi đang tìm bằng chứng y khoa liên quan…" },
   { id: "luat", line: "Tôi kiểm tra các số đo thực tế với luật an toàn…" },
   { id: "goi", line: "Tôi soạn lời khuyên phù hợp với bạn…" },

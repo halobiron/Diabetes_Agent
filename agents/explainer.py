@@ -3,6 +3,7 @@ import os
 from openai import OpenAI
 
 from agents.llm_context import supplied_features, supplied_inputs, unknown_inputs_instruction
+from memory.context import describe_memory
 from tools.vietnamese import ESCALATION_LABELS, EVIDENCE_LABELS, METHOD_LABELS, feature_label
 
 
@@ -16,13 +17,13 @@ class ExplanationAgent:
         patient_data,
         prob,
         feature_explanation=None,
-        similar_cases=None,
+        memory_context=None,
         safety=None,
         evidence_status=None,
     ):
         if self.client is None:
             return self._fallback_explanation(
-                patient_data, prob, feature_explanation, similar_cases, safety, evidence_status
+                patient_data, prob, feature_explanation, memory_context, safety, evidence_status
             )
 
         prompt = f"""
@@ -30,12 +31,15 @@ class ExplanationAgent:
         Inputs the patient did not supply: {unknown_inputs_instruction(patient_data)}
         Risk probability: {prob}
         Feature explanation (supplied inputs only): {supplied_features(feature_explanation)}
-        Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
+        Same-patient assessment history: {describe_memory(memory_context)}
         Safety assessment (rules applied to the measurements): {safety}
         Guideline evidence status: {evidence_status}
 
         Explain in simple terms why this patient has this risk. If the safety assessment
         raised the risk or an escalation above the model estimate, say so and why.
+        Use history only to describe measurement changes, not as clinical outcomes
+        or guideline evidence. Never infer disease improvement or progression from it.
+        Never compare probabilities across model versions.
         Viết hoàn toàn bằng tiếng Việt, dùng nhãn tiếng Việt cho các mã và đặc trưng.
         """
 
@@ -46,7 +50,7 @@ class ExplanationAgent:
             return response.choices[0].message.content
         except Exception:
             fallback = self._fallback_explanation(
-                patient_data, prob, feature_explanation, similar_cases, safety, evidence_status
+                patient_data, prob, feature_explanation, memory_context, safety, evidence_status
             )
             return f"{fallback} Không thể tạo giải thích bằng LLM; đang dùng nội dung dự phòng."
 
@@ -55,7 +59,7 @@ class ExplanationAgent:
         patient_data,
         prob,
         feature_explanation=None,
-        similar_cases=None,
+        memory_context=None,
         safety=None,
         evidence_status=None,
     ):
@@ -65,12 +69,7 @@ class ExplanationAgent:
             driver_text = self._driver_text(feature_explanation)
         else:
             driver_text = self._threshold_text(patient_data)
-        memory_text = ""
-        if similar_cases:
-            memory_text = (
-                f"Tìm thấy {len(similar_cases)} hồ sơ tương tự đã lưu; đây là các dự đoán"
-                " trước đây của mô hình, chưa phải kết quả bệnh được xác nhận."
-            )
+        memory_text = describe_memory(memory_context)
 
         return (
             f"Mô hình ước tính nguy cơ {prob:.1%} với BMI tính được là {bmi:.1f}. "

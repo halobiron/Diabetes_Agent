@@ -60,6 +60,25 @@ const STEPS: Step[] = [
     summary: (f) => `${f.age} tuổi, ${f.sex === "male" ? "nam" : "nữ"}, ${f.height_cm} cm, ${f.weight_kg} kg, huyết áp ${f.bp}`,
     body: ({ form, set, bmi }) => (
       <div className="space-y-5">
+        <div>
+          <label htmlFor="patient-id" className="field-label mb-1.5 block">Mã hồ sơ (nếu đã có)</label>
+          <div className="flex flex-wrap gap-2">
+            <input
+              id="patient-id"
+              type="text"
+              value={form.patient_id ?? ""}
+              onChange={(event) => set("patient_id", event.target.value)}
+              maxLength={64}
+              autoCapitalize="none"
+              spellCheck={false}
+              aria-describedby="patient-id-help"
+              className="min-h-12 min-w-0 flex-1 rounded-xl border-2 border-borderSoft bg-canvas px-3 text-base focus:border-info focus:outline-none"
+              placeholder="Để trống để tạo mã mới"
+            />
+            {form.patient_id ? <button type="button" className="btn-secondary" onClick={() => set("patient_id", "")}>Tạo mã mới</button> : null}
+          </div>
+          <p id="patient-id-help" className="mt-2 text-sm text-muted">Dùng lại cùng mã để so sánh với lần trước. Mã gồm chữ không dấu, số, dấu chấm, gạch nối hoặc gạch dưới. Với người khác, hãy tạo mã mới.</p>
+        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Stepper label="Tuổi" unit="tuổi" value={form.age} min={0} max={120} step={1} onChange={(v) => set("age", v)} />
           <div>
@@ -269,6 +288,7 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
       ) : (
         <section key="summary" className="step-in">
           <Say id="tiep" mood={isPending ? "think" : "happy"} size={96} text="Xong rồi! Bạn xem lại hồ sơ nhé. Cả đội sẵn sàng xem giúp bạn." />
+          <p className="mt-5 break-words text-sm text-muted">{form.patient_id?.trim() ? `Mã hồ sơ: ${form.patient_id.trim()}` : "Một mã hồ sơ mới sẽ được tạo khi phân tích. Lưu lại mã trong phần Lịch sử để dùng cho lần sau."}</p>
           <ul className="mt-6 divide-y divide-borderSoft rounded-3xl border-2 border-borderSoft bg-panel px-5 shadow-console">
             {STEPS.map((s, i) => (
               <li key={s.id} className="flex items-center gap-3 py-3">

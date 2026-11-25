@@ -11,14 +11,14 @@
 \contentsline {figure}{\numberline {4.4}{\ignorespaces Đường hiệu chuẩn}}{15}{figure.caption.13}%
 \contentsline {figure}{\numberline {4.5}{\ignorespaces Ma trận nhầm lẫn tại ngưỡng nhị phân}}{15}{figure.caption.13}%
 \contentsline {figure}{\numberline {4.6}{\ignorespaces Phân bố xác suất theo nhãn và hai mốc phân tầng (thang log)}}{16}{figure.caption.14}%
-\contentsline {figure}{\numberline {4.7}{\ignorespaces Đồ thị tri thức về ĐTĐ (nút tô màu theo nhãn: Condition, RiskFactor, Test, Intervention)\textcolor {red}{; vẽ lại từ Neo4j ngày 23/11/2026}}}{18}{figure.caption.16}%
-\contentsline {figure}{\numberline {4.8}{\ignorespaces Reward trung bình và tỉ lệ bỏ sót ca cần chuyển tuyến của bốn chiến lược (mô phỏng)\textcolor {red}{; vẽ lại ngày 23/11/2026}}}{23}{figure.caption.22}%
+\contentsline {figure}{\numberline {4.7}{\ignorespaces Đồ thị tri thức về ĐTĐ (nút tô màu theo nhãn: Condition, RiskFactor, Test, Intervention)}}{18}{figure.caption.16}%
+\contentsline {figure}{\numberline {4.8}{\ignorespaces Reward trung bình và tỉ lệ bỏ sót ca cần chuyển tuyến của bốn chiến lược (mô phỏng)}}{23}{figure.caption.22}%
 \addvspace {10\p@ }
-\contentsline {figure}{\numberline {5.1}{\ignorespaces Màn nhập hồ sơ: Bé Tiếp hỏi số đo cơ bản và tự tính BMI\textcolor {red}{; khung hỏi đáp ở bên phải}}}{30}{figure.caption.25}%
+\contentsline {figure}{\numberline {5.1}{\ignorespaces Màn nhập hồ sơ: Bé Tiếp hỏi số đo cơ bản và tự tính BMI}}{30}{figure.caption.25}%
 \contentsline {figure}{\numberline {5.2}{\ignorespaces Kết quả: mức nguy cơ, hướng xử trí và câu hỏi bổ sung theo nhóm}}{31}{figure.caption.26}%
-\contentsline {figure}{\numberline {5.3}{\ignorespaces Ông Mô giải thích kết quả và biểu đồ tác động của đặc trưng \textcolor {red}{(tab Vì sao)}}}{32}{figure.caption.27}%
-\contentsline {figure}{\numberline {5.4}{\ignorespaces Cô Chứng trích dẫn bằng chứng; Chú Luật kiểm tra an toàn \textcolor {red}{và thang chỉ số tham khảo (tab Bằng chứng và An toàn)}}}{33}{figure.caption.28}%
-\contentsline {figure}{\numberline {5.5}{\ignorespaces \textcolor {red}{Bạn Gợi mô phỏng ``nếu thay đổi'' (tab Nếu thay đổi)}}}{34}{figure.caption.29}%
-\contentsline {figure}{\numberline {5.6}{\ignorespaces \textcolor {red}{Mô hình đã chấm và} \emph {trace} của lượt xử lý \textcolor {red}{(tab Kỹ thuật)}}}{35}{figure.caption.30}%
-\contentsline {figure}{\numberline {5.7}{\ignorespaces \textcolor {red}{Tab Tri thức: đồ thị tri thức đọc từ Neo4j, tô nổi phần đã dùng cho hồ sơ}}}{36}{figure.caption.31}%
-\contentsline {figure}{\numberline {5.8}{\ignorespaces \textcolor {red}{Hỏi đáp tự do có trích dẫn (\texttt {/v1/chat}), câu hỏi ``Béo phì ảnh hưởng đến nguy cơ tiểu đường thế nào?''}}}{37}{figure.caption.32}%
+\contentsline {figure}{\numberline {5.3}{\ignorespaces Ông Mô giải thích kết quả và biểu đồ tác động của đặc trưng}}{32}{figure.caption.27}%
+\contentsline {figure}{\numberline {5.4}{\ignorespaces Cô Chứng trích dẫn bằng chứng; Chú Luật kiểm tra an toàn}}{33}{figure.caption.28}%
+\contentsline {figure}{\numberline {5.5}{\ignorespaces Bạn Gợi mô phỏng ``nếu thay đổi''}}{34}{figure.caption.29}%
+\contentsline {figure}{\numberline {5.6}{\ignorespaces Mô hình đã chấm và \emph {trace} của lượt xử lý}}{35}{figure.caption.30}%
+\contentsline {figure}{\numberline {5.7}{\ignorespaces Tab Tri thức: đồ thị tri thức đọc từ Neo4j, tô nổi phần đã dùng cho hồ sơ}}{36}{figure.caption.31}%
+\contentsline {figure}{\numberline {5.8}{\ignorespaces Hỏi đáp tự do có trích dẫn (\texttt {/v1/chat}), câu hỏi ``Béo phì ảnh hưởng đến nguy cơ tiểu đường thế nào?''}}{37}{figure.caption.32}%

@@ -19,7 +19,7 @@ export type CastMember = {
 export const CAST: Record<CastId, CastMember> = {
   tiep: { id: "tiep", name: "Bé Tiếp", role: "Tiếp đón, hỏi hồ sơ", ink: "#a8530d", tint: "#ffe3bd" },
   mo: { id: "mo", name: "Ông Mô", role: "Mô hình dự đoán, giải thích", ink: "#4b3fa8", tint: "#dcd7f7" },
-  nho: { id: "nho", name: "Bà Nhớ", role: "Bộ nhớ hồ sơ tương tự", ink: "#8a2f6b", tint: "#f6d8ea" },
+  nho: { id: "nho", name: "Bà Nhớ", role: "Lịch sử đánh giá của bạn", ink: "#8a2f6b", tint: "#f6d8ea" },
   chung: { id: "chung", name: "Cô Chứng", role: "Truy xuất bằng chứng", ink: "#1b6b4d", tint: "#cdeedd" },
   luat: { id: "luat", name: "Chú Luật", role: "Luật an toàn", ink: "#b3261e", tint: "#ffd5d0" },
   goi: { id: "goi", name: "Bạn Gợi", role: "Khuyến nghị, what-if", ink: "#0b6b86", tint: "#cdebf4" },
@@ -30,7 +30,7 @@ export const COMPONENT_CAST: Record<string, { cast: CastId; label: string }> = {
   risk_model: { cast: "mo", label: "Mô hình dự đoán" },
   feature_explainer: { cast: "mo", label: "Giải thích đặc trưng" },
   explainer: { cast: "mo", label: "Giải thích bằng lời" },
-  memory_search: { cast: "nho", label: "Tìm hồ sơ tương tự" },
+  memory_search: { cast: "nho", label: "Đọc lịch sử theo mã hồ sơ" },
   memory_store: { cast: "nho", label: "Lưu hồ sơ vào bộ nhớ" },
   retriever: { cast: "chung", label: "Truy xuất bằng chứng (KB + RAG)" },
   safety_guard: { cast: "luat", label: "Kiểm tra luật an toàn" },

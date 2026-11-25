@@ -30,7 +30,7 @@ class AdvisorAgent:
         )
 
     def recommend(
-        self, patient, safety, retrieved_context, similar_cases, feature_explanation, log
+        self, patient, safety, retrieved_context, memory_context, feature_explanation, log
     ):
         return log.guard(
             "recommender",
@@ -38,7 +38,7 @@ class AdvisorAgent:
                 patient,
                 safety["effective_risk"],
                 retrieved_context=retrieved_context,
-                similar_cases=similar_cases,
+                memory_context=memory_context,
                 safety=safety,
                 feature_explanation=feature_explanation,
             ),
@@ -47,14 +47,14 @@ class AdvisorAgent:
             on_failure="dùng văn bản cố định",
         )
 
-    def explain(self, patient, prob, feature_explanation, similar_cases, safety, status, log):
+    def explain(self, patient, prob, feature_explanation, memory_context, safety, status, log):
         return log.guard(
             "explainer",
             lambda: self.explainer.explain(
                 patient,
                 prob,
                 feature_explanation=feature_explanation,
-                similar_cases=similar_cases,
+                memory_context=memory_context,
                 safety=safety,
                 evidence_status=status,
             ),

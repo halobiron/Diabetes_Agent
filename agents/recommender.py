@@ -4,6 +4,7 @@ from openai import OpenAI
 
 from agents.llm_context import supplied_features, supplied_inputs, unknown_inputs_instruction
 from agents.retriever import evidence_status, excerpt
+from memory.context import describe_memory
 from tools.vietnamese import ESCALATION_LABELS, feature_label
 
 
@@ -17,13 +18,13 @@ class RecommendationAgent:
         patient_data,
         risk,
         retrieved_context=None,
-        similar_cases=None,
+        memory_context=None,
         safety=None,
         feature_explanation=None,
     ):
         if self.client is None:
             return self._fallback_recommendation(
-                patient_data, risk, retrieved_context, similar_cases, safety, feature_explanation
+                patient_data, risk, retrieved_context, memory_context, safety, feature_explanation
             )
 
         prompt = f"""
@@ -32,7 +33,7 @@ class RecommendationAgent:
         Risk level: {risk}
         Numbered guideline evidence:
         {self._evidence_block(retrieved_context)}
-        Similar prior cases (earlier model predictions, not confirmed outcomes): {similar_cases}
+        Same-patient assessment history: {describe_memory(memory_context)}
         Safety assessment: {safety}
         Main model risk drivers: {self._drivers(supplied_features(feature_explanation))}
 
@@ -40,6 +41,11 @@ class RecommendationAgent:
         recommendation with its evidence number in square brackets, e.g. [1]. Use only
         the numbered evidence above for guideline claims; if it does not cover something,
         say there is no supporting evidence instead of inventing a source.
+        Use history to describe supplied measurement changes, not to establish diagnoses
+        or treatment effectiveness, and never relax current safety rules based on history.
+        Never compare probabilities across model versions.
+        Put all history observations in a final separate section titled
+        "Lịch sử đánh giá:"; do not present past measurements as action items.
         Viết hoàn toàn bằng tiếng Việt. Giữ nguyên số trích dẫn và tên tài liệu gốc.
         """
 
@@ -50,7 +56,7 @@ class RecommendationAgent:
             return response.choices[0].message.content + self._sources_note(retrieved_context)
         except Exception:
             fallback = self._fallback_recommendation(
-                patient_data, risk, retrieved_context, similar_cases, safety, feature_explanation
+                patient_data, risk, retrieved_context, memory_context, safety, feature_explanation
             )
             return f"{fallback} Không thể tạo khuyến nghị bằng LLM; đang dùng nội dung dự phòng."
 
@@ -59,7 +65,7 @@ class RecommendationAgent:
         patient_data,
         risk,
         retrieved_context=None,
-        similar_cases=None,
+        memory_context=None,
         safety=None,
         feature_explanation=None,
     ):
@@ -71,12 +77,9 @@ class RecommendationAgent:
             recommendation = "Nên chăm sóc dự phòng định kỳ, vận động phù hợp, ăn uống cân bằng và theo dõi sức khỏe thường xuyên."
 
         context_note = self._context_note(retrieved_context)
-        memory_note = ""
-        if similar_cases:
-            memory_note = (
-                " Các hồ sơ tương tự đã lưu là dự đoán trước đây chưa có kết quả bệnh được xác nhận;"
-                " không dùng chúng làm bằng chứng về diễn biến bệnh của bệnh nhân này."
-            )
+        memory_note = (
+            f"\n\nLịch sử đánh giá: {describe_memory(memory_context)}" if memory_context else ""
+        )
         safety_note = self._safety_note(safety)
         drivers = self._drivers(feature_explanation)
         driver_note = (
@@ -87,8 +90,8 @@ class RecommendationAgent:
             recommendation
             + driver_note
             + context_note
-            + memory_note
             + safety_note
+            + memory_note
             + self._sources_note(retrieved_context)
         )
 
@@ -107,7 +110,8 @@ class RecommendationAgent:
             )
 
         points = " ".join(
-            f"{excerpt(item['text'], 260)} [{number}]" for number, item in enumerate(retrieved_context, 1)
+            f"{excerpt(item['text'], 260)} [{number}]"
+            for number, item in enumerate(retrieved_context, 1)
         )
         note = f" Bằng chứng hướng dẫn: {points}"
         if status == "limited":

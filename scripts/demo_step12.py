@@ -108,7 +108,7 @@ def run_api_scenarios(client, agent, audit_file):
 
     faults = [
         (agent.retriever, "retrieve", "retriever"),
-        (agent.memory, "find_similar", "memory_search"),
+        (agent.memory, "recall", "memory_search"),
         (agent.memory, "store", "memory_store"),
         (agent.feature_explainer, "explain", "feature_explainer"),
         (agent.explainer, "explain", "explainer"),
@@ -131,9 +131,9 @@ def run_api_scenarios(client, agent, audit_file):
     assert response.status_code == 422
     records.append(record("missing_required_data", response))
 
-    repeated = predict("repeat_profile_memory")
-    assert repeated["similar_cases"]
-    assert all(c["metadata"]["outcome_confirmed"] is False for c in repeated["similar_cases"])
+    repeated = predict("repeat_profile_memory", {**COMPLETE, "patient_id": full["patient_id"]})
+    assert repeated["memory_context"]["assessment_count"] > 0
+    assert repeated["memory_context"]["previous"]["metadata"]["outcome_confirmed"] is False
     response = client.get("/history?limit=100")
     assert response.status_code == 200 and response.json()["records"]
     records.append(record("history", response))

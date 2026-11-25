@@ -6,7 +6,7 @@ from threading import Lock
 from typing import Optional
 from uuid import uuid4
 
-from fastapi import Depends, FastAPI, Header, HTTPException
+from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -63,6 +63,9 @@ def _get_agent():
 
 
 class PatientRequest(BaseModel):
+    patient_id: Optional[str] = Field(
+        None, min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    )
     age: int = Field(..., ge=0, le=120)
     height_cm: Optional[float] = Field(None, ge=50, le=250)
     weight_kg: Optional[float] = Field(None, ge=2, le=300)
@@ -88,6 +91,11 @@ class PatientRequest(BaseModel):
     income: Optional[int] = Field(None, ge=1, le=8)
     # Optional yes/no inputs the patient declined to answer; the agent will not ask again.
     skipped_fields: list[str] = Field(default_factory=list, max_length=len(ASKABLE_FIELDS))
+
+    @field_validator("patient_id", mode="before")
+    @classmethod
+    def normalize_patient_id(cls, value):
+        return (value.strip() or None) if isinstance(value, str) else value
 
     @field_validator("skipped_fields")
     @classmethod
@@ -136,6 +144,9 @@ def _assess(patient):
 def _summary(result):
     safety = result.get("safety", {})
     return {
+        "patient_id": result["patient_id"],
+        "assessment_id": result["assessment_id"],
+        "memory_saved": result["memory_saved"],
         "risk": result["risk"],
         "probability": result["probability"],
         "confidence": safety.get("confidence_label"),
@@ -156,8 +167,15 @@ def predict_summary(patient: PatientRequest, _auth=Depends(_authorize)):
 
 
 @app.get("/history")
-def history(limit: int = 25, _auth=Depends(_authorize)):
-    return {"records": _get_agent().memory.get_all(limit=limit)}
+@app.get("/v1/history")
+def history(
+    limit: int = Query(25, ge=1, le=100),
+    patient_id: Optional[str] = Query(
+        None, min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    ),
+    _auth=Depends(_authorize),
+):
+    return {"records": _get_agent().memory.get_all(limit=limit, patient_id=patient_id)}
 
 
 @app.get("/v1/health")

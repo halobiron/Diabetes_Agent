@@ -109,11 +109,15 @@ class FakeModel:
 
 
 class FakeMemory:
-    def find_similar(self, patient):
-        return []
+    def recall(self, patient, prob, risk, model_version):
+        return {
+            "patient_id": patient["patient_id"],
+            "status": "first_assessment",
+            "assessment_count": 0,
+        }
 
-    def store(self, *args):
-        pass
+    def store(self, *args, **kwargs):
+        return kwargs.get("assessment_id")
 
 
 class FakeAgent:

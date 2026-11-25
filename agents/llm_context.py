@@ -12,7 +12,7 @@ from tools.vietnamese import feature_label
 # Model feature -> key of the same input in the prepared patient dict.
 PATIENT_KEY = {**RiskModel.FEATURE_KEYS, "Sex": "sex"}
 # Bookkeeping keys that describe the request rather than the patient.
-INTERNAL_KEYS = ("defaulted_fields", "skipped_fields", "optional_field_count")
+INTERNAL_KEYS = ("defaulted_fields", "skipped_fields", "optional_field_count", "patient_id")
 
 
 def supplied_inputs(patient):

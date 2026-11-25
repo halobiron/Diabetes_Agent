@@ -25,12 +25,8 @@ def build_agent():
 
     explainer = ExplanationAgent()
     recommender = RecommendationAgent()
-    # Age/BMI spreads come from the training data; bp has none, so use settings.
-    scales = {
-        "bp": settings.similarity_bp_scale,
-        **model.input_spreads(),
-    }
-    memory = MemoryAgent(CHROMA_PATH, scales=scales, max_distance=settings.similarity_max_distance)
+    # Patient history is looked up by ID; it does not need similarity scales.
+    memory = MemoryAgent(CHROMA_PATH)
     feature_explainer = FeatureExplainer(model)
     retriever = RetrievalAgent.from_settings(settings)
     safety_guard = SafetyGuard(max_defaulted_penalty=settings.data_quality_max_penalty)

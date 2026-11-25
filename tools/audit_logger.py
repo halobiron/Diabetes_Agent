@@ -14,6 +14,9 @@ class AuditLogger:
         entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "request_id": request_id,
+            "patient_id": result.get("patient_id"),
+            "assessment_id": result.get("assessment_id"),
+            "memory_saved": result.get("memory_saved"),
             "patient": {
                 "age": patient.get("age"),
                 "bmi": patient.get("bmi"),

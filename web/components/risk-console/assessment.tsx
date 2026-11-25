@@ -15,6 +15,7 @@ import { InputScoreDetails } from "./input-review";
 import { KbPanel } from "./kb-explorer";
 import { MeasurementScales } from "./measurement-scales";
 import { ModelStrip } from "./model-strip";
+import { PatientHistory } from "./patient-history";
 import { WhatIf } from "./what-if";
 
 const SENTENCE_SPLIT = /(?<=[.!?])\s+(?=[A-ZÀ-Ỹ])/;
@@ -36,7 +37,10 @@ type EvidenceItem = { text: string; n: number; source?: { title: string; url?: s
 function parseRecommendation(text: string) {
   const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
   const sourceStart = lines.findIndex((l) => /^nguồn/i.test(l) || /^\[\d+\]\s.*https?:\/\//.test(l));
-  const body = (sourceStart === -1 ? lines : lines.slice(0, sourceStart)).join(" ");
+  const fullBody = (sourceStart === -1 ? lines : lines.slice(0, sourceStart)).join(" ");
+  // History has its own tab; measurement changes are not action items.
+  const historyStart = /lịch sử đánh giá\s*:/i.exec(fullBody);
+  const body = historyStart ? fullBody.slice(0, historyStart.index).trim() : fullBody;
   const sourceMap = new Map<number, { title: string; url?: string }>();
   for (const line of sourceStart === -1 ? [] : lines.slice(sourceStart)) {
     const m = /^\[(\d+)\]\s*(.*?)(?:\s+-\s+(https?:\/\/\S+))?$/.exec(line);
@@ -59,7 +63,7 @@ function parseRecommendation(text: string) {
   return { actions, evidence, note };
 }
 
-type TabId = "explain" | "evidence" | "kb" | "safety" | "whatif" | "ask" | "tech";
+type TabId = "explain" | "evidence" | "kb" | "safety" | "whatif" | "ask" | "tech" | "history";
 type TabMeta = { id: TabId; label: string; cast: CastId; count?: number; alert?: boolean; intro: string };
 
 /**
@@ -72,6 +76,7 @@ export function Assessment({ result, scales }: { result: PredictionResult; scale
 
   const tabs: TabMeta[] = [
     { id: "explain", label: "Vì sao", cast: "mo", intro: "Các yếu tố khiến mô hình ra kết quả này." },
+    ...(result.memory_context ? [{ id: "history" as const, label: "Lịch sử", cast: "nho" as const, intro: "Các lần đánh giá của cùng mã hồ sơ và thay đổi so với lần gần nhất." }] : []),
     { id: "evidence", label: "Bằng chứng", cast: "chung", count: evidence.length || undefined, intro: "Hướng dẫn y khoa sát với hồ sơ của bạn." },
     { id: "kb", label: "Tri thức", cast: "nho", intro: "Phần tô nổi là phần đã dùng cho hồ sơ của bạn." },
     { id: "safety", label: "An toàn", cast: "luat", alert: urgent, intro: urgent ? "Có số đo cần chú ý, xem trước nhé." : "Số đo thực tế đối chiếu với luật an toàn." },
@@ -103,6 +108,7 @@ export function Assessment({ result, scales }: { result: PredictionResult; scale
   }
 
   const panels: Record<TabId, ReactNode> = {
+    history: <PatientHistory result={result} />,
     explain: <ExplainTab result={result} />,
     evidence: <EvidenceTab evidence={evidence} note={note} />,
     kb: <KbPanel result={result} />,

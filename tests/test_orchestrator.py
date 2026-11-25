@@ -32,15 +32,20 @@ class FakeMemory:
         self.fail_store = fail_store
         self.stored = []
 
-    def find_similar(self, patient):
+    def recall(self, patient, prob, risk, model_version):
         if self.fail_search:
             raise RuntimeError("chroma down")
-        return []
+        return {
+            "patient_id": patient["patient_id"],
+            "status": "first_assessment",
+            "assessment_count": 0,
+        }
 
-    def store(self, *args):
+    def store(self, *args, **kwargs):
         if self.fail_store:
             raise RuntimeError("disk full")
         self.stored.append(args)
+        return kwargs.get("assessment_id")
 
 
 class FakeFeatureExplainer:

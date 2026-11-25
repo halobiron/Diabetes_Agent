@@ -22,7 +22,7 @@
 \contentsline {section}{\numberline {4.2}Knowledge Base và RAG}{17}{section.4.2}%
 \contentsline {subsection}{\numberline {4.2.1}Nguồn tri thức và đồ thị Neo4j}{17}{subsection.4.2.1}%
 \contentsline {subsection}{\numberline {4.2.2}Truy xuất: ngữ nghĩa kết hợp đồ thị}{20}{subsection.4.2.2}%
-\contentsline {subsection}{\numberline {4.2.3}\textcolor {red}{Đánh giá truy xuất}}{20}{subsection.4.2.3}%
+\contentsline {subsection}{\numberline {4.2.3}Đánh giá truy xuất}{20}{subsection.4.2.3}%
 \contentsline {section}{\numberline {4.3}Bộ luật và Reinforcement Learning}{22}{section.4.3}%
 \contentsline {subsection}{\numberline {4.3.1}Bộ luật an toàn và xử lý xung đột}{22}{subsection.4.3.1}%
 \contentsline {subsection}{\numberline {4.3.2}Agent chọn bước hỗ trợ bằng Q-learning}{22}{subsection.4.3.2}%
