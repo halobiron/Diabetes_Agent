@@ -11,6 +11,7 @@ import { ChipGroup, HABITS, HISTORY, type GroupItem } from "./grouped-choices";
 import { SliderField, Toggle } from "./form-controls";
 import { Choice, Stepper } from "./inputs";
 import type { PatientFieldChange } from "./types";
+import { ProfileField, type ProfileLookupState } from "./profile-field";
 
 type Props = {
   initialStep?: string | null;
@@ -22,6 +23,8 @@ type Props = {
   onSubmit: () => void;
   onFieldChange: PatientFieldChange;
   onCancel: () => void;
+  profileLookup: ProfileLookupState;
+  onLoadProfile: () => Promise<boolean>;
 };
 
 type Reaction = { mood: Mood; text: string };
@@ -57,28 +60,9 @@ const STEPS: Step[] = [
     cast: "tiep",
     label: "Số đo cơ thể",
     ask: "Chào bạn, mình là Bé Tiếp! Cho mình xin vài số đo cơ bản của bạn nhé. Mình sẽ tự tính BMI giúp bạn.",
-    summary: (f) => `${f.age} tuổi, ${f.sex === "male" ? "nam" : "nữ"}, ${f.height_cm} cm, ${f.weight_kg} kg, huyết áp ${f.bp}`,
+    summary: (f) => `${f.age} tuổi, ${f.sex == null ? "chưa rõ giới tính" : f.sex === "male" ? "nam" : "nữ"}, ${f.height_cm != null && f.weight_kg != null ? `${f.height_cm} cm, ${f.weight_kg} kg` : `BMI ${f.bmi ?? "chưa rõ"}`}, huyết áp ${f.bp}`,
     body: ({ form, set, bmi }) => (
       <div className="space-y-5">
-        <div>
-          <label htmlFor="patient-id" className="field-label mb-1.5 block">Mã hồ sơ (nếu đã có)</label>
-          <div className="flex flex-wrap gap-2">
-            <input
-              id="patient-id"
-              type="text"
-              value={form.patient_id ?? ""}
-              onChange={(event) => set("patient_id", event.target.value)}
-              maxLength={64}
-              autoCapitalize="none"
-              spellCheck={false}
-              aria-describedby="patient-id-help"
-              className="min-h-12 min-w-0 flex-1 rounded-xl border-2 border-borderSoft bg-canvas px-3 text-base focus:border-info focus:outline-none"
-              placeholder="Để trống để tạo mã mới"
-            />
-            {form.patient_id ? <button type="button" className="btn-secondary" onClick={() => set("patient_id", "")}>Tạo mã mới</button> : null}
-          </div>
-          <p id="patient-id-help" className="mt-2 text-sm text-muted">Dùng lại cùng mã để so sánh với lần trước. Mã gồm chữ không dấu, số, dấu chấm, gạch nối hoặc gạch dưới. Với người khác, hãy tạo mã mới.</p>
-        </div>
         <div className="grid gap-4 sm:grid-cols-2">
           <Stepper label="Tuổi" unit="tuổi" value={form.age} min={0} max={120} step={1} onChange={(v) => set("age", v)} />
           <div>
@@ -91,9 +75,15 @@ const STEPS: Step[] = [
           <Stepper label="Chiều cao" unit="cm" value={form.height_cm} min={50} max={250} step={1} onChange={(v) => set("height_cm", v)} />
           <Stepper label="Cân nặng" unit="kg" value={form.weight_kg} min={2} max={300} step={0.5} onChange={(v) => set("weight_kg", v)} />
         </div>
+        {(form.height_cm == null || form.weight_kg == null) && form.bmi != null ? (
+          <div className="space-y-2">
+            <Stepper label="BMI đã lưu" unit="kg/m²" value={form.bmi} min={1} max={80} step={0.1} onChange={(v) => set("bmi", v)} />
+            <p className="text-sm text-muted">Hồ sơ cũ chỉ có BMI. Có thể cập nhật BMI hoặc bổ sung chiều cao và cân nặng thực tế.</p>
+          </div>
+        ) : null}
         <Stepper label="Huyết áp tâm thu (số trên)" unit="mmHg" value={form.bp} min={0} max={260} step={5} onChange={(v) => set("bp", v)} />
         <div className="flex items-baseline justify-between rounded-2xl bg-canvas px-5 py-3">
-          <span className="text-sm text-muted">BMI tự tính</span>
+          <span className="text-sm text-muted">{form.height_cm != null && form.weight_kg != null ? "BMI tự tính" : "BMI đã lưu"}</span>
           <strong className="text-3xl tabular-nums">{bmi.toFixed(1)}</strong>
         </div>
       </div>
@@ -162,7 +152,7 @@ const STEPS: Step[] = [
     cast: "chung",
     label: "Cảm nhận chung",
     ask: "Mình là Cô Chứng. Nhìn chung bạn thấy sức khỏe mình thế nào? Phần còn lại không bắt buộc.",
-    summary: (f) => `${GENERAL_HEALTH[f.general_health - 1] ?? f.general_health}, tinh thần kém ${f.mental_health_days} ngày, thể chất kém ${f.physical_health_days} ngày`,
+    summary: (f) => `${f.general_health == null ? "Chưa rõ sức khỏe chung" : GENERAL_HEALTH[f.general_health - 1]}, tinh thần kém ${f.mental_health_days ?? "chưa rõ"} ngày, thể chất kém ${f.physical_health_days ?? "chưa rõ"} ngày`,
     body: ({ form, set, answer }) => (
       <div className="space-y-5">
         <div className="grid grid-cols-5 gap-2">
@@ -209,7 +199,7 @@ const STEPS: Step[] = [
 
 const SUMMARY_INDEX = STEPS.length;
 
-export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSubmit, onFieldChange, onCancel, initialStep }: Props) {
+export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSubmit, onFieldChange, onCancel, initialStep, profileLookup, onLoadProfile }: Props) {
   const initialIndex = initialStep ? STEPS.findIndex((step) => step.id === initialStep) : -1;
   const [index, setIndex] = useState(initialIndex >= 0 ? initialIndex : hasResult ? SUMMARY_INDEX : 0);
   const [reaction, setReaction] = useState<Reaction | null>(null);
@@ -224,7 +214,8 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
     setIndex(Math.max(0, Math.min(SUMMARY_INDEX, next)));
   }
 
-  function advance() {
+  async function advance() {
+    if (index === 0 && !(await onLoadProfile())) return;
     go(fromSummary ? SUMMARY_INDEX : index + 1);
   }
 
@@ -274,13 +265,16 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
             </div>
           ) : null}
 
-          <div className="mt-6 rounded-3xl border-2 border-borderSoft bg-panel p-5 shadow-console md:p-6">{step.body(ctx)}</div>
+          <div className="mt-6 space-y-5 rounded-3xl border-2 border-borderSoft bg-panel p-5 shadow-console md:p-6">
+            {step.id === "body" ? <ProfileField value={form.patient_id ?? ""} state={profileLookup} onChange={(value) => onFieldChange("patient_id", value)} onLoad={onLoadProfile} /> : null}
+            <fieldset disabled={profileLookup.status === "loading"} className="min-w-0 disabled:opacity-60">{step.body(ctx)}</fieldset>
+          </div>
 
           <div className="mt-6 flex items-center justify-between gap-3">
             <button type="button" className="btn-secondary" onClick={() => go(index - 1)} disabled={index === 0}>
               <ArrowLeft aria-hidden="true" className="h-4 w-4" /> Quay lại
             </button>
-            <button type="button" className="btn-primary" onClick={advance}>
+            <button type="button" className="btn-primary" onClick={advance} disabled={profileLookup.status === "loading"}>
               {fromSummary ? "Xong, về phần xem lại" : "Tiếp theo"} <ArrowRight aria-hidden="true" className="h-4 w-4" />
             </button>
           </div>

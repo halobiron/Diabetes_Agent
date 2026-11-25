@@ -183,6 +183,7 @@ docker compose up --build
 | `POST /predict`, `POST /v1/predict` | Full multi-agent analysis |
 | `POST /predict/summary`, `POST /v1/predict/summary` | Condensed triage output |
 | `GET /history`, `GET /v1/history` | Assessment history; filter by `patient_id`, `limit` (1–100) |
+| `GET /patients/{patient_id}`, `GET /v1/patients/{patient_id}` | Latest editable input snapshot for the profile; 404 if absent, 503 if storage is unavailable |
 
 Example:
 
@@ -196,7 +197,9 @@ Optional auth: `REQUIRE_API_TOKEN=true` and `Authorization: Bearer <API_TOKEN>`.
 
 `POST /v1/predict` accepts an optional `patient_id` (1–64 ASCII letters, digits, dots,
 underscores or hyphens, starting with a letter or digit). Omit it or leave it blank to
-create a new profile. The response returns `patient_id`, `assessment_id`, `memory_saved`
+create a new profile with a short code such as `HS-7K3P9W2M6Q`. Existing IDs are unchanged
+and still accepted. New codes use random characters without `0`, `1`, `I`, or `O` and
+are checked against stored IDs before use. The response returns `patient_id`, `assessment_id`, `memory_saved`
 and structured `memory_context`. Reuse that exact profile ID for later assessments:
 
 ```json
@@ -211,9 +214,21 @@ Probabilities are compared only for the same known model version; differences do
 confirm clinical improvement or disease progression. Both advice agents receive the same
 history through a shared formatter, including their built-in fallbacks. Save the profile
 ID to reuse it after reloading; clear it with
-**Tạo mã mới** when assessing someone else. Existing records remain intact; records
+**Hồ sơ mới** when assessing someone else. Existing records remain intact; records
 without a profile ID are never automatically linked to a new patient. The existing
 Chroma collection and embedding format are retained; history lookup uses metadata.
+
+On the intake form, enter an ID and press Enter or leave the field to load the latest
+saved inputs. The form opens directly for editing; change only what needs updating,
+then continue to review and submit. Switching IDs clears the previous patient's values.
+A late lookup response cannot replace a newer selection. Leave the ID empty for a new profile.
+Loading a profile does not run the model or save another assessment.
+
+New assessments preserve the original request alongside the prepared model input.
+Existing `patient_json` records are converted to editable request fields on read:
+numeric booleans and sex are normalized, legacy field aliases are mapped, and imputed
+optional values remain unknown. BMI-only profiles keep their BMI without inventing a
+height or weight. The profile endpoints use the same optional token auth as prediction/history.
 
 `GET /v1/history?patient_id=demo-001&limit=25` returns only that profile's assessments.
 Profile IDs identify records; they are not authentication credentials or per-patient

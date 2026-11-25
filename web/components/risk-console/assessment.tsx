@@ -5,6 +5,7 @@ import { AlertTriangle, Check, ChevronDown, ListChecks, ShieldCheck } from "luci
 import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 
 import { ESCALATION_LABELS, featureLabel, formatFeatureValue, METHOD_LABELS } from "@/lib/labels";
+import { assessmentContent, type EvidenceItem } from "@/lib/assessment-content";
 import type { EvidenceTrailItem, MeasurementScale, PredictionResult } from "@/types/healthcare";
 
 import { AgentTrace } from "./agent-trace";
@@ -14,11 +15,10 @@ import { CitationLink } from "./citation";
 import { InputScoreDetails } from "./input-review";
 import { KbPanel } from "./kb-explorer";
 import { MeasurementScales } from "./measurement-scales";
+import { Markdown } from "./markdown";
 import { ModelStrip } from "./model-strip";
 import { PatientHistory } from "./patient-history";
 import { WhatIf } from "./what-if";
-
-const SENTENCE_SPLIT = /(?<=[.!?])\s+(?=[A-ZÀ-Ỹ])/;
 
 const ESCALATION_TITLE = {
   routine_followup: "Cần lưu ý",
@@ -28,41 +28,6 @@ const ESCALATION_TITLE = {
 
 const RULE_SCALE: Record<string, string> = { BP: "bp" };
 
-type EvidenceItem = { text: string; n: number; source?: { title: string; url?: string } };
-
-/**
- * The backend writes: actions, "Bằng chứng hướng dẫn:" then "<passage> [n]" pairs
- * (the marker FOLLOWS its passage), then a "[n] Title - url" source list.
- */
-function parseRecommendation(text: string) {
-  const lines = text.split(/\n+/).map((line) => line.trim()).filter(Boolean);
-  const sourceStart = lines.findIndex((l) => /^nguồn/i.test(l) || /^\[\d+\]\s.*https?:\/\//.test(l));
-  const fullBody = (sourceStart === -1 ? lines : lines.slice(0, sourceStart)).join(" ");
-  // History has its own tab; measurement changes are not action items.
-  const historyStart = /lịch sử đánh giá\s*:/i.exec(fullBody);
-  const body = historyStart ? fullBody.slice(0, historyStart.index).trim() : fullBody;
-  const sourceMap = new Map<number, { title: string; url?: string }>();
-  for (const line of sourceStart === -1 ? [] : lines.slice(sourceStart)) {
-    const m = /^\[(\d+)\]\s*(.*?)(?:\s+-\s+(https?:\/\/\S+))?$/.exec(line);
-    if (m) sourceMap.set(Number(m[1]), { title: m[2], url: m[3] });
-  }
-
-  const label = /bằng chứng hướng dẫn\s*:/i.exec(body);
-  const before = label ? body.slice(0, label.index) : body;
-  const after = label ? body.slice(label.index + label[0].length) : "";
-  const actions = before.split(SENTENCE_SPLIT).map((x) => x.trim()).filter(Boolean);
-
-  const evidence: EvidenceItem[] = [];
-  let end = 0;
-  for (const m of after.matchAll(/([\s\S]+?)\s*\[(\d+)\]/g)) {
-    const n = Number(m[2]);
-    evidence.push({ text: m[1].trim(), n, source: sourceMap.get(n) });
-    end = (m.index ?? 0) + m[0].length;
-  }
-  const note = after.slice(end).trim();
-  return { actions, evidence, note };
-}
-
 type TabId = "explain" | "evidence" | "kb" | "safety" | "whatif" | "ask" | "tech" | "history";
 type TabMeta = { id: TabId; label: string; cast: CastId; count?: number; alert?: boolean; intro: string };
 
@@ -71,12 +36,12 @@ type TabMeta = { id: TabId; label: string; cast: CastId; count?: number; alert?:
  * cột phụ luôn thấy "Việc nên làm". Cảnh báo an toàn chỉ hiện thành một dải khi có số đo nguy hiểm.
  */
 export function Assessment({ result, scales }: { result: PredictionResult; scales: MeasurementScale[] }) {
-  const { actions, evidence, note } = parseRecommendation(result.recommendation);
+  const { actions, evidence, note } = useMemo(() => assessmentContent(result), [result]);
   const urgent = result.safety.alerts.length > 0;
 
   const tabs: TabMeta[] = [
     { id: "explain", label: "Vì sao", cast: "mo", intro: "Các yếu tố khiến mô hình ra kết quả này." },
-    ...(result.memory_context ? [{ id: "history" as const, label: "Lịch sử", cast: "nho" as const, intro: "Các lần đánh giá của cùng mã hồ sơ và thay đổi so với lần gần nhất." }] : []),
+    ...(result.memory_context ? [{ id: "history" as const, label: "Lịch sử", cast: "nho" as const, intro: "Thói quen và chỉ số nào bạn đã đổi qua từng lần đánh giá. Mục nào không đổi thì tôi không nhắc lại." }] : []),
     { id: "evidence", label: "Bằng chứng", cast: "chung", count: evidence.length || undefined, intro: "Hướng dẫn y khoa sát với hồ sơ của bạn." },
     { id: "kb", label: "Tri thức", cast: "nho", intro: "Phần tô nổi là phần đã dùng cho hồ sơ của bạn." },
     { id: "safety", label: "An toàn", cast: "luat", alert: urgent, intro: urgent ? "Có số đo cần chú ý, xem trước nhé." : "Số đo thực tế đối chiếu với luật an toàn." },
@@ -110,7 +75,7 @@ export function Assessment({ result, scales }: { result: PredictionResult; scale
   const panels: Record<TabId, ReactNode> = {
     history: <PatientHistory result={result} />,
     explain: <ExplainTab result={result} />,
-    evidence: <EvidenceTab evidence={evidence} note={note} />,
+    evidence: <EvidenceTab evidence={evidence} note={note} result={result} />,
     kb: <KbPanel result={result} />,
     safety: <SafetyTab result={result} scales={scales} />,
     whatif: result.what_if ? <WhatIf whatIf={result.what_if} /> : null,
@@ -237,14 +202,13 @@ function ExplainTab({ result }: { result: PredictionResult }) {
     () => result.feature_explanation.features.slice().sort((a, b) => b.magnitude - a.magnitude).slice(0, 8),
     [result.feature_explanation.features],
   );
-  const paragraphs = result.explanation.split(/\n+/).map((p) => p.trim()).filter(Boolean);
   return (
     <div className="space-y-6">
       <div className="flex gap-3">
         <Avatar id="mo" size={40} mood={result.risk === "High" ? "worried" : result.risk === "Low" ? "happy" : "think"} />
         <div className="min-w-0 space-y-2 text-sm leading-6 [overflow-wrap:anywhere]">
           <p className="font-semibold" style={{ color: CAST.mo.ink }}>Ông Mô giải thích</p>
-          {paragraphs.map((p) => <p key={p}>{p}</p>)}
+          <Markdown>{result.explanation}</Markdown>
         </div>
       </div>
       <div className="min-w-0">
@@ -258,7 +222,8 @@ function ExplainTab({ result }: { result: PredictionResult }) {
   );
 }
 
-function EvidenceTab({ evidence, note }: { evidence: EvidenceItem[]; note: string }) {
+function EvidenceTab({ evidence, note, result }: { evidence: EvidenceItem[]; note: string; result: PredictionResult }) {
+  const unavailable = result.degraded?.some((item) => item.component === "retriever");
   return (
     <div className="space-y-5">
       {evidence.length > 0 ? (
@@ -267,14 +232,10 @@ function EvidenceTab({ evidence, note }: { evidence: EvidenceItem[]; note: strin
             <li key={item.n} className="flex gap-3 rounded-xl border border-borderSoft p-3">
               <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold text-onAccent" style={{ background: CAST.chung.ink }}>{item.n}</span>
               <div className="min-w-0 [overflow-wrap:anywhere]">
-                <p className="text-sm leading-6">{item.text}</p>
-                {item.source ? (
+                <Markdown className="text-sm leading-6">{item.citation.text}</Markdown>
+                {item.citation.source_title ? (
                   <p className="mt-1 text-xs leading-5 text-muted">
-                    {item.source.url ? (
-                      <a href={item.source.url} target="_blank" rel="noreferrer" className="text-info underline underline-offset-2">{item.source.title}</a>
-                    ) : (
-                      item.source.title
-                    )}
+                    <CitationLink citation={item.citation} />
                   </p>
                 ) : null}
               </div>
@@ -282,9 +243,15 @@ function EvidenceTab({ evidence, note }: { evidence: EvidenceItem[]; note: strin
           ))}
         </ul>
       ) : (
-        <p className="text-sm text-muted">Chưa tìm được đoạn hướng dẫn nào đủ liên quan đến hồ sơ này.</p>
+        <div className="space-y-2 text-sm text-muted" role="status">
+          <p>{unavailable ? "Chưa tải được bằng chứng y khoa cho lần đánh giá này." : "Chưa tìm được đoạn hướng dẫn nào đủ liên quan đến hồ sơ này."}</p>
+          <p>Bạn có thể xem tab Tri thức hoặc đặt câu hỏi ở tab Hỏi đáp.</p>
+        </div>
       )}
-      {note ? <p className="text-xs leading-5 text-muted">{note}</p> : null}
+      {note ? <Markdown className="text-xs leading-5 text-muted">{note}</Markdown> : null}
+      {!note && evidence.length > 0 && result.trace?.evidence_status === "limited" ? (
+        <p className="text-xs leading-5 text-muted">Bằng chứng hỗ trợ còn hạn chế; cần xác nhận với bác sĩ.</p>
+      ) : null}
     </div>
   );
 }
@@ -337,7 +304,7 @@ function Drivers({ features, trail }: { features: PredictionResult["feature_expl
                 <div className="space-y-2 pb-3 pl-1">
                   {evidence.map((passage) => (
                     <blockquote key={passage.evidence_id} className="rounded-lg bg-canvas p-3 text-sm leading-6 text-muted">
-                      {passage.text}
+                      <Markdown>{passage.text}</Markdown>
                       <footer className="mt-1 text-xs"><CitationLink citation={passage} /></footer>
                     </blockquote>
                   ))}
@@ -390,15 +357,13 @@ function ActionsCard({ actions }: { actions: string[] }) {
         {actions.map((text, i) => {
           const on = done.has(i);
           return (
-            <li key={text}>
+            <li key={`${i}-${text}`} className={clsx("flex items-start gap-1 rounded-xl p-1", on && "bg-success/10")}>
               <button
                 type="button"
                 aria-pressed={on}
+                aria-label={`${on ? "Bỏ đánh dấu" : "Đánh dấu đã làm"} việc ${i + 1}`}
                 onClick={() => toggle(i)}
-                className={clsx(
-                  "flex w-full items-start gap-3 rounded-xl p-2.5 text-left transition-colors",
-                  on ? "bg-success/10" : "hover:bg-canvas",
-                )}
+                className="flex min-h-11 min-w-11 shrink-0 items-start justify-center rounded-lg pt-2.5 transition-colors hover:bg-canvas"
               >
                 <span
                   aria-hidden="true"
@@ -406,8 +371,8 @@ function ActionsCard({ actions }: { actions: string[] }) {
                 >
                   {on ? <Check className="h-3 w-3" /> : i + 1}
                 </span>
-                <span className={clsx("text-sm leading-6 [overflow-wrap:anywhere]", on && "text-muted line-through")}>{text}</span>
               </button>
+              <Markdown className={clsx("min-w-0 flex-1 py-2 text-sm leading-6", on && "text-muted line-through")}>{text}</Markdown>
             </li>
           );
         })}

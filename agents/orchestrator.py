@@ -12,6 +12,7 @@ from agents.dialogue import (
     retrieval_outcome,
 )
 from agents.retriever import evidence_status
+from memory.profiles import generate_patient_id
 from rl.environment import TERMINAL_ACTIONS
 from rl.state_tracker import StateTracker
 from tools.explainability import evidence_trail
@@ -140,7 +141,7 @@ class Orchestrator:
 
     def run(self, patient_data, request_id=None):
         log = RunLog(request_id, self._versions())
-        patient_id = patient_data.get("patient_id") or f"patient-{uuid4()}"
+        patient_id = patient_data.get("patient_id") or getattr(self.memory, "new_patient_id", generate_patient_id)()
         assessment_id = f"assessment-{uuid4()}"
         diagnosis = self.diagnosis_agent.diagnose({**patient_data, "patient_id": patient_id}, log)
         prob, patient = diagnosis["probability"], diagnosis["patient"]
@@ -226,6 +227,7 @@ class Orchestrator:
                 risk,
                 model_version=self.model.model_version,
                 assessment_id=assessment_id,
+                input_data=patient_data,
             ),
             None,
             detail=lambda value: "đã lưu hồ sơ",

@@ -16,11 +16,12 @@ export type RiskLevel = "Low" | "Medium" | "High";
 export type PatientInput = {
   patient_id?: string;
   age: number;
-  height_cm: number;
-  weight_kg: number;
+  height_cm: number | null;
+  weight_kg: number | null;
+  bmi?: number | null;
   bp: number;
   high_chol: boolean | null;
-  chol_check: boolean;
+  chol_check: boolean | null;
   smoker: boolean | null;
   stroke: boolean | null;
   heart_disease_or_attack: boolean | null;
@@ -28,16 +29,23 @@ export type PatientInput = {
   fruits: boolean | null;
   veggies: boolean | null;
   heavy_alcohol_consump: boolean | null;
-  any_healthcare: boolean;
-  no_doc_bc_cost: boolean;
-  general_health: number;
-  mental_health_days: number;
-  physical_health_days: number;
+  any_healthcare: boolean | null;
+  no_doc_bc_cost: boolean | null;
+  general_health: number | null;
+  mental_health_days: number | null;
+  physical_health_days: number | null;
   diff_walk: boolean | null;
-  sex: "female" | "male";
-  education: number;
-  income: number;
+  sex: "female" | "male" | null;
+  education: number | null;
+  income: number | null;
   skipped_fields?: string[];
+};
+
+export type PatientProfile = {
+  patient_id: string;
+  assessment_id: string;
+  saved_at: string;
+  input: PatientInput;
 };
 
 export type PreparedPatient = {
@@ -259,9 +267,25 @@ export type PredictionResult = {
   followup?: FollowupQuestion | null;
 };
 
+export type ChangeGroup = "habit" | "body" | "medical" | "profile";
+export type ChangeDirection = "better" | "worse" | "neutral";
+
+export type AssessmentChange = {
+  field: string;
+  label?: string;
+  previous: string | number;
+  current: string | number;
+  unit: string | null;
+  delta?: number | null;
+  group?: ChangeGroup;
+  direction?: ChangeDirection;
+};
+
 export type AssessmentRecord = {
   id: string;
   summary: string;
+  /** Changes since the assessment right before this one; null for the very first one. */
+  changes?: AssessmentChange[] | null;
   metadata: {
     patient_id?: string;
     assessment_id?: string;
@@ -284,7 +308,7 @@ export type PatientMemory = {
   assessment_count: number;
   previous: AssessmentRecord | null;
   recent_assessments: AssessmentRecord[];
-  changes: { field: string; previous: number; current: number; delta: number; unit: string }[];
+  changes: AssessmentChange[];
   prediction_comparison: {
     comparable: boolean;
     probability_delta: number | null;

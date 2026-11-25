@@ -7,6 +7,7 @@ from typing import Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
+from fastapi import Path as PathParameter
 from pydantic import BaseModel, Field, field_validator, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -176,6 +177,24 @@ def history(
     _auth=Depends(_authorize),
 ):
     return {"records": _get_agent().memory.get_all(limit=limit, patient_id=patient_id)}
+
+
+@app.get("/patients/{patient_id}")
+@app.get("/v1/patients/{patient_id}")
+def patient_profile(
+    patient_id: str = PathParameter(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
+    _auth=Depends(_authorize),
+):
+    try:
+        profile = _get_agent().memory.get_profile(patient_id)
+    except HTTPException:
+        raise
+    except Exception as exc:
+        logger.exception("Failed to load patient profile")
+        raise HTTPException(status_code=503, detail="Chưa đọc được hồ sơ. Vui lòng thử lại.") from exc
+    if profile is None:
+        raise HTTPException(status_code=404, detail="Mã này chưa có hồ sơ đã lưu.")
+    return profile
 
 
 @app.get("/v1/health")

@@ -10,6 +10,7 @@ import type { ChatReply } from "@/types/healthcare";
 import { Avatar, CAST } from "./agents";
 import { CitationLink } from "./citation";
 import { Fold } from "./fold";
+import { Markdown } from "./markdown";
 
 const EXAMPLES = [
   "Chẩn đoán đái tháo đường bằng xét nghiệm nào?",
@@ -120,7 +121,7 @@ function Answer({ reply }: { reply: ChatReply }) {
   const { trace } = reply;
   return (
     <div className="space-y-4" aria-live="polite">
-      <div className="whitespace-pre-line text-base leading-relaxed">{reply.answer}</div>
+      <Markdown className="text-base leading-relaxed">{reply.answer}</Markdown>
 
       {reply.citations.length > 0 ? (
         <ol className="divide-y divide-borderSoft border-y border-borderSoft">
@@ -130,7 +131,7 @@ function Answer({ reply }: { reply: ChatReply }) {
                 <summary className="cursor-pointer text-sm font-semibold">
                   [{index + 1}] {item.title} <span className="font-normal text-muted">· điểm {item.final_score.toFixed(2)}</span>
                 </summary>
-                <p className="mt-2 text-sm leading-relaxed">{item.text}</p>
+                <Markdown className="mt-2 text-sm leading-relaxed">{item.text}</Markdown>
                 <p className="mt-2 text-xs text-muted">
                   <CitationLink citation={item} /> · cách tìm: {item.via === "graph+semantic" ? "ngữ nghĩa + đồ thị" : "ngữ nghĩa"}
                 </p>

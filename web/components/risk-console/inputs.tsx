@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Minus, Plus } from "lucide-react";
 import type { ReactNode } from "react";
 
-export function Stepper({ label, unit, value, min, max, step, onChange }: { label: string; unit: string; value: number; min: number; max: number; step: number; onChange: (v: number) => void }) {
+export function Stepper({ label, unit, value, min, max, step, onChange }: { label: string; unit: string; value: number | null; min: number; max: number; step: number; onChange: (v: number) => void }) {
   const clamp = (v: number) => Math.min(max, Math.max(min, Math.round(v * 10) / 10));
   return (
     <div>
@@ -11,7 +11,7 @@ export function Stepper({ label, unit, value, min, max, step, onChange }: { labe
         <span className="text-sm text-muted">{unit}</span>
       </div>
       <div className="flex h-16 items-stretch overflow-hidden rounded-2xl border-2 border-borderSoft bg-panel focus-within:border-info focus-within:ring-2 focus-within:ring-info/25">
-        <button type="button" aria-label={`Giảm ${label}`} onClick={() => onChange(clamp(value - step))} className="choice w-16 text-muted hover:bg-panelMuted hover:text-ink">
+        <button type="button" aria-label={`Giảm ${label}`} onClick={() => onChange(clamp((value ?? min + step) - step))} className="choice w-16 text-muted hover:bg-panelMuted hover:text-ink">
           <Minus aria-hidden="true" className="mx-auto h-5 w-5" />
         </button>
         <input
@@ -21,11 +21,12 @@ export function Stepper({ label, unit, value, min, max, step, onChange }: { labe
           min={min}
           max={max}
           step={step}
-          value={value}
+          value={value ?? ""}
+          placeholder="Chưa rõ"
           onChange={(e) => onChange(Number(e.target.value))}
           className="min-w-0 flex-1 bg-transparent text-center text-3xl font-bold tabular-nums outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none"
         />
-        <button type="button" aria-label={`Tăng ${label}`} onClick={() => onChange(clamp(value + step))} className="choice w-16 text-muted hover:bg-panelMuted hover:text-ink">
+        <button type="button" aria-label={`Tăng ${label}`} onClick={() => onChange(clamp((value ?? min - step) + step))} className="choice w-16 text-muted hover:bg-panelMuted hover:text-ink">
           <Plus aria-hidden="true" className="mx-auto h-5 w-5" />
         </button>
       </div>

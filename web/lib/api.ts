@@ -1,4 +1,12 @@
-import type { ChatReply, KbEntityDetail, KbGraph, PatientInput, PredictionResult } from "@/types/healthcare";
+import type { ChatReply, KbEntityDetail, KbGraph, PatientInput, PatientProfile, PredictionResult } from "@/types/healthcare";
+
+export async function fetchPatientProfile(patientId: string): Promise<PatientProfile | null> {
+  const response = await fetch(`/api/patients/${encodeURIComponent(patientId)}`, { cache: "no-store" });
+  const payload = await response.json();
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error(typeof payload?.detail === "string" ? payload.detail : "Chưa đọc được hồ sơ. Vui lòng thử lại.");
+  return payload as PatientProfile;
+}
 
 export async function createPrediction(input: PatientInput): Promise<PredictionResult> {
   const response = await fetch("/api/predict", {

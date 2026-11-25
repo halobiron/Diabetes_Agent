@@ -2,9 +2,9 @@
 
 import { QueryClient, QueryClientProvider, useMutation } from "@tanstack/react-query";
 import { ArrowLeft, Stethoscope } from "lucide-react";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
-import { createPrediction } from "@/lib/api";
+import { createPrediction, fetchPatientProfile } from "@/lib/api";
 import type { AskableField, PatientInput, PredictionResult } from "@/types/healthcare";
 
 import { Avatar, CAST, type CastId } from "./risk-console/agents";
@@ -18,6 +18,7 @@ import { GroupedFollowup } from "./risk-console/grouped-followup";
 import { FollowupChange, NextQuestion } from "./risk-console/next-question";
 import { calculateBmi } from "./risk-console/utils";
 import { Intake } from "./risk-console/intake";
+import type { ProfileLookupState } from "./risk-console/profile-field";
 
 const queryClient = new QueryClient();
 
@@ -37,11 +38,16 @@ function RiskConsoleInner() {
   const [updatedFrom, setUpdatedFrom] = useState<PredictionResult | null>(null);
   const [editStep, setEditStep] = useState<string | null>(null);
   const [confirmedMeasurements, setConfirmedMeasurements] = useState<string[]>([]);
+  const [profileLookup, setProfileLookup] = useState<ProfileLookupState>({ status: "idle" });
+  const profileSequence = useRef(0);
+  const loadedProfileId = useRef<string | null>(null);
+  const pendingProfile = useRef<{ id: string; promise: Promise<boolean> } | null>(null);
 
   const mutation = useMutation({
     mutationFn: createPrediction,
     onSuccess: (result, input) => {
       const savedInput = { ...input, patient_id: result.patient_id ?? input.patient_id };
+      loadedProfileId.current = savedInput.patient_id ?? null;
       setLastResult(result);
       setLastInput(savedInput);
       setForm(savedInput);
@@ -52,13 +58,66 @@ function RiskConsoleInner() {
 
   const result = lastResult;
   const groupedFields = result ? missingFollowupFields(result) : [];
-  const calculatedBmi = calculateBmi(form.height_cm, form.weight_kg);
+  const calculatedBmi = form.height_cm != null && form.weight_kg != null
+    ? calculateBmi(form.height_cm, form.weight_kg) : form.bmi ?? 0;
 
   function updateField<K extends keyof PatientInput>(key: K, value: PatientInput[K]) {
+    if (key === "patient_id" && value !== form.patient_id) {
+      profileSequence.current += 1;
+      pendingProfile.current = null;
+      loadedProfileId.current = null;
+      setProfileLookup({ status: "idle" });
+      // Switching IDs must never carry another patient's values or result into a new assessment.
+      setForm({ ...DEFAULT_INPUT, patient_id: value as string });
+      setLastResult(null);
+      setLastInput(null);
+      setUpdatedFrom(null);
+      setConfirmedMeasurements([]);
+      return;
+    }
     setForm((current) => ({ ...current, [key]: value }));
   }
 
+  function loadProfile(): Promise<boolean> {
+    const id = form.patient_id?.trim();
+    if (!id || id === loadedProfileId.current) return Promise.resolve(true);
+    if (pendingProfile.current?.id === id) return pendingProfile.current.promise;
+    if (!/^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$/.test(id)) {
+      setProfileLookup({ status: "error", message: "Mã gồm chữ không dấu, số, dấu chấm, gạch nối hoặc gạch dưới; tối đa 64 ký tự." });
+      return Promise.resolve(false);
+    }
+    const sequence = ++profileSequence.current;
+    setProfileLookup({ status: "loading" });
+    const promise = (async () => {
+      try {
+        const profile = await fetchPatientProfile(id);
+        if (sequence !== profileSequence.current) return false;
+        if (!profile) {
+          setProfileLookup({ status: "not_found", message: "Mã này chưa có hồ sơ đã lưu. Kiểm tra lại mã hoặc nhập thông tin để tạo hồ sơ." });
+          return true;
+        }
+        loadedProfileId.current = id;
+        setForm({ ...profile.input, patient_id: profile.patient_id });
+        const savedAt = new Date(profile.saved_at).toLocaleString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
+        setProfileLookup({ status: "loaded", message: `Đã nạp hồ sơ lần ${savedAt}. Bạn chỉ cần cập nhật thông tin thay đổi.` });
+        setEditStep("body");
+        setView("form");
+        return true;
+      } catch (error) {
+        if (sequence === profileSequence.current) {
+          setProfileLookup({ status: "error", message: error instanceof Error ? error.message : "Chưa nạp được hồ sơ. Vui lòng thử lại." });
+        }
+        return false;
+      } finally {
+        if (sequence === profileSequence.current) pendingProfile.current = null;
+      }
+    })();
+    pendingProfile.current = { id, promise };
+    return promise;
+  }
+
   function submit() {
+    if (profileLookup.status === "loading" || profileLookup.status === "error") return;
     setUpdatedFrom(null);
     mutation.mutate(form);
   }
@@ -97,6 +156,7 @@ function RiskConsoleInner() {
       {view === "form" || !result ? (
         <div className="mx-auto grid w-full max-w-6xl lg:grid-cols-[minmax(0,40rem)_minmax(20rem,1fr)] lg:gap-10">
           <Intake
+            key={`${result?.request_id ?? "new"}:${editStep ?? "default"}`}
             initialStep={editStep}
             form={form}
             calculatedBmi={calculatedBmi}
@@ -106,6 +166,8 @@ function RiskConsoleInner() {
             onSubmit={submit}
             onFieldChange={updateField}
             onCancel={() => setView("result")}
+            profileLookup={profileLookup}
+            onLoadProfile={loadProfile}
           />
           <aside className="mx-auto w-full max-w-2xl px-5 pb-16 lg:sticky lg:top-6 lg:max-w-none lg:self-start lg:pl-0 lg:pr-5 lg:pt-8">
             <ChatPanel dockOnWide />

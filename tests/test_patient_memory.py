@@ -164,3 +164,116 @@ def test_both_llm_prompts_receive_history_without_profile_identifier(agent):
         prompt = create.call_args.kwargs["messages"][0]["content"]
         assert "BMI từ 30 thành 28" in prompt and "private-profile" not in prompt
         assert "Never compare probabilities across model versions" in prompt
+
+
+def test_short_ids_are_new_only_and_retry_existing_codes(agent, monkeypatch):
+    import memory.store as store
+
+    existing = "HS-ABCDEFGH23"
+    agent.memory.store({"patient_id": existing, "age": 50, "bmi": 30, "bp": 130}, 0.2, "Low")
+    candidates = iter([existing, "HS-ABCDEFGH24"])
+    monkeypatch.setattr(store, "generate_patient_id", lambda: next(candidates))
+    assert agent.memory.new_patient_id() == "HS-ABCDEFGH24"
+    legacy = agent.run({"patient_id": "patient-legacy-long-code", "age": 50, "bmi": 30, "bp": 130})
+    assert legacy["patient_id"] == "patient-legacy-long-code"
+
+
+def test_profile_restores_latest_raw_inputs_with_false_zero_and_unknowns(agent):
+    from memory.profiles import editable_inputs
+
+    first = {"patient_id": "a", "age": 40, "bmi": 30, "bp": 130, "sex": "female"}
+    agent.memory.store(first, 0.2, "Low", input_data=first)
+    latest = {**first, "age": 41, "height_cm": 170, "weight_kg": 75, "bp": 125,
+              "smoker": False, "phys_activity": True, "high_chol": None,
+              "mental_health_days": 0, "physical_health_days": 3, "general_health": 2,
+              "education": 4, "income": 5, "skipped_fields": ["high_chol"]}
+    agent.memory.store(latest, 0.2, "Low", input_data=latest)
+    profile = agent.memory.get_profile("a")
+    assert profile["input"] == {**editable_inputs(latest), "patient_id": "a"}
+    assert profile["input"]["smoker"] is False
+    assert profile["input"]["mental_health_days"] == 0
+    assert profile["input"]["high_chol"] is None
+    assert len(agent.memory.get_all(patient_id="a")) == 2  # Loading never saves a new assessment.
+    assert agent.memory.get_profile("unknown") is None
+
+
+def test_legacy_prepared_profile_migrates_aliases_without_imputed_answers(agent):
+    from models.risk_model import RiskModel
+
+    model = RiskModel()
+    model.feature_names = model.BRFSS_FEATURE_NAMES
+    prepared = model.prepare_patient({"age": 56, "bmi": 29, "bp": 145, "smoker": False,
+                                      "mental_health_days": 0, "general_health": 4, "sex": "male"})
+    prepared["patient_id"] = "patient-old-id"
+    agent.memory.store(prepared, 0.2, "Low")  # Existing storage has no raw input_json.
+    restored = agent.memory.get_profile("patient-old-id")["input"]
+    assert restored["height_cm"] is None and restored["weight_kg"] is None
+    assert restored["bmi"] == 29 and restored["sex"] == "male"
+    assert restored["general_health"] == 4 and restored["mental_health_days"] == 0
+    assert restored["smoker"] is False and restored["phys_activity"] is None
+    assert restored["income"] is None and restored["chol_check"] is None
+    assert "gen_hlth" not in restored and "defaulted_fields" not in restored
+
+
+def test_timeline_changes_group_habits_and_mark_direction(agent):
+    base = {"patient_id": "timeline", "age": 50, "bmi": 30, "bp": 150, "smoker": True,
+            "phys_activity": False, "fruits": True, "sex": "male"}
+    second = {**base, "bmi": 27, "smoker": False, "phys_activity": True}
+    third = {**second, "bp": 160, "fruits": False}
+    for step, data in enumerate((base, second, third), start=1):
+        record_id = agent.memory.store(data, 0.2, "Low", input_data=data, model_version="v1")
+        agent.memory.collection.update(
+            ids=[record_id], metadatas=[{"timestamp": f"2025-01-{step:02}T00:00:00+00:00"}]
+        )
+    memory = agent.memory.recall(third, 0.2, "Low", "v1")
+    newest, middle, first = memory["recent_assessments"]
+    assert first["changes"] is None  # nothing precedes the first assessment
+    by_field = {item["field"]: item for item in middle["changes"]}
+    assert set(by_field) == {"bmi", "smoker", "phys_activity"}  # unchanged answers never appear
+    assert (by_field["smoker"]["group"], by_field["smoker"]["direction"]) == ("habit", "better")
+    assert by_field["phys_activity"]["direction"] == "better"
+    assert by_field["bmi"]["group"] == "body" and by_field["bmi"]["direction"] == "better"
+    assert by_field["bmi"]["delta"] == -3 and by_field["smoker"]["delta"] is None
+    latest = {item["field"]: item for item in newest["changes"]}
+    assert (latest["fruits"]["group"], latest["fruits"]["direction"]) == ("habit", "worse")
+    assert latest["bp"]["direction"] == "worse"
+    assert memory["changes"] == []  # current answers equal the newest stored ones
+    described = describe_memory(agent.memory.recall({**third, "smoker": True}, 0.2, "Low", "v1"))
+    assert "Hút thuốc từ Không thành Có." in described
+
+
+def test_profile_api_roundtrip_not_found_unavailable_and_auth(agent, monkeypatch, tmp_path):
+    import api.app as api
+    from core.config import get_settings
+
+    ready = Future()
+    ready.set_result(agent)
+    monkeypatch.setattr(api, "_agent_future", ready)
+    monkeypatch.setenv("REQUIRE_API_TOKEN", "false")
+    monkeypatch.setattr(api, "settings", get_settings())
+    monkeypatch.setattr(api, "audit_logger", AuditLogger(tmp_path / "logs"))
+    patient = {"age": 46, "bmi": 28, "height_cm": 170, "weight_kg": 81,
+               "bp": 132, "smoker": None, "sex": "female", "mental_health_days": 0}
+    with TestClient(api.app) as client:
+        result = client.post("/v1/predict", json=patient).json()
+        patient_id = result["patient_id"]
+        assert patient_id.startswith("HS-") and len(patient_id) == 13
+        for route in ("/patients/", "/v1/patients/"):
+            response = client.get(route + patient_id)
+            assert response.status_code == 200
+            profile = response.json()
+            assert profile["assessment_id"] == result["assessment_id"]
+            assert profile["input"]["smoker"] is None
+            assert profile["input"]["sex"] == "female"
+            updated = client.post("/v1/predict", json={**profile["input"], "bp": 120}).json()
+            assert updated["patient_id"] == patient_id
+            assert updated["memory_context"]["previous"]["metadata"]["bp"] in (120, 132)
+            result = updated
+        assert client.get("/v1/patients/missing").status_code == 404
+        assert client.get("/v1/patients/bad%20id").status_code == 422
+        monkeypatch.setattr(agent.memory, "get_profile", Mock(side_effect=RuntimeError("offline")))
+        assert client.get("/v1/patients/any").status_code == 503
+        monkeypatch.setenv("REQUIRE_API_TOKEN", "true")
+        monkeypatch.setenv("API_TOKEN", "test-profile-token")
+        monkeypatch.setattr(api, "settings", get_settings())
+        assert client.get("/v1/patients/any").status_code == 401

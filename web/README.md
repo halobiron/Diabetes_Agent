@@ -29,6 +29,9 @@ npm run dev
 
 Open `http://localhost:3000`.
 
+Development writes generated files to `.next-dev`; production builds use `.next`.
+This lets `npm run build` run while the dev server stays open without breaking its CSS or JavaScript.
+
 The web app calls its own `/api/predict` route, which forwards requests to FastAPI
 using `API_BASE_URL` and optional `API_TOKEN`. This keeps production API credentials
 out of browser JavaScript.
@@ -46,3 +49,8 @@ API_TOKEN=
 npm run typecheck
 npm run build
 ```
+
+## Content regression tests
+
+With Node.js 22.18 or newer, run `npm test`. These tests cover evidence from the
+structured API response, legacy recommendations, Markdown preservation, and empty retrieval.

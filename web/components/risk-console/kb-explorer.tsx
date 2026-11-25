@@ -10,6 +10,7 @@ import type { KbEntity, KbEvidenceRow, KbGraph as KbGraphData, PredictionResult 
 
 import { CitationLink } from "./citation";
 import { KB_COLUMNS, KbGraph, RELATION_TEXT } from "./kb-graph";
+import { Markdown } from "./markdown";
 
 const DEFAULT_ENTITY = "type2_diabetes";
 
@@ -140,7 +141,7 @@ function EntityDetail({ graph, entityId, usedEvidence, onSelect }: { graph: KbGr
         <h3 id="entity-title" className="text-lg font-bold">{entity.name}</h3>
         <span className="rounded-full bg-infoSoft px-2 py-0.5 text-xs font-semibold text-info">{column?.title ?? entity.label}</span>
       </div>
-      {entity.description ? <p className="mt-2 max-w-prose text-sm leading-6 text-muted">{entity.description}</p> : null}
+      {entity.description ? <Markdown className="mt-2 max-w-prose text-sm leading-6 text-muted">{entity.description}</Markdown> : null}
 
       <div className="mt-3">
         {detail.isPending ? (
@@ -172,7 +173,7 @@ function EntityDetail({ graph, entityId, usedEvidence, onSelect }: { graph: KbGr
                           <li key={row.evidence_id}>
                             <blockquote className={clsx("rounded-lg p-3 text-sm leading-6", usedEvidence.has(row.evidence_id) ? "bg-warning/10" : "bg-canvas")}>
                               {usedEvidence.has(row.evidence_id) ? <p className="mb-1 text-xs font-semibold text-warning">Đã dùng cho bạn</p> : null}
-                              {row.evidence}
+                              <Markdown>{row.evidence}</Markdown>
                               <footer className="mt-1 text-xs text-muted">
                                 <CitationLink citation={{ evidence_id: row.evidence_id, text: row.evidence, source_title: row.source_title, publisher: row.publisher, year: row.year, url: row.url }} />
                               </footer>

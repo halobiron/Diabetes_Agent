@@ -28,15 +28,14 @@ def describe_memory(context):
     for change in context["changes"]:
         if change["field"] == "age":
             continue
-        delta = change["delta"]
-        difference = (
-            f"{'tăng' if delta > 0 else 'giảm'} {abs(delta):g} {change['unit']}"
-            if delta
-            else "không đổi"
-        )
-        parts.append(
-            f"{LABELS[change['field']]} từ {change['previous']:g} thành {change['current']:g} {change['unit']} ({difference})."
-        )
+        label = change.get("label") or LABELS.get(change["field"], change["field"])
+        delta = change.get("delta")
+        unit = f" {change['unit']}" if change.get("unit") else ""
+        if delta is None:  # An answer such as a habit: no arithmetic difference to report.
+            parts.append(f"{label} từ {change['previous']} thành {change['current']}.")
+            continue
+        difference = f"{'tăng' if delta > 0 else 'giảm'} {abs(delta):g}{unit}"
+        parts.append(f"{label} từ {change['previous']:g} thành {change['current']:g}{unit} ({difference}).")
     comparison = context.get("prediction_comparison")
     if comparison:
         delta = comparison["probability_delta"]
