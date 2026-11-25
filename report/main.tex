@@ -43,7 +43,7 @@
 \lstset{basicstyle=\ttfamily\footnotesize,backgroundcolor=\color{codebg},frame=none,breaklines=true,
   columns=fullflexible,keepspaces=true,showstringspaces=false,xleftmargin=4pt,xrightmargin=4pt,
   keywordstyle=\bfseries,commentstyle=\itshape\color{gray}}
-% ----- Đánh dấu chỉnh sửa (đều là chữ đỏ) -----
+% ----- Đánh dấu chỉnh sửa trong phần văn bản (chữ đỏ) -----
 % \khacpdf: nội dung khác bản PDF đã nộp (project01_06_03_longth.pdf).
 % \capnhat: nội dung sửa cho khớp mã nguồn hiện tại.
 % Chỉ tô phần chữ/số thực sự thêm hoặc thay thế so với PDF đã nộp.
@@ -51,17 +51,10 @@
 % Giữ thuật ngữ kỹ thuật của bản gốc; không dịch lại chỉ để tạo thay đổi.
 \newcommand{\khacpdf}[1]{\textcolor{red}{#1}}
 \newcommand{\capnhat}[1]{\textcolor{red}{#1}}
-% Trong code cell: các dòng liệt kê ở tham số tùy chọn của \nbcell được in chữ đỏ.
-\makeatletter
-\def\FancyVerbHighlightLineFirst#1{\textcolor{red}{#1}}
-\let\FancyVerbHighlightLineMiddle\FancyVerbHighlightLineFirst
-\let\FancyVerbHighlightLineLast\FancyVerbHighlightLineFirst
-\let\FancyVerbHighlightLineSingle\FancyVerbHighlightLineFirst
-\makeatother
-% Trong lstlisting: đoạn nằm giữa @@...@@ được in chữ đỏ.
-\lstset{moredelim=[is][\color{red}]{@@}{@@}}
+% Khối code không tô đỏ sửa đổi; ẩn dấu @@ trong lstlisting.
+\lstset{moredelim=[is][\color{black}]{@@}{@@}}
 \input{cells/numbers.tex}
-\newcommand{\nbcell}[3][]{\par\medskip\noindent\textbf{Cell~\csname cell#2\endcsname{} của \texttt{training.ipynb}}: #3\par\smallskip\VerbatimInput[fontsize=\scriptsize,frame=leftline,rulecolor=\color{gray},framesep=4pt,breaklines=true,breakanywhere=true,highlightlines={#1}]{cells/#2.py}\par\medskip}
+\newcommand{\nbcell}[3][]{\par\medskip\noindent\textbf{Cell~\csname cell#2\endcsname{} của \texttt{training.ipynb}}: #3\par\smallskip\VerbatimInput[fontsize=\scriptsize,frame=leftline,rulecolor=\color{gray},framesep=4pt,breaklines=true,breakanywhere=true]{cells/#2.py}\par\medskip}
 \newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
 
 \begin{document}
@@ -371,7 +364,7 @@ Triển khai & Docker Compose; Terraform cho AWS App Runner & CI GitHub Actions:
 \subsection{Dữ liệu và bài toán}
 Khối ``DB có sẵn'' là bộ \emph{CDC Diabetes Health Indicators} (BRFSS 2015, bản Kaggle/UCI \cite{uci891}): \textbf{253.680} hồ sơ, 21 đặc trưng (huyết áp cao, mỡ máu cao, BMI, hút thuốc, đột quỵ, bệnh tim, vận động, ăn trái cây và rau, uống nhiều rượu, tình trạng bảo hiểm, sức khỏe tự đánh giá, số ngày sức khỏe thể chất/tinh thần kém, khó đi lại, giới, nhóm tuổi, học vấn, thu nhập). Nhãn \code{Diabetes_binary} bằng 0 là chưa mắc, bằng 1 là \emph{tiền ĐTĐ hoặc ĐTĐ} (gộp chung); tỉ lệ nhãn 1 là 13,9\%. Đây là dữ liệu \textbf{tự khai} của người Hoa Kỳ, nên nhãn có thể bỏ sót người mắc chưa được chẩn đoán.
 
-Glucose \textbf{không phải} đặc trưng của mô hình\capnhat{, và hệ thống cũng không còn thu số đo glucose: API, bộ luật, bộ nhớ, policy và giao diện đều đã bỏ trường này, vì giá trị glucose nhập vào không làm thay đổi dự đoán. Mô hình trả lời câu hỏi ``với hồ sơ lối sống này, nguy cơ cao đến mức nào''; số đo duy nhất mà bộ luật đối chiếu với dự đoán là huyết áp tâm thu (Mục~4.3).}
+Glucose \textbf{không phải} đặc trưng của mô hình. \capnhat{Mô hình trả lời câu hỏi ``với hồ sơ lối sống này, nguy cơ cao đến mức nào''; số đo duy nhất mà bộ luật đối chiếu với dự đoán là huyết áp tâm thu (Mục~4.3).}
 
 \begin{figure}[H]
 \centering
@@ -510,12 +503,12 @@ contexts.sort(key=lambda c: c["relevance"] + (GRAPH_BOOST if c["supports"] else 
 \end{lstlisting}
 
 \subsection{Đánh giá truy xuất}
-\capnhat{Bộ câu hỏi \code{data/eval/rag_retrieval_questions.json} gồm 28 câu trong phạm vi, 8 câu ngoài phạm vi (6 câu không liên quan và 2 câu y khoa gần chủ đề mà KB không có: cúm mùa, ung thư phổi) và 3 câu hỏi về liều thuốc. Một đoạn được coi là liên quan khi chính văn bản của nó chứa dữ kiện trả lời (ví dụ ``HbA1c $\ge$ 6,5\%'', ``tuổi 45''), kiểm bằng biểu thức chính quy; vì nhãn theo từ khóa nên precision@3 là cận dưới. Bảng~\ref{tab:rageval} là kết quả chạy lại \code{scripts/evaluate_retrieval.py} ngày 23/11/2026 trên Neo4j (\code{BAAI/bge-m3}, lấy 3 đoạn đầu, ngưỡng hỏi đáp 0,55).}
+Bộ câu hỏi \code{data/eval/rag_retrieval_questions.json} gồm 28 câu trong phạm vi, 8 câu ngoài phạm vi (6 câu không liên quan và 2 câu y khoa gần chủ đề mà KB không có: cúm mùa, ung thư phổi) và 3 câu hỏi về liều thuốc. Một đoạn được coi là liên quan khi chính văn bản của nó chứa dữ kiện trả lời (ví dụ ``HbA1c $\ge$ 6,5\%'', ``tuổi 45''), kiểm bằng biểu thức chính quy; vì nhãn theo từ khóa nên precision@3 là cận dưới. Bảng~\ref{tab:rageval} là kết quả chạy lại \code{scripts/evaluate_retrieval.py} ngày 23/11/2026 trên Neo4j (\code{BAAI/bge-m3}, lấy 3 đoạn đầu, ngưỡng hỏi đáp 0,55).
 
 \begin{table}[H]
 \centering
 \caption{Chất lượng truy xuất trên 28 câu có nhãn (top 3, ngưỡng 0,55)}\label{tab:rageval}
-{\color{red}
+{
 \begin{tabular}{@{}lc@{}}
 \toprule
 \textbf{Chỉ số} & \textbf{Giá trị}\\
@@ -531,12 +524,12 @@ Câu ngoài phạm vi bị trả lời nhầm & 0/8\\
 \end{tabular}}
 \end{table}
 
-\capnhat{Điểm cosine cao nhất của câu trong phạm vi thấp nhất là 0,613, của câu ngoài phạm vi cao nhất là 0,522, nên ngưỡng hỏi đáp 0,55 nằm giữa hai nhóm. Mô hình nhúng được chọn bằng cách so bốn mô hình trên cùng 28 câu, chỉ với bước xếp hạng ngữ nghĩa (Bảng~\ref{tab:embcompare}, đo ngày 11/11/2026, \code{docs/danh_gia_truy_xuat_va_do_tre.md}): bge-m3 có precision@3 cao nhất và là mô hình duy nhất tách rõ câu trong và ngoài phạm vi; đổi lại, mô hình nặng hơn (RAM đỉnh khi nạp khoảng 3,4~GB so với 1,7~GB của MiniLM).}
+Điểm cosine cao nhất của câu trong phạm vi thấp nhất là 0,613, của câu ngoài phạm vi cao nhất là 0,522, nên ngưỡng hỏi đáp 0,55 nằm giữa hai nhóm. Mô hình nhúng được chọn bằng cách so bốn mô hình trên cùng 28 câu, chỉ với bước xếp hạng ngữ nghĩa (Bảng~\ref{tab:embcompare}, đo ngày 11/11/2026, \code{docs/danh_gia_truy_xuat_va_do_tre.md}): bge-m3 có precision@3 cao nhất và là mô hình duy nhất tách rõ câu trong và ngoài phạm vi; đổi lại, mô hình nặng hơn (RAM đỉnh khi nạp khoảng 3,4~GB so với 1,7~GB của MiniLM).
 
 \begin{table}[H]
 \centering
 \caption{So sánh mô hình nhúng trên 28 câu có nhãn (chỉ xếp hạng ngữ nghĩa)}\label{tab:embcompare}
-{\color{red}
+{
 \begin{tabular}{@{}lcccc@{}}
 \toprule
 \textbf{Mô hình} & \textbf{hit@3} & \textbf{P@3} & \textbf{MRR} & \textbf{Khoảng cách trong/ngoài phạm vi}\\
@@ -549,9 +542,9 @@ multilingual-e5-base & 0,857 & 0,440 & 0,720 & $0{,}007$\\
 \end{tabular}}
 \end{table}
 
-\capnhat{Bộ độc lập \code{data/eval/chat_heldout_questions.json} gồm 40 câu do một agent riêng viết mà không đọc mã nguồn, KB hay danh sách alias. Nhận yếu tố nguy cơ trong câu hỏi bằng tên và \code{aliases} của \code{RiskFactor} trong Neo4j tìm đúng 22/30 câu có nhắc yếu tố, khớp hoàn toàn 25/40 câu, và nhận thêm một yếu tố thừa ở 8/40 câu (chủ yếu do câu hỏi nhắc tới tuổi). Khi chấm mù các đoạn hiển thị (thang 0--2), cấu hình hiện tại có đoạn trả lời trực tiếp trong 3 đoạn đầu ở 24/40 câu.}
+Bộ độc lập \code{data/eval/chat_heldout_questions.json} gồm 40 câu do một agent riêng viết mà không đọc mã nguồn, KB hay danh sách alias. Nhận yếu tố nguy cơ trong câu hỏi bằng tên và \code{aliases} của \code{RiskFactor} trong Neo4j tìm đúng 22/30 câu có nhắc yếu tố, khớp hoàn toàn 25/40 câu, và nhận thêm một yếu tố thừa ở 8/40 câu (chủ yếu do câu hỏi nhắc tới tuổi). Khi chấm mù các đoạn hiển thị (thang 0--2), cấu hình hiện tại có đoạn trả lời trực tiếp trong 3 đoạn đầu ở 24/40 câu.
 
-\capnhat{\textbf{Giới hạn.} Bộ câu hỏi nhỏ, do nhóm tự soạn và chưa có chuyên gia y khoa duyệt; ngưỡng và mức cộng điểm đồ thị được chọn trên chính 28 câu có nhãn nên các số trên có thể hơi lạc quan. \code{tests/test_retriever.py} chỉ kiểm tra hành vi (không bằng chứng, bằng chứng hạn chế, thứ tự, chặn liều thuốc), không đo chất lượng.}
+\textbf{Giới hạn.} Bộ câu hỏi nhỏ, do tác giả tự soạn và chưa có chuyên gia y khoa duyệt; ngưỡng và mức cộng điểm đồ thị được chọn trên chính 28 câu có nhãn nên các số trên có thể hơi lạc quan. \code{tests/test_retriever.py} chỉ kiểm tra hành vi (không bằng chứng, bằng chứng hạn chế, thứ tự, chặn liều thuốc), không đo chất lượng.
 
 \section{Bộ luật và Reinforcement Learning}
 \subsection{Bộ luật an toàn và xử lý xung đột}
@@ -568,14 +561,14 @@ Bộ luật (\code{tools/rules.py}) chạy hai pha: luật \emph{cơ sở} xét 
 \code{BP-160} & 75 & Huyết áp tâm thu 160--179 & Sớm khám bác sĩ\\
 \code{PRED-VERYHIGH} & 60 & Mức Cao và $p\ge0{,}85$ & Sớm khám bác sĩ\\
 \midrule
-\code{CF-PRED-LOW-MEASURED-HIGH} & 85 & Mô hình Thấp nhưng \capnhat{luật huyết áp (\code{BP-180} hoặc \code{BP-160}) kích hoạt} & Số đo thắng; \code{effective_risk}=Cao\\
+\code{CF-PRED-LOW-MEASURED-HIGH} & 85 & Mô hình Thấp nhưng \capnhat{huyết áp tâm thu từ 160 mmHg trở lên kích hoạt luật BP-160 hoặc BP-180} & Số đo thắng; \code{effective_risk}=Cao\\
 \code{CF-PRED-HIGH-LOW-QUALITY} & 40 & Mô hình Cao trên dữ liệu chất lượng thấp & Đánh dấu tạm thời\\
 \code{CF-ESCALATION-NO-EVIDENCE} & 30 & Có chuyển tuyến nhưng bằng chứng \code{none}/\code{limited} & Không hạ mức chuyển tuyến\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
-Chính sách giải quyết: (1) số đo lâm sàng thắng dự đoán thống kê, khuyến nghị viết theo \code{effective_risk}; (2) mức chuyển tuyến là mức nặng nhất trong các luật đã kích hoạt, không gì hạ được, kể cả dự đoán thấp hay thiếu bằng chứng; (3) mọi xung đột đều được báo cáo kèm cách giải quyết, không bị ẩn. \capnhat{Luật huyết áp dùng số đo do người dùng nhập (trường bắt buộc của API), không dùng giá trị điền thay thế. Ba luật \code{GLU-300}, \code{GLU-200} và \code{CF-PRED-HIGH-GLUCOSE-NORMAL} của bản trước đã bị gỡ cùng với trường glucose.}
+Chính sách giải quyết: (1) số đo lâm sàng thắng dự đoán thống kê, khuyến nghị viết theo \code{effective_risk}; (2) mức chuyển tuyến là mức nặng nhất trong các luật đã kích hoạt, không gì hạ được, kể cả dự đoán thấp hay thiếu bằng chứng; (3) mọi xung đột đều được báo cáo kèm cách giải quyết, không bị ẩn. \capnhat{Luật huyết áp dùng số đo do người dùng nhập (trường bắt buộc của API), không dùng giá trị điền thay thế.}
 
 \subsection{Agent chọn bước hỗ trợ bằng Q-learning}
 Policy (\code{rl/}) mô hình hóa việc chọn bước tiếp theo như một MDP; Q-learning \cite{watkins1992,sutton2018} cập nhật $Q(s,a)\leftarrow Q(s,a)+\alpha\,[\,r+\gamma\max_{a'}Q(s',a')-Q(s,a)\,]$ với $\alpha=0{,}1$ và $\gamma=1$ (bài toán có kết thúc hữu hạn).
@@ -586,7 +579,7 @@ Policy (\code{rl/}) mô hình hóa việc chọn bước tiếp theo như một 
 \item \capnhat{\textbf{Nhu cầu thật} của mỗi tập mô phỏng chỉ phụ thuộc mức nguy cơ: Cao $\rightarrow$ chuyển bác sĩ, Trung bình $\rightarrow$ sớm khám, Thấp $\rightarrow$ theo dõi định kỳ.}
 \item \textbf{Huấn luyện}: 60.000 tập, $\epsilon$ giảm tuyến tính từ 1 xuống 0,05 trong 80\% số tập đầu.
 \end{itemize}
-\textbf{Hạn chế cần nói rõ.} Môi trường, \capnhat{phân bố mức nguy cơ và trạng thái bằng chứng ban đầu}, khả năng tìm mở rộng cải thiện bằng chứng (giả định 60\%) và mọi giá trị phần thưởng đều do nhóm đặt, ghi trong \code{rl/environment.py}; \textbf{không có phản hồi thật} từ bệnh nhân hay bác sĩ. Kết quả chỉ cho biết các chiến lược khác nhau ra sao \emph{dưới các giả định đó}.
+\textbf{Hạn chế cần nói rõ.} Môi trường, \capnhat{phân bố mức nguy cơ và trạng thái bằng chứng ban đầu}, khả năng tìm mở rộng cải thiện bằng chứng (giả định 60\%) và mọi giá trị phần thưởng đều do tác giả đặt, ghi trong \code{rl/environment.py}; \textbf{không có phản hồi thật} từ bệnh nhân hay bác sĩ. Kết quả chỉ cho biết các chiến lược khác nhau ra sao \emph{dưới các giả định đó}.
 
 \begin{table}[H]
 \centering
@@ -775,7 +768,7 @@ Giao diện web (Next.js) dẫn người dùng qua các câu hỏi ngắn rồi 
 \end{figure}
 
 \section{Ví dụ ba lượt đánh giá}
-Ba hồ sơ dưới đây được chạy thật qua \code{POST /v1/predict} (\capnhat{ngày 23/11/2026, không LLM, KB đọc từ Neo4j; glucose đã bỏ khỏi cả ba hồ sơ vì hệ thống không còn nhận trường này}). Cột cuối cho thấy hành vi của hệ thống, không phải đánh giá lâm sàng.
+Ba hồ sơ dưới đây được chạy thật qua \code{POST /v1/predict} (\capnhat{ngày 23/11/2026, không LLM, KB đọc từ Neo4j}). Cột cuối cho thấy hành vi của hệ thống, không phải đánh giá lâm sàng.
 
 \begin{table}[H]
 \centering
@@ -834,18 +827,15 @@ Bộ kiểm thử gồm \textbf{\capnhat{179} kiểm thử} \capnhat{trong 17 t�
 
 \textbf{Tích hợp.} Lần chạy demo tích hợp ngày 23/11/2026 (\code{scripts/demo_step12.py --require-neo4j --with-web}) đạt \textbf{26/26} kịch bản trên Neo4j thật (\code{kb_source = KnowledgeGraph}\capnhat{; 178 nút, 181 quan hệ, 146 đoạn bằng chứng}): hồ sơ đủ và thiếu dữ liệu, cảnh báo, thiếu bằng chứng, lỗi từng thành phần (retriever, memory, explainer, recommender, safety, policy), lỗi đầu vào (422), lịch sử, và cả ba proxy web khi backend ngừng (HTTP 502). Phần luồng hỏi bổ sung được kiểm tra bằng trình duyệt (Playwright, bản build production của web, ngày 23/11/2026) ở hai kích thước (1440$\times$1000 và 390$\times$844)\capnhat{; cả hai đều đạt mọi kiểm tra: mục bổ sung hiện đủ hai nhóm câu hỏi; lần gửi đầu để các mục chưa khai là \code{null}, không tự điền giá trị; trả lời nhóm tiền sử (chọn ``Cholesterol cao'') thì hệ thống gửi lại câu trả lời, nhóm để ``Chưa rõ'' đi vào \code{skipped_fields}, và xác suất được tính lại (12,2\% lên 24,2\%); mục đã trả lời hoặc bỏ qua không bị hỏi lại; bấm ``Bỏ qua các mục này'' thì cả 9 mục vào \code{skipped_fields}; khi mạng lỗi, giao diện báo lỗi, giữ lựa chọn và gửi lại thành công; không tràn ngang và không có lỗi JavaScript (ngoài lỗi tải do kiểm tra cố ý cắt mạng). Lint, kiểm tra kiểu (\code{tsc --noEmit}) và build của web đều đạt.} Lần chạy demo dùng mẫu câu dự phòng (script tắt khóa LLM để kết quả tái lập được).
 
-\capnhat{\textbf{Chạy với LLM thật.} Ba hồ sơ của Bảng~\ref{tab:cases} được chạy thêm một lần qua API với OpenAI (\code{gpt-4o-mini}, ngày 23/11/2026). Cả ba lượt đều có giải thích và khuyến nghị do LLM viết, không lượt nào rơi về nội dung dự phòng, và mọi trích dẫn \code{[1]}--\code{[3]} đều trỏ tới đoạn bằng chứng có thật trong lượt đó. Xác suất, luật kích hoạt, \code{effective_risk}, mức chuyển tuyến và bước policy giống hệt lượt không có LLM, vì LLM chỉ diễn đạt. Đổi lại, mỗi lượt mất 12,2--13,2 giây (khuyến nghị 6,6--8,4 giây, giải thích 4,5--5,4 giây), so với 0,18--0,37 giây khi không gọi LLM.}
+\capnhat{\textbf{Chạy với LLM thật.} Ba hồ sơ của Bảng~\ref{tab:cases} được chạy qua API OpenAI (\code{gpt-4o-mini}, ngày 23/11/2026). Cả ba lượt đều có giải thích và khuyến nghị do LLM viết, không dùng nội dung dự phòng, và các trích dẫn \code{[1]}--\code{[3]} đều trỏ tới đoạn bằng chứng có thật trong lượt tương ứng. Xác suất, luật kích hoạt, \code{effective_risk}, mức chuyển tuyến và bước policy không đổi so với lượt không có LLM vì LLM chỉ diễn đạt; thời gian chạy ban đầu là 12,2--13,2 giây mỗi lượt (khuyến nghị 6,6--8,4 giây, giải thích 4,5--5,4 giây), so với 0,18--0,37 giây khi không gọi LLM. Lần chạy đầu phát hiện LLM coi các mục tùy chọn được điền mặc định là thông tin người dùng đã khai, dù prompt có kèm \code{defaulted_fields}: hồ sơ B chỉ khai tuổi, giới, chiều cao, cân nặng và huyết áp nhưng khuyến nghị lại nói bệnh nhân thường xuyên vận động và không hút thuốc; giải thích của hồ sơ A và C cũng khẳng định bệnh nhân không có tiền sử cholesterol cao, bệnh tim hay đột quỵ dù các mục này chưa được khai. Nguyên nhân là nhánh LLM đưa nguyên hồ sơ đã điền mặc định và toàn bộ giải thích đặc trưng vào prompt, trong khi mẫu câu dự phòng đã lọc các trường tự điền. Để sửa lỗi, module mới \code{agents/llm_context.py} loại trường tự điền khỏi hồ sơ và giải thích đặc trưng trước khi đưa vào prompt, đồng thời liệt kê bằng tiếng Việt các mục chưa khai và yêu cầu không khẳng định bệnh nhân có hay không có các mục đó; \code{RecommendationAgent} và \code{ExplanationAgent} cùng dùng module này. Năm kiểm thử mới trong \code{tests/test_llm_context.py} dùng client OpenAI giả để kiểm tra prompt không còn giá trị mặc định. Khi chạy lại ba hồ sơ, không còn câu nào khẳng định điều người dùng chưa khai: hồ sơ B được giải thích rằng mô hình đã dùng giá trị mặc định cho một số mục như cholesterol cao và hút thuốc, đồng thời được mời bổ sung thông tin; hồ sơ A được gợi ý kiểm tra cholesterol vì thiếu thông tin. Trích dẫn vẫn đúng phạm vi và kết quả an toàn không đổi; mỗi lượt mất 7,7--15,0 giây. Do LLM không tất định, đây mới là ba lượt chạy, chưa phải đánh giá có ý nghĩa thống kê.}
 
-\capnhat{Lần chạy đầu phát hiện một lỗi: LLM coi các mục tùy chọn được điền giá trị mặc định là thông tin người dùng đã khai, dù prompt có kèm danh sách \code{defaulted_fields}. Ví dụ, hồ sơ B chỉ khai tuổi, giới, chiều cao, cân nặng và huyết áp, nhưng khuyến nghị viết ``Bệnh nhân đã báo cáo tham gia vào hoạt động thể chất thường xuyên'' và ``Bệnh nhân không phải là người hút thuốc lá''; phần giải thích của hồ sơ A và C cũng nói bệnh nhân không có tiền sử cholesterol cao, bệnh tim hay đột quỵ, là các mục chưa được khai. Nguyên nhân: nhánh LLM đưa nguyên hồ sơ đã điền mặc định và toàn bộ giải thích đặc trưng vào prompt, trong khi mẫu câu dự phòng đã lọc các trường tự điền.}
 
-\capnhat{\textbf{Cách sửa.} Module mới \code{agents/llm_context.py} bỏ các trường tự điền khỏi hồ sơ và khỏi giải thích đặc trưng trước khi đưa vào prompt, đồng thời liệt kê bằng tiếng Việt các mục người dùng chưa khai kèm yêu cầu không được nói bệnh nhân có hay không có các mục đó; \code{RecommendationAgent} và \code{ExplanationAgent} đều dùng module này. Năm kiểm thử mới (\code{tests/test_llm_context.py}) thay client OpenAI bằng client giả để kiểm tra prompt không còn giá trị mặc định. Chạy lại ba hồ sơ với OpenAI sau khi sửa: không còn câu nào khẳng định điều người dùng chưa khai; hồ sơ B được giải thích là mô hình đã dùng giá trị mặc định cho các mục như cholesterol cao, hút thuốc và được mời bổ sung, hồ sơ A được gợi ý kiểm tra cholesterol vì thiếu thông tin. Trích dẫn vẫn đúng phạm vi và kết quả an toàn vẫn giống lượt không có LLM; mỗi lượt mất 7,7--15,0 giây. Vì LLM không tất định, kết quả này mới là ba lượt chạy, chưa phải đánh giá có thống kê.}
 
-\textbf{Điều chưa được đánh giá.} Chưa có đánh giá đầu--cuối trên ca bệnh thật (độ nhạy/đặc hiệu của cả hệ thống), \capnhat{bộ đánh giá truy xuất còn nhỏ và do nhóm tự soạn}, chưa có thử nghiệm người dùng, và các số đo độ trễ ở Bảng~\ref{tab:cases} chỉ là ba lần chạy, không phải thống kê.
+\textbf{Điều chưa được đánh giá.} Chưa có đánh giá đầu--cuối trên ca bệnh thật (độ nhạy/đặc hiệu của cả hệ thống), \capnhat{bộ đánh giá truy xuất còn nhỏ và do tác giả tự soạn}, chưa có thử nghiệm người dùng, và các số đo độ trễ ở Bảng~\ref{tab:cases} chỉ là ba lần chạy, không phải thống kê.
 
 \section{Hạn chế và hướng phát triển}
 \begin{itemize}[nosep]
 \item \textbf{Mô hình}: dữ liệu BRFSS 2015 chỉ của Hoa Kỳ, nhãn tự khai và gộp tiền ĐTĐ với ĐTĐ; chưa hiệu chỉnh cho người Việt; MLP không hơn rõ rệt các mô hình boosting. \code{HighBP} suy ra từ một số đo huyết áp là xấp xỉ.
-\item \textbf{\capnhat{Không dùng glucose}}: \capnhat{mô hình không có đặc trưng này và hệ thống không còn nhận số đo glucose, nên không có cảnh báo dựa trên đường huyết; chẩn đoán vẫn cần xét nghiệm.}
 \item \textbf{KB/RAG}: \capnhat{146 đoạn bằng chứng từ 12 nguồn, trong đó 10 nguồn là bài viết của cùng một bệnh viện}, chưa thẩm định chuyên môn; \capnhat{bộ đánh giá truy xuất nhỏ (28 câu có nhãn, 40 câu độc lập), nhãn xấp xỉ theo từ khóa, ngưỡng chọn trên chính bộ câu có nhãn; bge-m3 cần khoảng 3,4 GB RAM khi nạp. Hướng sửa: mở rộng nguồn, chia đoạn nhỏ theo chủ đề, xây bộ câu hỏi lớn hơn có chuyên gia duyệt.}
 \item \textbf{Luật}: ngưỡng là của dự án, chưa được bác sĩ thẩm định.
 \item \capnhat{\textbf{LLM (khi bật)}: làm mỗi lượt chậm thêm khoảng 7--15 giây; lỗi diễn đạt giá trị mặc định như thông tin đã khai đã được sửa (Mục~5.7) nhưng mới kiểm tra trên ba hồ sơ, chưa có đánh giá độ trung thành của văn bản LLM trên tập lớn.}
