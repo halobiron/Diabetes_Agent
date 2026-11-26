@@ -32,6 +32,7 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.utils.class_weight import compute_class_weight
 
 from models.mlp import TorchMLPClassifier
+from models.screening import screening_threshold, select_screening_candidate
 
 try:
     from lightgbm import LGBMClassifier
@@ -296,7 +297,7 @@ def evaluate_model(model, X_test, y_test, threshold=None):
         "precision_at_0_5": round(float(precision_score(y_test, default_pred, zero_division=0)), 5),
         "recall_at_0_5": round(float(recall_score(y_test, default_pred, zero_division=0)), 5),
         "f1_at_0_5": round(float(f1_score(y_test, default_pred, zero_division=0)), 5),
-        "selected_threshold": round(float(threshold), 5),
+        "selected_threshold": float(threshold),
         "accuracy": round(float(accuracy_score(y_test, tuned_pred)), 5),
         "precision": round(float(precision_score(y_test, tuned_pred, zero_division=0)), 5),
         "recall": round(float(recall_score(y_test, tuned_pred, zero_division=0)), 5),
@@ -318,7 +319,19 @@ def rank_models(cv_results):
     )
 
 
-def train_production_model(X, y, data_path, output_dir, explanation_sample_size=2500):
+def train_production_model(
+    X,
+    y,
+    data_path,
+    output_dir,
+    explanation_sample_size=2500,
+    minimum_recall=0.8,
+    minimum_precision=0.5,
+):
+    if not 0 < minimum_recall <= 1:
+        raise ValueError("minimum_recall must be in (0, 1].")
+    if not 0 < minimum_precision <= 1:
+        raise ValueError("minimum_precision must be in (0, 1].")
     X_dev, X_test, y_dev, y_test = train_test_split(
         X,
         y,
@@ -347,6 +360,7 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
     final_models = {}
     tuning_metadata = {}
     validation_metrics = {}
+    selection_metrics = {}
 
     for name, model in base_models.items():
         estimator = clone(model)
@@ -358,13 +372,19 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
             fit_estimator(name, estimator, X_train, y_train, sample_weight)
 
         final_models[name] = calibrate_model(estimator, X_train, y_train)
-        validation_metrics[name] = evaluate_model(final_models[name], X_val, y_val)
+        probabilities = final_models[name].predict_proba(X_val)[:, 1]
+        threshold = screening_threshold(y_val, probabilities, minimum_recall)
+        validation_metrics[name] = evaluate_model(
+            final_models[name], X_val, y_val, threshold=threshold
+        )
+        selection_metrics[name] = {
+            **validation_metrics[name],
+            "precision": float(precision_score(y_val, probabilities >= threshold)),
+            "recall": float(recall_score(y_val, probabilities >= threshold)),
+        }
 
     # Model and threshold are fixed on validation; test is scored once, afterwards.
-    selected_name = max(
-        validation_metrics.items(),
-        key=lambda item: (item[1]["roc_auc"], item[1]["f1"]),
-    )[0]
+    selected_name = select_screening_candidate(selection_metrics, minimum_recall, minimum_precision)
     selected_threshold = validation_metrics[selected_name]["selected_threshold"]
     # Binary flag = prob >= selected_threshold. Low/Medium/High bands are derived from it:
     # Low < selected_threshold <= Medium < high_min <= High (both cut points fixed on validation).
@@ -375,7 +395,7 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
     )
     risk_bands = {
         "low_max": selected_threshold,
-        "high_min": round(high_min, 5) if high_min is not None else None,
+        "high_min": high_min,
         "high_min_rule": f"lowest validation probability with precision >= {HIGH_RISK_MIN_PRECISION}",
     }
 
@@ -405,7 +425,12 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
         "risk_bands": risk_bands,
         "feature_names": FEATURE_NAMES,
         "selected_model": selected_name,
-        "selection_method": f"{CV_FOLDS}-fold_cv_tuning_then_validation_selection_then_holdout_test",
+        "selection_method": (
+            f"{CV_FOLDS}-fold_cv_tuning_then_validation_max_precision_at_recall_"
+            f"{minimum_recall}_then_holdout_test"
+        ),
+        "minimum_validation_recall": minimum_recall,
+        "minimum_validation_precision": minimum_precision,
         "calibration": "isotonic_cv3",
         "tuned_models": sorted(tune_targets),
         "lightgbm_available": HAS_LIGHTGBM,
@@ -441,6 +466,38 @@ def train_production_model(X, y, data_path, output_dir, explanation_sample_size=
 def write_model_card(path, metadata):
     metrics = metadata["metrics"][metadata["selected_model"]]
     test = metrics["test"]
+    cv = metrics.get("cv")
+    cv_note = (
+        f"{cv['roc_auc_mean']} (+/- {cv['roc_auc_std']})"
+        if cv
+        else "not measured for this ensemble; selected on validation"
+    )
+    optimization_note = ""
+    if metadata.get("optimization"):
+        optimization_note = """
+## Operating-point tradeoff
+
+The experimental target is recall >= 0.80 on validation, maximizing precision
+subject to this constraint. This is not a clinically approved target.
+The historical test split is reused for a paired comparison, not a new external
+validation set. Search candidates, frozen selection, dataset hash and paired
+results are in `artifacts/screening_optimization/comparison.json`.
+The baseline artifact is preserved in `artifacts/screening_optimization/baseline/`.
+Higher recall comes with more false positives and lower precision/accuracy/F1
+at the screening threshold. Ranking gains are small; do not describe them as a
+large model improvement. Historical integration tests and screenshots predate
+this artifact and must not be represented as reruns of the optimized model.
+"""
+    verification = metadata.get("verification")
+    if verification:
+        optimization_note += (
+            f"\n## Regression verification\n\n"
+            f"- Passed: {verification['passed']}\n"
+            f"- Warnings: {verification['warnings']}\n"
+            f"- Duration: {verification['duration_seconds']} seconds\n"
+            "- Includes real local Neo4j and API acceptance tests.\n"
+            "- Coverage was not remeasured in this run.\n"
+        )
     path.write_text(
         f"""# Healthcare Diabetes Risk Model Card
 
@@ -466,7 +523,7 @@ healthcare AI prototype. It is not a diagnostic medical device.
 ## Selected Model
 
 - Model: `{metadata["selected_model"]}`
-- CV ROC AUC: {metrics["cv"]["roc_auc_mean"]} (+/- {metrics["cv"]["roc_auc_std"]})
+- CV ROC AUC: {cv_note}
 - Validation ROC AUC (selection): {metrics["validation"]["roc_auc"]}
 - Holdout test ROC AUC: {test["roc_auc"]}
 - Average precision: {test["average_precision"]}
@@ -474,6 +531,8 @@ healthcare AI prototype. It is not a diagnostic medical device.
 - Threshold (chosen on validation): {test["selected_threshold"]}
 - Test F1 at that threshold: {test["f1"]}
 - Test precision / recall: {test["precision"]} / {test["recall"]}
-""",
+{optimization_note}
+""".rstrip()
+        + "\n",
         encoding="utf-8",
     )

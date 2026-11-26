@@ -21,6 +21,13 @@ def parse_args():
         "--output-dir", default=str(DEFAULT_OUTPUT), help="Local directory for model outputs."
     )
     parser.add_argument("--explanation-sample-size", type=int, default=2500)
+    parser.add_argument("--minimum-precision", type=float, default=0.5)
+    parser.add_argument(
+        "--minimum-recall",
+        type=float,
+        default=0.8,
+        help="Experimental minimum validation recall; maximize precision subject to it.",
+    )
     return parser.parse_args()
 
 
@@ -33,4 +40,6 @@ if __name__ == "__main__":
         data_path=data_path,
         output_dir=args.output_dir,
         explanation_sample_size=args.explanation_sample_size,
+        minimum_recall=args.minimum_recall,
+        minimum_precision=args.minimum_precision,
     )

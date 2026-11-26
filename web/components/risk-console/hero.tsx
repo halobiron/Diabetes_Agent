@@ -11,7 +11,7 @@ function speech(result: PredictionResult, raised: boolean, alerts: number) {
   if (alerts > 0) return "Có số đo cần chú ý trước tiên, xem ngay bên dưới.";
   if (raised) return "Số đo thực tế đã nâng mức so với dự đoán của mô hình.";
   if (result.risk === "High") return "Nhiều yếu tố làm tăng nguy cơ, nhưng có việc làm được ngay.";
-  if (result.risk === "Low") return "Mọi thứ khá ổn, cứ giữ thói quen tốt nhé!";
+  if (result.risk === "Low") return "Điểm mô hình đang ở mức thấp; kết quả này vẫn không loại trừ bệnh.";
   return "Có vài yếu tố đáng để ý, xem tab Vì sao.";
 }
 
@@ -50,6 +50,9 @@ export function Hero({ result }: { result: PredictionResult }) {
       className="rise overflow-hidden rounded-2xl border border-borderSoft bg-panel p-5 shadow-console md:p-6"
       style={{ backgroundImage: `linear-gradient(135deg, ${color}1f 0%, transparent 55%)` }}
     >
+      {result.model?.task === "symptoms" ? (
+        <p className="mb-5 max-w-prose text-sm leading-relaxed text-muted">Đánh giá theo triệu chứng, từ bộ dữ liệu UCI quy mô nhỏ tại Bangladesh. Điểm này chỉ để tham khảo, không xác nhận hay loại trừ bệnh và chưa được kiểm chứng trên người Việt.</p>
+      ) : null}
       <div className="grid gap-6 lg:grid-cols-[16rem_minmax(0,1fr)] lg:gap-8">
         <div className="min-w-0">
           <h1 className="text-center text-sm font-semibold text-muted">Nguy cơ tiểu đường của bạn</h1>

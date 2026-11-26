@@ -22,6 +22,7 @@ class TorchMLPClassifier(ClassifierMixin, BaseEstimator):
         patience=5,
         validation_fraction=0.1,
         random_state=42,
+        positive_weight=None,
     ):
         self.hidden_layers = hidden_layers
         self.dropout = dropout
@@ -32,6 +33,7 @@ class TorchMLPClassifier(ClassifierMixin, BaseEstimator):
         self.patience = patience
         self.validation_fraction = validation_fraction
         self.random_state = random_state
+        self.positive_weight = positive_weight
 
     def fit(self, X, y):
         import torch
@@ -62,7 +64,12 @@ class TorchMLPClassifier(ClassifierMixin, BaseEstimator):
 
         # Same class balancing as the other candidates; calibration restores probabilities.
         positives = float(y_train.sum().item())
-        pos_weight = torch.tensor((len(y_train) - positives) / max(positives, 1.0), device=device)
+        weight = getattr(self, "positive_weight", None)
+        if weight is None:
+            weight = (len(y_train) - positives) / max(positives, 1.0)
+        if not np.isfinite(weight) or weight <= 0:
+            raise ValueError("positive_weight must be finite and positive.")
+        pos_weight = torch.tensor(float(weight), device=device)
         loss_fn = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
         optimizer = torch.optim.AdamW(
             net.parameters(), lr=self.learning_rate, weight_decay=self.weight_decay

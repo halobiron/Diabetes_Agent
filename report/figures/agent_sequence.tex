@@ -16,9 +16,9 @@
   \node[participant] at (\x,0) {\name\\Agent};
   \draw[draw=black!35,densely dashed] (\x,-0.5) -- (\x,-16.8);
 }
-\node[phase] at (6.6,-1.0) {Giao diện $\rightarrow$ FastAPI kiểm tra hồ sơ $\rightarrow$ Orchestrator};
+\node[phase] at (6.6,-1.0) {Giao diện $\rightarrow$ FastAPI kiểm tra hồ sơ và chọn nhánh $\rightarrow$ Orchestrator};
 \draw[call] (0,-1.8) -- node[msg,above] {Đánh giá hồ sơ} (2.2,-1.8);
-\node[msg,text width=2.4cm] at (2.2,-2.5) {Gọi MLP và\\FeatureExplainer};
+\node[msg,text width=2.4cm] at (2.2,-2.5) {Gọi mô hình theo nhánh\\và FeatureExplainer};
 \draw[reply] (2.2,-3.2) -- node[msg,above] {Kết quả dự đoán} (0,-3.2);
 \draw[call] (0,-3.9) -- node[msg,above] {Đọc lịch sử cùng mã hồ sơ} (4.4,-3.9);
 \draw[reply] (4.4,-4.6) -- node[msg,above] {Lịch sử và thay đổi từ ChromaDB} (0,-4.6);

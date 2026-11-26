@@ -32,3 +32,23 @@ graphify-out/
 # corpus download cache
 data/corpus/.cache/
 *.pdf
+
+# Local review, test databases, logs and experiment checkpoints
+/tmp/
+/.pytest_cache/
+/artifacts/joint_target_search/
+/artifacts/screening_optimization/
+/artifacts/symptom_nested_cv/
+/artifacts/symptom_training/
+
+# Generated LaTeX and Next.js files (keep report PDF and source assets)
+/report/*.aux
+/report/*.log
+/report/*.lof
+/report/*.lot
+/report/*.out
+/report/*.toc
+/report/*.fls
+/report/*.fdb_latexmk
+/report/*.synctex.gz
+/web/next-env.d.ts

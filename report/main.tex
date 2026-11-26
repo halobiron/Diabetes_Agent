@@ -46,7 +46,7 @@
 % ----- Đánh dấu chỉnh sửa trong phần văn bản (chữ đỏ) -----
 % \khacpdf: nội dung khác bản PDF đã nộp (project01_06_03_longth.pdf).
 % \capnhat: nội dung sửa cho khớp mã nguồn hiện tại.
-% Chỉ tô phần chữ/số thực sự thêm hoặc thay thế so với PDF đã nộp.
+% Chỉ tô đỏ phần sửa/thay thế của nội dung cũ; các mục mới hoàn toàn dùng chữ đen.
 % Không tô lại phần giữ nguyên vì đổi khoảng trắng, định dạng hoặc xóa chữ bên cạnh.
 % Giữ thuật ngữ kỹ thuật của bản gốc; không dịch lại chỉ để tạo thay đổi.
 \newcommand{\khacpdf}[1]{\textcolor{red}{#1}}
@@ -74,7 +74,7 @@
     \node[anchor=north] at ([xshift=311.8pt,yshift=-64.1pt]current page.north west) {KHOA CÔNG NGHỆ THÔNG TIN 1};
     \node[anchor=north] at ([xshift=311.8pt,yshift=-86.8pt]current page.north west) {BỘ MÔN PHÁT TRIỂN CÁC HỆ THỐNG THÔNG MINH};
     \node[anchor=north,font=\bfseries\fontsize{20}{24}\selectfont] at ([xshift=314pt,yshift=-321.3pt]current page.north west) {BÁO CÁO PROJECT 01};
-    \node[anchor=north,font=\bfseries\fontsize{18}{20.8}\selectfont] at ([xshift=314pt,yshift=-354.2pt]current page.north west) {HỆ ĐA AGENT HỖ TRỢ SÀNG LỌC NGUY CƠ BỆNH\\TIỂU ĐƯỜNG};
+    \node[anchor=north,font=\bfseries\fontsize{18}{20.8}\selectfont] at ([xshift=314pt,yshift=-395.8pt]current page.north west) {HỆ ĐA AGENT HỖ TRỢ SÀNG LỌC NGUY CƠ BỆNH\\TIỂU ĐƯỜNG};
     \node[anchor=north west] at ([xshift=154.8pt,yshift=-506.2pt]current page.north west) {Giảng viên hướng dẫn};
     \node[anchor=north west] at ([xshift=310.8pt,yshift=-506.2pt]current page.north west) {: PGS.TS. Trần Đình Quế};
     \node[anchor=north west] at ([xshift=154.8pt,yshift=-528.9pt]current page.north west) {Họ và tên sinh viên};
@@ -90,6 +90,18 @@
 
 \pagenumbering{roman}
 \setcounter{page}{2}
+
+\chapter*{TÓM TẮT}
+\addcontentsline{toc}{chapter}{TÓM TẮT}
+Hệ thống hỗ trợ sàng lọc nguy cơ tiểu đường bằng hai nhánh dự đoán: hồ sơ sức khỏe và lối sống dùng tổ hợp MLP--LightGBM trên BRFSS 2015; hồ sơ bổ sung 14 triệu chứng dùng Random Forest hiệu chuẩn trên UCI Early Stage Diabetes Risk Prediction. API chọn nhánh theo dữ liệu người dùng cung cấp. Các agent chuyên trách dự đoán, truy xuất bằng chứng, giải thích và lưu lịch sử, dưới sự điều phối của Orchestrator và bộ luật an toàn.
+
+Nhánh BRFSS đạt AUC 0,82663, precision 30,39\% và recall 80,0\% trên 50.736 hồ sơ kiểm tra. Nhánh triệu chứng được huấn luyện sau khi loại hồ sơ trùng, còn 251 hồ sơ khác nhau; với ngưỡng 0,5, precision đạt 88,89\%, recall 91,43\% và accuracy 86,27\% trên 51 hồ sơ holdout. Hai nguồn có đầu vào, nhãn và tỉ lệ ca dương khác nhau nên kết quả được đánh giá riêng. Ngưỡng triệu chứng được chấp nhận sau khi xem xét holdout; các số liệu này là so sánh hồi cứu, chưa phải xác nhận ngoài độc lập.
+
+Kho tri thức Neo4j gồm 20 thực thể, 35 quan hệ nghiệp vụ và 146 đoạn bằng chứng từ 12 nguồn. Truy xuất ngữ nghĩa kết hợp đồ thị đạt hit@3 0,929 trên 28 câu có nhãn; bộ 40 câu độc lập có 24 câu tìm được đoạn trả lời trực tiếp trong ba kết quả đầu theo chấm mù. Sáu luật an toàn được ưu tiên hơn dự đoán và policy Q-learning. Hệ thống đạt 220 kiểm thử backend; luồng nhập triệu chứng và lưu/đọc hồ sơ được kiểm tra trên desktop và mobile. Dữ liệu ngoài Việt Nam, bộ đánh giá nhỏ và việc chưa có thử nghiệm lâm sàng giới hạn khả năng suy rộng của nguyên mẫu.
+
+\textbf{Từ khóa:} hệ đa agent; sàng lọc nguy cơ; MLP; Random Forest; Neo4j; RAG.
+\clearpage
+
 \tableofcontents
 \clearpage
 
@@ -145,7 +157,7 @@ Một công cụ hỗ trợ sàng lọc cần làm được bốn việc: \emph{
 \section{Mục tiêu và phạm vi}
 Dự án hiện thực hóa sơ đồ do giảng viên đưa ra trên lớp (Hình~\ref{fig:arch}, Chương~3) thành một hệ thống chạy được đầu--cuối:
 \begin{itemize}[nosep]
-\item \textbf{DB $\rightarrow$ Deep Learning $\rightarrow$ dự đoán, phân loại}: huấn luyện và so sánh năm mô hình học máy/học sâu trên bộ dữ liệu CDC Diabetes Health Indicators (BRFSS 2015, 253.680 hồ sơ, 21 đặc trưng); chọn mạng MLP (PyTorch) đã hiệu chuẩn xác suất; phân tầng nguy cơ thành ba mức Thấp, Trung bình, Cao.
+\item \textbf{DB $\rightarrow$ ML/DL $\rightarrow$ dự đoán, phân loại}: \capnhat{hai nhánh độc lập: tổ hợp MLP--LightGBM trên 253.680 hồ sơ BRFSS với 21 đặc trưng; Random Forest hiệu chuẩn trên 251 hồ sơ triệu chứng UCI không trùng với 16 đặc trưng}. Mỗi nhánh có artifact, ngưỡng và kết quả đánh giá riêng; đầu ra phân thành Thấp, Trung bình, Cao.
 \item \textbf{Web, sách $\rightarrow$ Neo4j KB $\rightarrow$ RAG}: đồ thị tri thức về ĐTĐ (20 thực thể, 35 quan hệ, \capnhat{146 đoạn bằng chứng từ 12 nguồn}) trên Neo4j; các đoạn bằng chứng được nhúng bằng \capnhat{\code{BAAI/bge-m3}} và tìm kiếm theo độ tương đồng \capnhat{cosine}, kết hợp với liên kết từ đồ thị.
 \item \textbf{Reinforcement learning + rule $\rightarrow$ Agent}: chính sách Q-learning chọn bước hỗ trợ tiếp theo, luôn nằm dưới quyền ưu tiên của bộ luật an toàn.
 \item \textbf{Tư vấn, trợ giúp}: giải thích đặc trưng, khuyến nghị có trích dẫn nguồn, câu hỏi bổ sung theo mức ảnh hưởng, mô phỏng \emph{``nếu thay đổi''} \capnhat{và hỏi đáp tự do có trích dẫn trên KB}.
@@ -153,11 +165,28 @@ Dự án hiện thực hóa sơ đồ do giảng viên đưa ra trên lớp (Hì
 \end{itemize}
 \textbf{Phạm vi.} Đây là sản phẩm học tập. Hệ thống phục vụ \emph{sàng lọc} chứ không \emph{chẩn đoán}, không đưa liều thuốc, và mọi kết quả đều nhắc người dùng đi khám bác sĩ. Các con số trong báo cáo được lấy từ \code{artifacts/}, từ lần chạy kiểm thử và từ ví dụ chạy trực tiếp trên mã nguồn của dự án; các giả định chưa kiểm chứng được nêu rõ.
 
+\section{Câu hỏi nghiên cứu}
+\label{sec:research-questions}
+Báo cáo tập trung vào ba câu hỏi tương ứng với ba khối kỹ thuật của đề bài:
+\begin{enumerate}[label=\textbf{RQ\arabic*.},leftmargin=1.7cm]
+\item Hai nhánh dự đoán từ lối sống và triệu chứng có hiệu năng, đánh đổi precision--recall và giới hạn suy rộng như thế nào trên từng bộ dữ liệu?
+\item Truy xuất ngữ nghĩa kết hợp đồ thị cung cấp bằng chứng phù hợp đến mức nào, và các phép đo hiện có cho phép kết luận gì về chất lượng truy xuất?
+\item Kiến trúc điều phối phối hợp dự đoán, bằng chứng, luật và policy như thế nào để xử lý bất đồng, cô lập lỗi và truy vết quyết định?
+\end{enumerate}
+RQ1 được xem xét bằng kết quả trên tập kiểm tra và ma trận nhầm lẫn; RQ2 bằng bộ câu hỏi có nhãn và bộ câu hỏi độc lập; RQ3 bằng luồng xử lý, trace, kiểm thử và demo tích hợp. Các phép đo phần mềm không thay thế đánh giá hiệu quả sàng lọc trên người dùng thật.
+
+\section{Cơ sở nghiên cứu và hướng tiếp cận liên quan}
+Lý thuyết agent và hệ đa agent cung cấp cách mô tả mục tiêu, khả năng tự chủ và sự phối hợp giữa các thành phần \cite{wooldridge2009,jennings1998,russell2021}. Dự án sử dụng kiến trúc supervisor với quy trình hữu hạn: Orchestrator giữ quyền điều phối, còn các thành phần đảm nhận nhiệm vụ chuyên trách. Giao tiếp có kiểu tham khảo khái niệm performative của FIPA-ACL \cite{fipa2002}, nhưng chỉ hiện thực một tập con nhỏ để ghi nhận bất đồng và đề xuất tìm thêm bằng chứng; chưa có thương lượng phân tán nhiều vòng.
+
+Hướng RAG gắn phản hồi với tri thức truy xuất ngoài mô hình \cite{lewis2020}. Trong dự án, các đoạn văn được xếp hạng bằng embedding, kết hợp quan hệ trong Neo4j để ưu tiên bằng chứng gắn với yếu tố nguy cơ. Khi bật LLM, bằng chứng được đưa vào bước diễn đạt; khi không bật, hệ thống dùng mẫu câu hoặc trích xuất. Cách tích hợp này cần được đánh giá riêng ở bước truy xuất và bước tạo câu trả lời: tìm được đoạn liên quan chưa bảo đảm mọi diễn giải đều đúng hoặc đầy đủ.
+
+Q-learning học giá trị hành động từ phần thưởng \cite{watkins1992,sutton2018}. Dự án áp dụng phương pháp này cho việc chọn bước hỗ trợ tiếp theo trong môi trường mô phỏng, dưới quyền ưu tiên của bộ luật. So sánh với bảng kiểm cố định giúp xem xét lợi ích của policy trong chính môi trường đó. Phạm vi đóng góp là tích hợp và kiểm chứng các kỹ thuật đã có trên một nguyên mẫu; báo cáo không đề xuất thuật toán học mới hoặc suy ra hiệu quả lâm sàng từ phần thưởng mô phỏng.
+
 \section{Đóng góp và cấu trúc báo cáo}
 Các đóng góp chính:
 \begin{itemize}[nosep]
-\item Quy trình huấn luyện có kỷ luật đánh giá: chia 60/20/20 có phân tầng, CV 5 lần, tuning hai mô hình đứng đầu, chọn mô hình và ngưỡng \emph{trên tập kiểm định}, chỉ dùng tập kiểm tra để đánh giá cuối.
-\item Tách ngưỡng nhị phân và các mức Thấp/Trung bình/Cao nhưng cùng chọn trên kiểm định, để một ca bị gắn cờ dương tính không bao giờ ở mức Thấp.
+\item Quy trình đánh giá tách dữ liệu huấn luyện, kiểm định và kiểm tra; so sánh mô hình đối chứng, hiệu chuẩn xác suất và công bố rõ phép đo hồi cứu khi ngưỡng được xem xét sau holdout.
+\item Tách ngưỡng nhị phân và các mức Thấp/Trung bình/Cao theo từng artifact, để một ca bị gắn cờ dương tính không bao giờ ở mức Thấp.
 \item Bộ luật an toàn có mã luật, mức ưu tiên và căn cứ; \emph{số đo thực tế thắng dự đoán thống kê}, và mọi xung đột được báo cáo cùng cách giải quyết.
 \item Truy xuất bằng chứng từ đồ thị tri thức Neo4j kết hợp tìm kiếm ngữ nghĩa, mỗi khẳng định trích dẫn được tới nguồn\capnhat{; truy xuất được đánh giá trên một bộ câu hỏi có nhãn và một bộ câu hỏi độc lập}.
 \item Policy Q-learning chọn bước hỗ trợ tiếp theo, so sánh với các chiến lược cố định, và ghi rõ phản hồi là \emph{mô phỏng}.
@@ -184,7 +213,7 @@ Phản xạ theo luật & Nếu điều kiện thì hành động; không học 
 Có trạng thái & Duy trì bộ nhớ & \code{MemoryAgent} lưu lịch sử trong ChromaDB theo mã bệnh nhân và so sánh giữa các lần đánh giá\\
 Dựa trên tri thức & Suy luận trên tri thức tường minh & \code{RetrievalAgent}: KB Neo4j + tìm kiếm ngữ nghĩa\\
 Dựa trên mục tiêu (đơn giản) & Chọn chuỗi bước để đạt mục tiêu & \code{Orchestrator}: quy trình cố định; riêng việc ``thu thập thêm'' do policy chọn (tối đa \capnhat{2} bước)\\
-Agent học & Cải thiện từ dữ liệu, phần thưởng & \code{RiskModel} (MLP, học có giám sát); \code{QPolicy} (Q-learning)\\
+Agent học & Cải thiện từ dữ liệu, phần thưởng & \code{RiskModel}/\code{SymptomRiskModel} (\capnhat{MLP--LightGBM hoặc RF}); \code{QPolicy} (Q-learning)\\
 Sinh văn bản & Diễn đạt kết quả của các thành phần khác & \code{ExplanationAgent}, \code{RecommendationAgent} (LLM tùy chọn; mặc định dùng mẫu câu)\\
 \bottomrule
 \end{tabularx}
@@ -201,7 +230,7 @@ Hệ đa agent (Multi-Agent System, MAS) gồm nhiều agent tương tác để 
 \textbf{Tiêu chí} & \textbf{Một khối} & \textbf{Nhiều thành phần (dự án)}\\
 \midrule
 Độ phức tạp & Cao, trộn nhiều kỹ thuật & Mỗi thành phần một kỹ thuật\\
-Kiểm thử & Khó tách lỗi & Kiểm thử riêng từng thành phần (\capnhat{17} tệp kiểm thử)\\
+Kiểm thử & Khó tách lỗi & Kiểm thử riêng từng thành phần (\capnhat{20} tệp kiểm thử)\\
 An toàn & Luật nằm lẫn trong mô hình & Bộ luật độc lập, luôn ưu tiên hơn dự đoán và policy RL\\
 Chịu lỗi & Một lỗi làm hỏng cả yêu cầu & Lỗi được ghi vào \code{degraded}, dùng nội dung dự phòng\\
 Chi phí phối hợp & Không có & Cần Orchestrator và định dạng dữ liệu trao đổi thống nhất\\
@@ -209,7 +238,8 @@ Chi phí phối hợp & Không có & Cần Orchestrator và định dạng dữ 
 \end{tabularx}
 \end{table}
 
-\textbf{Mô hình tổ chức.} Dự án dùng kiểu \emph{supervisor}: Orchestrator gọi các thành phần theo thứ tự, truyền kết quả giữa chúng và tổng hợp đầu ra. \capnhat{Orchestrator gọi trực tiếp \code{DiagnosisAgent}, \code{AdvisorAgent} và \code{MemoryAgent}; \code{AdvisorAgent} gọi các thành phần chuyên trách \code{RetrievalAgent}, \code{RecommendationAgent} và \code{ExplanationAgent}. Mã nguồn có sáu lớp mang tên Agent; cách gom vai trò này không thể hiện mức tự chủ cao hơn. Từ phiên bản \code{agents-v2}, các thành phần được gom theo vai trò: \code{DiagnosisAgent} (\code{agents/diagnosis_agent.py}) chạy mô hình học sâu và giải thích đặc trưng; \code{AdvisorAgent} (\code{agents/advisor_agent.py}) truy xuất bằng chứng từ KB Neo4j, soạn khuyến nghị và giải thích bằng lời; Orchestrator gọi hai agent này, chạy bộ nhớ, bộ luật, thương lượng, policy và mô phỏng. Mỗi bước trong \code{trace} ghi tên agent sở hữu (\code{diagnosis}, \code{advisor} hoặc \code{orchestrator}).}
+
+\textbf{Mô hình tổ chức.} Dự án dùng kiểu \emph{supervisor}: Orchestrator gọi \code{DiagnosisAgent}, \code{AdvisorAgent} và \code{MemoryAgent}. DiagnosisAgent chạy mô hình của nhánh đã chọn và giải thích đặc trưng; AdvisorAgent gọi RetrievalAgent, RecommendationAgent và ExplanationAgent. Orchestrator áp luật, xử lý bất đồng và chạy policy. Mỗi bước ghi agent sở hữu trong \code{trace}. Hai nhánh có mô hình và Orchestrator riêng, dùng chung KB, bộ nhớ và các công cụ an toàn; một yêu cầu không thay mô hình dùng chung của yêu cầu khác.
 
 \section{Giao tiếp giữa các thành phần}
 FIPA-ACL \cite{fipa2002} chuẩn hóa thông điệp giữa các agent bằng \emph{performative}. Dự án \textbf{không} hiện thực đầy đủ FIPA-ACL và không có bus thông điệp bất đồng bộ. Giao tiếp gồm hai tầng:
@@ -220,13 +250,13 @@ FIPA-ACL \cite{fipa2002} chuẩn hóa thông điệp giữa các agent bằng \e
 
 Để vẫn truy vết được ``ai đã làm gì'', lớp \code{RunLog} ghi lại mỗi bước (tên thành phần, trạng thái \code{ok}/\code{degraded}, thời gian xử lý bằng mili-giây, mô tả ngắn). Trường \code{trace} trong kết quả API chứa toàn bộ các bước này, cùng danh sách thông điệp \code{trace.dialogue} giữa các thành phần, và được giao diện hiển thị ở mục ``Cả đội đã làm việc thế nào''.
 
-\textbf{Hướng lai LLM.} Các mô hình ngôn ngữ lớn thường được dùng làm ``bộ não'' của agent, kéo theo rủi ro ảo giác lan truyền và chi phí gọi nhiều lần. Dự án chọn hướng lai: mọi quyết định lâm sàng do mô hình đã đánh giá và luật tường minh đảm nhận; LLM (OpenAI, mặc định \code{gpt-4o-mini}) chỉ \emph{diễn đạt} giải thích và khuyến nghị khi có \code{OPENAI_API_KEY}. Thiếu khóa hoặc gọi lỗi thì dùng mẫu câu dự phòng và nói rõ điều đó. Nhờ vậy toàn bộ hệ thống chạy được không cần LLM và cho kết quả tái lập.
+\textbf{Hướng lai LLM.} Các mô hình ngôn ngữ lớn thường được dùng làm ``bộ não'' của agent, kéo theo rủi ro ảo giác lan truyền và chi phí gọi nhiều lần. Dự án chọn hướng lai: điểm dự đoán và mức chuyển tuyến do mô hình cùng luật tường minh tính toán; LLM (OpenAI, mặc định \code{gpt-4o-mini}) chỉ \emph{diễn đạt} giải thích và khuyến nghị khi có \code{OPENAI_API_KEY}. Thiếu khóa hoặc gọi lỗi thì dùng mẫu câu dự phòng và nói rõ điều đó. Nhờ vậy toàn bộ hệ thống chạy được không cần LLM và cho kết quả tái lập.
 
 % ================= CHƯƠNG 3 =================
 \chapter{KIẾN TRÚC TỔNG QUAN}
 
 \section{Sơ đồ của đề bài và hiện thực}
-Hình~\ref{fig:arch} vẽ lại sơ đồ của đề bài kèm thành phần hiện thực. Có ba dòng chảy hội tụ vào Orchestrator: (1) dữ liệu có sẵn đi qua Deep Learning để dự đoán và phân loại; (2) tri thức từ các nguồn y khoa được tạo thành Knowledge Base trên Neo4j và truy xuất bằng RAG; (3) bộ luật và policy reinforcement learning cùng điều khiển việc ra quyết định. Kết quả hội tụ ở đầu ra tư vấn và trợ giúp có kèm bằng chứng.
+Hình~\ref{fig:arch} vẽ lại sơ đồ của đề bài kèm thành phần hiện thực. Có ba dòng chảy hội tụ vào Orchestrator: (1) hồ sơ lối sống hoặc triệu chứng đi qua mô hình tương ứng để dự đoán và phân loại; (2) tri thức từ các nguồn y khoa được tạo thành Knowledge Base trên Neo4j và truy xuất bằng RAG; (3) bộ luật và policy reinforcement learning cùng điều khiển việc ra quyết định. Kết quả hội tụ ở đầu ra tư vấn và trợ giúp có kèm bằng chứng.
 
 \begin{figure}[H]
 \centering
@@ -237,8 +267,8 @@ Hình~\ref{fig:arch} vẽ lại sơ đồ của đề bài kèm thành phần hi
   data/.style={draw,cylinder,shape border rotate=90,aspect=0.25,align=center,font=\small,minimum height=1.2cm},
   note/.style={font=\scriptsize\itshape,gray,align=center},
   arr/.style={-{Stealth[length=2.2mm]},thick}]
-\node[data] (db) {Dữ liệu BRFSS 2015\\253.680 hồ sơ};
-\node[box,right=of db] (dl) {Deep Learning\\MLP + 4 mô hình đối chứng};
+\node[data] (db) {BRFSS · UCI triệu chứng\\253.680 · 251 hồ sơ};
+\node[box,right=of db] (dl) {Mô hình dự đoán\\MLP--LightGBM / RF};
 \node[box,right=of dl] (pred) {Dự đoán, phân loại\\xác suất · Thấp/TB/Cao};
 \node[data,below=1.6cm of db] (kb) {KB Neo4j\\20 thực thể · 35 quan hệ\\\capnhat{146 đoạn bằng chứng}};
 \node[box,right=of kb] (rag) {RAG\\\capnhat{bge-m3 + tìm cosine}\\+ liên kết đồ thị};
@@ -268,7 +298,7 @@ Bảng~\ref{tab:map} ánh xạ từng khối trên sơ đồ sang mã nguồn.
 \toprule
 \textbf{Khối trên sơ đồ} & \textbf{Thành phần} & \textbf{Hiện thực}\\
 \midrule
-DB $\rightarrow$ Deep learning $\rightarrow$ Dự đoán, Phân loại & \code{models/}, \code{RiskModel} & Huấn luyện bằng \code{training_pipeline.py}; MLP PyTorch, suy luận bằng NumPy; ngưỡng và mức nguy cơ lưu trong artifact (Mục~4.1)\\
+DB $\rightarrow$ ML/DL $\rightarrow$ Dự đoán, Phân loại & \code{RiskModel}, \code{SymptomRiskModel} & \capnhat{MLP--LightGBM cho lối sống; RF hiệu chuẩn cho triệu chứng}. API chọn nhánh theo \code{screening_mode}; ngưỡng lưu trong artifact (Mục~4.1)\\
 Neo4j KB & \code{tools/neo4j_kb.py}, \khacpdf{\code{scripts/collect_corpus.py}} & \khacpdf{Neo4j là nguồn sự thật, \code{artifacts/kb_diabet.cypher} là bản seed; thu thập web/PDF làm mới đoạn bằng chứng, giữ thực thể và quan hệ tuyển chọn; ứng dụng bắt buộc dùng Neo4j} (Mục~4.2)\\
 RAG $\rightarrow$ Agent & \code{RetrievalAgent} & Nhúng \capnhat{\code{BAAI/bge-m3}, tìm cosine trên ma trận vector dựng lúc khởi động}, cộng điểm cho đoạn gắn với yếu tố nguy cơ qua đồ thị\\
 Bộ luật & \code{SafetyGuard}, \code{RuleEngine} & \capnhat{3 luật cơ sở và 3 luật xung đột} (Mục~4.3)\\
@@ -287,9 +317,10 @@ Tư vấn, trợ giúp & \code{ExplanationAgent}, \code{RecommendationAgent}, \c
 \textbf{Thành phần} & \textbf{Nhận} & \textbf{Vai trò và kỹ thuật}\\
 \midrule
 \code{Orchestrator} & Hồ sơ đã kiểm tra từ API & Gọi lần lượt các thành phần, truyền kết quả, ghi \code{trace}, xử lý lỗi, thương lượng giữa các thành phần (\code{_negotiate}), chạy vòng policy (tối đa \capnhat{2} bước)\\
-\capnhat{\code{DiagnosisAgent}} & \capnhat{Hồ sơ} & \capnhat{Gọi \code{RiskModel} và \code{FeatureExplainer}; lỗi của mô hình được truyền lên, lỗi giải thích thì trả giải thích rỗng}\\
+\capnhat{\code{DiagnosisAgent}} & \capnhat{Hồ sơ} & \capnhat{Gọi mô hình của nhánh và \code{FeatureExplainer}; lỗi của mô hình được truyền lên, lỗi giải thích thì trả giải thích rỗng}\\
 \capnhat{\code{AdvisorAgent}} & \capnhat{Hồ sơ, mức nguy cơ, giải thích đặc trưng, kết quả luật} & \capnhat{Gọi \code{RetrievalAgent}, \code{RecommendationAgent}, \code{ExplanationAgent}; lỗi của từng bước dùng nội dung dự phòng}\\
-\code{RiskModel} & Hồ sơ (tuổi, giới, chiều cao, cân nặng, huyết áp, các mục tùy chọn) & Chuẩn hóa về 21 đặc trưng BRFSS, dự đoán xác suất bằng MLP hiệu chuẩn, ghi nhận trường tự điền\\
+\code{RiskModel} & Hồ sơ (tuổi, giới, chiều cao, cân nặng, huyết áp, các mục tùy chọn) & Chuẩn hóa về 21 đặc trưng BRFSS, dự đoán xác suất bằng \capnhat{tổ hợp MLP--LightGBM hiệu chuẩn}, ghi nhận trường tự điền\\
+\code{SymptomRiskModel} & Tuổi, giới và 14 câu trả lời triệu chứng & RF hiệu chuẩn; yêu cầu đủ dữ liệu, không tự điền câu trả lời chưa rõ\\
 \code{FeatureExplainer} & Hồ sơ & Giải thích bằng phân tích độ nhạy (SHAP chỉ cho mô hình tuyến tính)\\
 \code{RetrievalAgent} & Hồ sơ, mức nguy cơ, giải thích đặc trưng & Tìm tối đa 3 đoạn bằng chứng (5 khi mở rộng), trả nguồn, URL, độ liên quan, \code{evidence_status}\\
 \code{MemoryAgent} & Mã bệnh nhân, hồ sơ, xác suất, phiên bản mô hình & Đọc lịch sử cùng bệnh nhân, so sánh số đo và dự đoán với lần gần nhất; lưu lần đánh giá mới trong ChromaDB\\
@@ -307,8 +338,8 @@ Tư vấn, trợ giúp & \code{ExplanationAgent}, \code{RecommendationAgent}, \c
 
 Mỗi yêu cầu \code{POST /v1/predict} đi qua các bước sau (Hình~\ref{fig:flow}); các bước tùy chọn được bọc bởi \code{RunLog.guard} nên lỗi của chúng không làm hỏng cả yêu cầu:
 \begin{enumerate}[nosep]
-\item API kiểm tra dữ liệu (cần BMI \emph{hoặc} đủ chiều cao và cân nặng, nếu không trả HTTP 422).
-\item \code{RiskModel} dự đoán; xác định nhãn nhị phân và mức nguy cơ theo ngưỡng trong artifact.
+\item API kiểm tra dữ liệu và chọn nhánh theo \code{screening_mode}. Nhánh triệu chứng yêu cầu đủ 14 boolean, giới tính và tuổi 16--90; dữ liệu thiếu hoặc sai trả HTTP 422. Cả hai nhánh cần BMI \emph{hoặc} chiều cao/cân nặng cho phần số đo và an toàn.
+\item Mô hình của nhánh dự đoán; xác định nhãn nhị phân và mức nguy cơ theo ngưỡng trong artifact.
 \item Tính độ nhạy đặc trưng, đọc lịch sử theo \code{patient_id} và so sánh số đo với lần gần nhất, truy xuất bằng chứng.
 \item Đánh giá \code{evidence_status}, chạy bộ luật, soạn khuyến nghị.
 \item \emph{Thương lượng}: nếu có luật xung đột, các thành phần trao đổi thông điệp (Mục~4.4); đề xuất ``tìm mở rộng bằng chứng'' của \code{RetrievalAgent} được thực hiện ngay (chạy lại truy xuất, luật và khuyến nghị), tối đa một lần.
@@ -323,7 +354,7 @@ Mỗi yêu cầu \code{POST /v1/predict} đi qua các bước sau (Hình~\ref{fi
   r/.style={s,fill=red!6},g/.style={s,fill=green!6},b/.style={s,fill=blue!6},
   arr/.style={-{Stealth[length=2mm]},thick}]
 \node[s] (a) {Hồ sơ từ giao diện / API (kiểm tra đầu vào)};
-\node[b,below=of a] (b1) {\code{RiskModel}: xác suất, mức nguy cơ};
+\node[b,below=of a] (b1) {Mô hình theo nhánh: xác suất, mức nguy cơ};
 \node[b,below=of b1] (b2) {Giải thích đặc trưng · lịch sử bệnh nhân · truy xuất bằng chứng};
 \node[r,below=of b2] (c) {\code{SafetyGuard}: luật cơ sở, luật xung đột, mức chuyển tuyến};
 \node[s,below=of c] (d) {\code{RecommendationAgent}: khuyến nghị có trích dẫn};
@@ -358,7 +389,7 @@ Kho lịch sử & ChromaDB \cite{chroma} & \capnhat{\code{MemoryAgent} lưu các
 Embedding & \capnhat{\code{BAAI/bge-m3} \cite{bgem3}, qua thư viện sentence-transformers} \cite{reimers2019} & Chuẩn hóa đơn vị nên cosine bằng tích vô hướng\capnhat{; chạy fp16 khi có GPU}\\
 LLM (tùy chọn) & OpenAI & Chỉ diễn đạt; thiếu khóa thì dùng mẫu câu\\
 Backend & FastAPI, Pydantic 2, Uvicorn & Xác thực Bearer tùy chọn; audit \code{logs/decisions.jsonl}\\
-Giao diện & Next.js 15, React 19, TypeScript, Tailwind, Recharts & \capnhat{Gồm luồng đánh giá, khung hỏi đáp và trang xem đồ thị tri thức}\\
+Giao diện & Next.js 15, React 19, TypeScript, Tailwind & \capnhat{Gồm luồng đánh giá, khung hỏi đáp và trang xem đồ thị tri thức}\\
 Triển khai & Docker Compose; Terraform cho AWS App Runner & CI GitHub Actions: lint, định dạng, kiểm thử, build web\\
 \bottomrule
 \end{tabularx}
@@ -367,96 +398,94 @@ Triển khai & Docker Compose; Terraform cho AWS App Runner & CI GitHub Actions:
 % ================= CHƯƠNG 4 =================
 \chapter{CÁC THÀNH PHẦN CỦA HỆ THỐNG}
 
-\section{Deep Learning $\Rightarrow$ Agent}
-\subsection{Dữ liệu và bài toán}
-Khối ``DB có sẵn'' là bộ \emph{CDC Diabetes Health Indicators} (BRFSS 2015, bản Kaggle/UCI \cite{uci891}): \textbf{253.680} hồ sơ, 21 đặc trưng (huyết áp cao, mỡ máu cao, BMI, hút thuốc, đột quỵ, bệnh tim, vận động, ăn trái cây và rau, uống nhiều rượu, tình trạng bảo hiểm, sức khỏe tự đánh giá, số ngày sức khỏe thể chất/tinh thần kém, khó đi lại, giới, nhóm tuổi, học vấn, thu nhập). Nhãn \code{Diabetes_binary} bằng 0 là chưa mắc, bằng 1 là \emph{tiền ĐTĐ hoặc ĐTĐ} (gộp chung); tỉ lệ nhãn 1 là 13,9\%. Đây là dữ liệu \textbf{tự khai} của người Hoa Kỳ, nên nhãn có thể bỏ sót người mắc chưa được chẩn đoán.
 
-Glucose \textbf{không phải} đặc trưng của mô hình. \capnhat{Mô hình trả lời câu hỏi ``với hồ sơ lối sống này, nguy cơ cao đến mức nào''; số đo duy nhất mà bộ luật đối chiếu với dự đoán là huyết áp tâm thu (Mục~4.3).}
+\section{Mô hình dự đoán $\Rightarrow$ Agent}
+\subsection{Dữ liệu và bài toán}
+Nhánh lối sống dùng \emph{CDC Diabetes Health Indicators} (BRFSS 2015) \cite{uci891}: 253.680 hồ sơ, 21 đặc trưng về sức khỏe, lối sống và nhân khẩu học. Nhãn \code{Diabetes_binary=1} gộp tiền ĐTĐ với ĐTĐ, chiếm 13,9\%; đây là nhãn tự khai của người Hoa Kỳ. Glucose không thuộc đầu vào mô hình. Dữ liệu được chia phân tầng 60/20/20, seed 42: 152.208 hồ sơ huấn luyện, 50.736 kiểm định và 50.736 kiểm tra.
+
+Nhánh triệu chứng dùng \emph{UCI Early Stage Diabetes Risk Prediction} \cite{uci529}: 520 dòng điều tra tại một bệnh viện Bangladesh. Sau khi loại 269 dòng trùng trước chia tập, còn 251 hồ sơ khác nhau với tuổi, giới tính và 14 mục triệu chứng/trạng thái; không có hồ sơ giống nhau nhưng khác nhãn. Chia phân tầng cùng seed thành 150/50/51 hồ sơ, không trùng vector đặc trưng giữa các tập. Hai nguồn có nhãn, đầu vào và tỉ lệ ca dương khác nhau nên được đánh giá riêng, không gộp chỉ số.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.78\textwidth]{images/fig_split.png}
-\caption{Cách chia dữ liệu 60/20/20, phân tầng theo nhãn, \texttt{random\_state=42}}\label{fig:split}
+\includegraphics[width=0.9\textwidth]{images/fig_split.png}
+\caption{Cách chia dữ liệu BRFSS 60/20/20, phân tầng theo nhãn, seed 42}\label{fig:split}
 \end{figure}
-\nbcell{setup}{khởi tạo, nạp \texttt{metrics.json}, định dạng số kiểu Việt Nam}
-\nbcell[4]{split}{chia dữ liệu và vẽ Hình~\ref{fig:split}}
-
+\nbcell{setup}{khởi tạo và đọc metadata của artifact đang dùng}
+\nbcell{split}{chia dữ liệu BRFSS và vẽ Hình~\ref{fig:split}}
 
 \subsection{Mô hình và huấn luyện}
-Dữ liệu được chia thành tập huấn luyện (152.208), kiểm định (50.736) và kiểm tra (50.736) (Hình~\ref{fig:split}). Quy trình trong \code{models/training_pipeline.py}:
-\begin{enumerate}[nosep]
-\item Năm mô hình ứng viên: hồi quy logistic (đối chứng), rừng ngẫu nhiên, LightGBM, HistGradientBoosting và MLP PyTorch; tất cả dùng cân bằng lớp.
-\item CV phân tầng 5 lần trên tập huấn luyện; hai mô hình có CV cao nhất được tuning bằng \code{RandomizedSearchCV} (12 vòng, \code{cv=3}).
-\item MLP: các lớp ẩn $(64,32)$ với ReLU và Dropout $0{,}2$; hàm mất mát BCE có \code{pos_weight}; tối ưu AdamW \cite{adamw} ($\text{lr}=10^{-3}$, weight decay $10^{-5}$); dừng sớm theo mất mát kiểm định (patience 5). Đây là bộ tham số tốt nhất do tuning chọn.
-\item Hiệu chuẩn xác suất bằng hồi quy đẳng điệu (\code{CalibratedClassifierCV}, \code{isotonic}, \code{cv=3}), vì cân bằng lớp làm lệch xác suất.
-\item \textbf{Chọn mô hình và ngưỡng trên tập kiểm định}; tập kiểm tra chỉ dùng để đánh giá cuối.
-\end{enumerate}
+Với BRFSS, năm mô hình đối chứng gồm hồi quy logistic, rừng ngẫu nhiên, LightGBM, HistGradientBoosting và MLP. CV phân tầng 5 lần trên train dùng để chọn hai ứng viên tuning (12 cấu hình, CV 3 fold). MLP có hai lớp ẩn $(64,32)$, ReLU, Dropout 0,2, BCE có trọng số lớp và AdamW \cite{adamw}; xác suất được hiệu chuẩn isotonic CV 3 fold. Bảng~\ref{tab:models} cho thấy MLP và boosting có AUC tương đương.
+
+Nhánh đang dùng lấy 75\% xác suất MLP và 25\% LightGBM (31 lá, L2 = 20). LightGBM được fit trên 121.766 hồ sơ và hiệu chuẩn isotonic trên 30.442 hồ sơ còn lại trong train. Trọng số tổ hợp và ngưỡng được chọn trên validation theo precision cao nhất khi recall ít nhất 80\%. Tổ hợp đạt AUC 0,82663, AP 0,41893, Brier 0,09755 trên test; mức tăng xếp hạng so với MLP riêng nhỏ, không chứng minh ưu thế rõ rệt.
+
+Nhánh triệu chứng so sánh logistic regression, RF và MLP bằng CV trên train. Artifact đang dùng là RF 400 cây, \code{min_samples_leaf=2}, \code{max_features=0.8}, seed 42; hiệu chuẩn sigmoid CV 3 fold trong 150 hồ sơ train. Tuổi được dùng theo năm, giới tính và các câu trả lời được mã hóa nhị phân. BMI và huyết áp phục vụ phần số đo/luật an toàn, không phải đặc trưng của RF.
 
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.92\textwidth]{images/fig_model_compare.png}
-\caption{ROC-AUC của năm mô hình ứng viên (CV, kiểm định, kiểm tra), vẽ từ \texttt{metrics.json}}\label{fig:compare}
+\includegraphics[width=0.93\textwidth]{images/fig_model_compare.png}
+\caption{AUC của năm mô hình đối chứng trên BRFSS}\label{fig:compare}
 \end{figure}
-
 \begin{table}[H]
 \centering
-\caption{Kết quả năm mô hình (ROC-AUC của CV là trung bình $\pm$ độ lệch chuẩn)}\label{tab:models}
+\caption{Năm mô hình đối chứng trên BRFSS (CV: trung bình $\pm$ độ lệch chuẩn)}\label{tab:models}
 \input{tables/tab_models.tex}
 \end{table}
-\nbcell{compare}{vẽ Hình~\ref{fig:compare} và ghi Bảng~\ref{tab:models} ra \texttt{tables/tab\_models.tex}}
-
-
-\textbf{Nhận xét thẳng thắn.} MLP được chọn vì có AUC kiểm định cao nhất (0,8283 so với 0,8278 của HistGradientBoosting), nhưng chênh lệch này nằm trong nhiễu; trên tập kiểm tra HistGradientBoosting thậm chí nhỉnh hơn (0,8266 so với 0,8258). Với 21 đặc trưng dạng bảng, các mô hình boosting và MLP tương đương, và hồi quy logistic chỉ kém khoảng 0,006 AUC. Dự án vẫn dùng MLP để đáp ứng khối ``Deep Learning'' của sơ đồ, chứ không phải vì học sâu vượt trội.
+\nbcell{compare}{vẽ Hình~\ref{fig:compare} và ghi Bảng~\ref{tab:models}}
 
 \begin{figure}[H]
 \centering
 \includegraphics[width=\textwidth]{images/fig_roc_pr.png}
-\caption{Đường ROC và Precision--Recall của MLP hiệu chuẩn trên tập kiểm tra}\label{fig:rocpr}
+\caption{ROC và Precision--Recall của tổ hợp MLP--LightGBM đang dùng}\label{fig:rocpr}
 \end{figure}
-\nbcell{rocpr}{vẽ Hình~\ref{fig:rocpr}}
+\nbcell{rocpr}{đánh giá artifact BRFSS đang phục vụ và vẽ Hình~\ref{fig:rocpr}}
 
+\subsection{Hiệu chuẩn, ngưỡng và kết quả}
+\label{sec:model-evaluation}
+Mỗi artifact lưu ngưỡng nhị phân và hai mốc phân tầng. Nhánh BRFSS dùng ngưỡng 0,1414667 cho cờ dương; mức Cao bắt đầu ở 0,3974202 theo precision validation ít nhất 0,5. Nhánh triệu chứng dùng ngưỡng 0,5 và mốc Cao 0,6199697 theo precision validation ít nhất 0,9. Mức Thấp luôn nằm dưới ngưỡng nhị phân; các tên mức này là quy ước hiển thị, chưa phải ngưỡng lâm sàng được thẩm định.
 
-\subsection{Hiệu chuẩn, ngưỡng và phân tầng nguy cơ}
-Sau hiệu chuẩn, xác suất dự đoán khớp tỉ lệ dương thực tế (Hình~\ref{fig:calib}, Brier 0,0978). Hai khái niệm được tách riêng nhưng cùng chọn trên tập kiểm định:
-\begin{itemize}[nosep]
-\item \textbf{Ngưỡng nhị phân} $0{,}23906$: xác suất cho F1 cao nhất trên kiểm định; $\ge$ ngưỡng thì gắn cờ dương tính.
-\item \textbf{Ba mức}: Thấp ($p<0{,}23906$), Trung bình ($0{,}23906\le p<0{,}40992$), Cao ($p\ge0{,}40992$), trong đó mốc Cao là xác suất thấp nhất trên kiểm định mà độ chính xác của các ca được gắn cờ đạt tối thiểu 0,5.
-\end{itemize}
-Nhờ vậy mọi ca dương tính đều từ mức Trung bình trở lên; trước đây mốc cố định 0,4/0,7 làm một ca xác suất 0,30 vừa dương tính vừa ``Thấp''. Trên tập kiểm tra, tỉ lệ nhãn 1 theo mức là 7,1\% (Thấp, 39.495 ca), 32,1\% (Trung bình, 7.371 ca) và 49,0\% (Cao, 3.870 ca), tức phân tầng có ý nghĩa. Tại ngưỡng 0,23906: độ chính xác 0,379, độ nhạy 0,603, F1 0,465 (Hình~\ref{fig:conf}).
+\begin{table}[H]
+\centering
+\caption{Kết quả của hai nhánh trên từng tập holdout riêng}\label{tab:screening-optimization}
+\input{tables/tab_screening.tex}
+\end{table}
+
+Ở BRFSS, TP = 5.655, FN = 1.414, FP = 12.956 và TN = 30.711. Recall 80,0\% vẫn bỏ sót 20,0\% hồ sơ nhãn dương; precision 30,39\% nghĩa là phần lớn cờ dương không khớp nhãn dương của dữ liệu. Ngưỡng tối đa F1 của MLP riêng cho recall 60,3\% và FN = 2.808, cho thấy tăng recall chủ yếu là đánh đổi điểm vận hành. Accuracy (tỉ lệ đúng toàn bộ) khác precision (tỉ lệ đúng trong các ca gắn cờ); tối đa F1 không tự chứng minh ngưỡng phù hợp nhất cho sàng lọc. Test BRFSS đã được dùng trong các phép so sánh trước, chưa phải xác nhận ngoài mới.
+
+Ở nhánh triệu chứng, ngưỡng 0,5 cho TP = 32, FN = 3, FP = 4, TN = 12; specificity 75\%, F1 0,90141 và AUC 0,94821. So với ngưỡng 0,75734, precision đổi từ 100\% xuống 88,89\%, recall tăng từ 71,43\% lên 91,43\%. Vì ngưỡng 0,5 được chấp nhận sau khi xem xét holdout, đây là so sánh hồi cứu. Khoảng Wilson 95\% là 74,7--95,6\% cho precision và 77,6--97,0\% cho recall. Holdout có 35/51 hồ sơ dương: baseline đoán tất cả dương cũng đạt precision 68,6\%, recall 100\% nhưng specificity 0\%. Không suy ra hiệu quả sàng lọc ngoài bệnh viện nghiên cứu từ điểm số trên bộ nhỏ, giàu ca dương này.
+
+Đánh giá chéo lồng nhau trên 251 hồ sơ dùng 5 outer fold để đánh giá và 3 inner fold để chọn mô hình/ngưỡng, hiệu chuẩn trong train. Quy trình đạt precision 88,24\%, recall 95,38\%, accuracy 88,05\% (TP = 165, FN = 8, FP = 22, TN = 56). Các fold chọn RF hoặc MLP; đây là phép đo của quy trình lựa chọn, không phải của riêng artifact RF ngưỡng 0,5. Kết quả tóm tắt ở \code{artifacts/symptom_cv_metrics.json}. Cả hai nhánh chưa có kiểm chứng ngoài hoặc trên người Việt; mức Thấp không loại trừ bệnh.
 
 \begin{figure}[H]
 \centering
 \begin{minipage}{0.47\textwidth}\centering
 \includegraphics[width=\textwidth]{images/fig_calibration.png}
-\caption{Đường hiệu chuẩn}\label{fig:calib}
+\caption{Hiệu chuẩn xác suất của nhánh BRFSS}\label{fig:calib}
 \end{minipage}\hfill
 \begin{minipage}{0.47\textwidth}\centering
 \includegraphics[width=0.9\textwidth]{images/fig_confusion.png}
-\caption{Ma trận nhầm lẫn tại ngưỡng nhị phân}\label{fig:conf}
+\caption{Ma trận nhầm lẫn nhánh BRFSS tại ngưỡng đang dùng}\label{fig:conf}
 \end{minipage}
 \end{figure}
 \nbcell{calib}{vẽ Hình~\ref{fig:calib}}
 \nbcell{confusion}{vẽ Hình~\ref{fig:conf}}
 
-
 \begin{figure}[H]
 \centering
 \includegraphics[width=0.9\textwidth]{images/fig_bands.png}
-\caption{Phân bố xác suất theo nhãn và hai mốc phân tầng (thang log)}\label{fig:bands}
+\caption{Xác suất và hai mốc phân tầng của nhánh BRFSS}\label{fig:bands}
 \end{figure}
-
 \begin{table}[H]
 \centering
-\caption{Tỉ lệ nhãn 1 trên tập kiểm tra theo mức nguy cơ}\label{tab:bands}
+\caption{Tỉ lệ nhãn dương trong từng mức của nhánh BRFSS}\label{tab:bands}
 \input{tables/tab_bands.tex}
 \end{table}
+Mức Thấp vẫn có 1.414/32.125 hồ sơ nhãn dương (4,4\%); Trung bình và Cao lần lượt có 24,9\% và 48,7\% nhãn dương. Đây là tỉ lệ trong tập dữ liệu, không phải xác nhận tình trạng bệnh của một người.
 \nbcell{bands}{vẽ Hình~\ref{fig:bands} và ghi Bảng~\ref{tab:bands}}
-
 
 \subsection{Từ mô hình thành thành phần của hệ thống}
 Một con số xác suất chưa đủ để tư vấn. Quanh mô hình, \code{RiskModel} và \code{FeatureExplainer} bổ sung:
 \begin{enumerate}[nosep]
-\item \textbf{Chuẩn hóa đầu vào}: người dùng chỉ cần tuổi, huyết áp tâm thu và BMI (hoặc chiều cao, cân nặng); tuổi đổi thành nhóm BRFSS; \code{HighBP} suy ra từ huyết áp $\ge130$ mmHg nếu người dùng không khai (xấp xỉ, ghi rõ là hạn chế); các mục tùy chọn thiếu được điền giá trị mặc định và \textbf{được đánh dấu} (\code{defaulted_fields}).
+\item \textbf{Chuẩn hóa đầu vào}: nhánh lối sống nhận tuổi, huyết áp tâm thu và BMI (hoặc chiều cao, cân nặng); tuổi đổi thành nhóm BRFSS; \code{HighBP} suy ra từ huyết áp $\ge130$ mmHg nếu người dùng không khai (xấp xỉ, ghi rõ là hạn chế); các mục tùy chọn thiếu được điền giá trị mặc định và \textbf{được đánh dấu} (\code{defaulted_fields}). Nhánh triệu chứng yêu cầu đủ 14 boolean, giới tính và tuổi 16--90; dữ liệu chưa rõ không được tự điền.
 \item \textbf{Giải thích}: phân tích độ nhạy, tức thay từng đặc trưng bằng giá trị mặc định (trung vị huấn luyện) rồi đo xác suất đổi bao nhiêu; trường tự điền bị đánh dấu để không giải thích như thể người dùng đã khai.
 \item \textbf{Điểm chất lượng dữ liệu} (\code{confidence_score}): điểm quy ước trừ theo tỉ lệ mục tùy chọn bị tự điền (tối đa 0,2), huyết áp $\le70$ hoặc $\ge220$ mmHg ($-0{,}15$) và BMI $\le14$ hoặc $\ge50$ ($-0{,}1$). \emph{Đây không phải độ tin cậy thống kê}, và giao diện ghi rõ như vậy.
 \item \textbf{Bộ nhớ theo bệnh nhân}: lưu mã hồ sơ, mã lần đánh giá, thời điểm, số đo, dự đoán và phiên bản mô hình trong ChromaDB; so sánh tuổi, BMI, huyết áp, chiều cao và cân nặng (khi có) với lần gần nhất. Chỉ tính chênh lệch xác suất khi cùng phiên bản mô hình đã biết; thay đổi dự đoán không xác nhận bệnh tiến triển hay cải thiện. Lịch sử được đưa vào giải thích và khuyến nghị, không thay thế bằng chứng RAG và luật an toàn. Mỗi hồ sơ mang \code{outcome_confirmed = false}.
@@ -466,7 +495,7 @@ Một con số xác suất chưa đủ để tư vấn. Quanh mô hình, \code{R
 \subsection{Nguồn tri thức và đồ thị Neo4j}
 \khacpdf{Neo4j là nguồn sự thật của tri thức; bản seed \code{artifacts/kb_diabet.cypher} trong Git được xuất từ Neo4j và dùng để dựng lại cơ sở dữ liệu. Danh sách nguồn được cấu hình tại \code{data/corpus/sources.json}. Script \code{scripts/collect_corpus.py} thu thập web/PDF, chia đoạn bằng chứng với ID ổn định theo nội dung (băm SHA-256 của văn bản), đọc thực thể và quan hệ tuyển chọn từ Neo4j, kiểm tra mọi quan hệ còn bằng chứng rồi nạp bằng \code{MERGE}. Nội dung y khoa} \textbf{chưa được chuyên gia y khoa thẩm định}. \khacpdf{Ứng dụng, công cụ đánh giá RAG, kiểm thử tích hợp và notebook báo cáo đều đọc tri thức đã xử lý từ Neo4j.}
 
-Lược đồ gồm bốn nhãn thực thể (\code{Condition}, \code{RiskFactor}, \code{Test}, \code{Intervention}), nút \code{Evidence} và \code{Source}, và năm loại quan hệ: \code{INCREASES_RISK_OF}, \code{DIAGNOSES}, \code{REDUCES_RISK_OF}, \code{ADDRESSES}, \code{SHOULD_TEST_WITH}. Mỗi quan hệ mang \code{evidence_ids}; mỗi \code{Evidence} nối tới \code{Source} qua \code{FROM}, nên mọi khẳng định truy vấn ra đều đi kèm trích dẫn. Kết quả: 20 thực thể, 35 quan hệ nghiệp vụ, \capnhat{146 đoạn bằng chứng, 12 nguồn}; sau khi nạp, Neo4j có \capnhat{178 nút và 181 quan hệ (gồm 146 quan hệ bằng chứng $\rightarrow$ nguồn), được xác minh ngày 23/11/2026 trên Neo4j 5.26.32 chạy trong Docker (\code{neo4j:5-community}, phiên bản KB \code{corpus-2026-11-08})}. \capnhat{Mười hai nguồn gồm quy trình lâm sàng chẩn đoán và điều trị ĐTĐ típ 2 của Bộ Y tế (QĐ 3798/QĐ-BYT, 2017) \cite{moh2017}, fact sheet về ĐTĐ của WHO \cite{who2024} và 10 bài viết của Vinmec \cite{vinmec}; 11/12 nguồn bằng tiếng Việt. Bảy thực thể \code{RiskFactor} có thêm thuộc tính \code{aliases} (cách gọi khác như ``mập'', ``ít vận động'') để nhận yếu tố nguy cơ trong câu hỏi tự do.}
+Lược đồ gồm bốn nhãn thực thể (\code{Condition}, \code{RiskFactor}, \code{Test}, \code{Intervention}), nút \code{Evidence} và \code{Source}, và năm loại quan hệ: \code{INCREASES_RISK_OF}, \code{DIAGNOSES}, \code{REDUCES_RISK_OF}, \code{ADDRESSES}, \code{SHOULD_TEST_WITH}. Mỗi quan hệ mang \code{evidence_ids}; mỗi \code{Evidence} nối tới \code{Source} qua \code{FROM}, nên mọi khẳng định truy vấn ra đều đi kèm trích dẫn. Kết quả: 20 thực thể, 35 quan hệ nghiệp vụ, \capnhat{146 đoạn bằng chứng, 12 nguồn}; sau khi nạp, Neo4j có \capnhat{178 nút và 181 quan hệ (gồm 146 quan hệ bằng chứng $\rightarrow$ nguồn), được xác minh trong phép đo trên Neo4j 5.26.32 chạy trong Docker (\code{neo4j:5-community}, phiên bản KB \code{corpus-2026-11-08})}. \capnhat{Mười hai nguồn gồm quy trình lâm sàng chẩn đoán và điều trị ĐTĐ típ 2 của Bộ Y tế (QĐ 3798/QĐ-BYT, 2017) \cite{moh2017}, fact sheet về ĐTĐ của WHO \cite{who2024} và 10 bài viết của Vinmec \cite{vinmec}; 11/12 nguồn bằng tiếng Việt. Bảy thực thể \code{RiskFactor} có thêm thuộc tính \code{aliases} (cách gọi khác như ``mập'', ``ít vận động'') để nhận yếu tố nguy cơ trong câu hỏi tự do.}
 
 Hình~\ref{fig:kg} vẽ đồ thị tri thức \khacpdf{truy vấn trực tiếp từ Neo4j} bằng NetworkX; hình chỉ gồm 20 nút thực thể và 35 quan hệ, còn các nút \code{Evidence} và \code{Source} không được vẽ cho gọn. Bảng~\ref{tab:kb} thống kê số lượng, cùng cell sinh ra chúng.
 
@@ -510,7 +539,7 @@ contexts.sort(key=lambda c: c["relevance"] + (GRAPH_BOOST if c["supports"] else 
 \end{lstlisting}
 
 \subsection{Đánh giá truy xuất}
-Bộ câu hỏi \code{data/eval/rag_retrieval_questions.json} gồm 28 câu trong phạm vi, 8 câu ngoài phạm vi (6 câu không liên quan và 2 câu y khoa gần chủ đề mà KB không có: cúm mùa, ung thư phổi) và 3 câu hỏi về liều thuốc. Một đoạn được coi là liên quan khi chính văn bản của nó chứa dữ kiện trả lời (ví dụ ``HbA1c $\ge$ 6,5\%'', ``tuổi 45''), kiểm bằng biểu thức chính quy; vì nhãn theo từ khóa nên precision@3 là cận dưới. Bảng~\ref{tab:rageval} là kết quả chạy lại \code{scripts/evaluate_retrieval.py} ngày 23/11/2026 trên Neo4j (\code{BAAI/bge-m3}, lấy 3 đoạn đầu, ngưỡng hỏi đáp 0,55).
+Bộ câu hỏi \code{data/eval/rag_retrieval_questions.json} gồm 28 câu trong phạm vi, 8 câu ngoài phạm vi (6 câu không liên quan và 2 câu y khoa gần chủ đề mà KB không có: cúm mùa, ung thư phổi) và 3 câu hỏi về liều thuốc. Một đoạn được coi là liên quan khi chính văn bản của nó chứa dữ kiện trả lời (ví dụ ``HbA1c $\ge$ 6,5\%'', ``tuổi 45''), kiểm bằng biểu thức chính quy; vì nhãn theo từ khóa nên precision@3 là cận dưới. Bảng~\ref{tab:rageval} là kết quả chạy lại \code{scripts/evaluate_retrieval.py} trong phép đo trên Neo4j (\code{BAAI/bge-m3}, lấy 3 đoạn đầu, ngưỡng hỏi đáp 0,55).
 
 \begin{table}[H]
 \centering
@@ -531,7 +560,7 @@ Câu ngoài phạm vi bị trả lời nhầm & 0/8\\
 \end{tabular}}
 \end{table}
 
-Điểm cosine cao nhất của câu trong phạm vi thấp nhất là 0,613, của câu ngoài phạm vi cao nhất là 0,522, nên ngưỡng hỏi đáp 0,55 nằm giữa hai nhóm. Mô hình nhúng được chọn bằng cách so bốn mô hình trên cùng 28 câu, chỉ với bước xếp hạng ngữ nghĩa (Bảng~\ref{tab:embcompare}, đo ngày 11/11/2026, \code{docs/danh_gia_truy_xuat_va_do_tre.md}): bge-m3 có precision@3 cao nhất và là mô hình duy nhất tách rõ câu trong và ngoài phạm vi; đổi lại, mô hình nặng hơn (RAM đỉnh khi nạp khoảng 3,4~GB so với 1,7~GB của MiniLM).
+Điểm cosine cao nhất của câu trong phạm vi thấp nhất là 0,613, của câu ngoài phạm vi cao nhất là 0,522, nên ngưỡng hỏi đáp 0,55 nằm giữa hai nhóm. Mô hình nhúng được chọn bằng cách so bốn mô hình trên cùng 28 câu, chỉ với bước xếp hạng ngữ nghĩa (Bảng~\ref{tab:embcompare}, đo trong phép đo, \code{docs/danh_gia_truy_xuat_va_do_tre.md}): bge-m3 có precision@3 cao nhất và là mô hình duy nhất tách rõ câu trong và ngoài phạm vi; đổi lại, mô hình nặng hơn (RAM đỉnh khi nạp khoảng 3,4~GB so với 1,7~GB của MiniLM).
 
 \begin{table}[H]
 \centering
@@ -648,25 +677,25 @@ Cần nói thẳng về phạm vi của cơ chế này:
 \section{Cấu trúc mã nguồn}
 \begin{lstlisting}[caption={Cấu trúc thư mục chính của dự án}]
 healthcare-agent-system/
-|-- main.py              build_agent(): nap model, KB, memory, policy
+|-- main.py              build_agent() / build_symptom_agent(): nap model theo nhanh
 |-- api/app.py           FastAPI: /v1/predict, @@/v1/chat, /v1/kb,@@ /history,
 |                        /health, xac thuc Bearer
 |-- agents/              orchestrator, dialogue, retriever, explainer, recommender,
 |                        @@diagnosis_agent, advisor_agent, llm_context@@
-|-- models/              risk_model.py, mlp.py (PyTorch->NumPy), training_pipeline.py
+|-- models/              risk_model.py, symptoms.py, mlp.py, screening.py, training_pipeline.py
 |-- rl/                  environment.py (mo phong), policy.py (Q-learning),
 |                        @@state_tracker.py@@
 |-- tools/               rules.py, safety.py, neo4j_kb.py, explainability.py,
 |                        what_if.py, patient_guidance.py, audit_logger.py
 |-- memory/store.py      MemoryAgent (ChromaDB)
-|-- data/                @@corpus/, train/ (BRFSS 2015 CSV), eval/, chroma/@@
-|-- artifacts/           risk_model.joblib, metrics.json, support_policy.json,
-|                        @@kb_diabet.cypher, policy_comparison.json@@
+|-- data/                @@corpus/, train/ (BRFSS, UCI symptoms), eval/, chroma/@@
+|-- artifacts/           risk_model.joblib, symptom_model.joblib, metrics.json,
+|                        @@symptom_metrics.json, kb_diabet.cypher, support_policy.json@@
 |-- scripts/             download_training_data, train_diabetes_model,
 |                        train_support_policy, @@collect_corpus@@, demo_step12,
 |                        @@evaluate_retrieval, export_kb_cypher@@
 |-- web/                 Next.js: app/, components/risk-console/, lib/
-|-- tests/               @@179@@ kiem thu tu dong
+|-- tests/               @@220@@ kiem thu tu dong
 |-- docs/, infra/aws/    tai lieu, Terraform App Runner
 \end{lstlisting}
 
@@ -686,6 +715,7 @@ healthcare-agent-system/
 \capnhat{\code{DiagnosisAgent.diagnose}} & \capnhat{Chạy mô hình, phân mức nguy cơ, giải thích đặc trưng; ghi các bước vào \code{trace}}\\
 \capnhat{\code{AdvisorAgent.retrieve}, \code{.recommend}, \code{.explain}} & \capnhat{Truy xuất bằng chứng, soạn khuyến nghị, giải thích bằng lời; lỗi dùng nội dung dự phòng}\\
 \code{RiskModel.assess} & Chuẩn hóa hồ sơ, ghi trường tự điền, trả xác suất đã hiệu chuẩn\\
+\code{SymptomRiskModel.assess} & Kiểm tra đủ triệu chứng, gọi RF hiệu chuẩn; không tự điền câu trả lời chưa rõ\\
 \code{train_production_model} & CV, tuning, hiệu chuẩn, chọn mô hình và ngưỡng trên kiểm định\\
 \code{TorchMLPClassifier} & MLP huấn luyện bằng PyTorch, suy luận bằng NumPy\\
 \code{FeatureExplainer.explain} & Phân tích độ nhạy theo từng đặc trưng\\
@@ -718,6 +748,8 @@ safety = log.guard("safety_guard",
 .\.venv\Scripts\python.exe -m pip install -r requirements.txt
 .\.venv\Scripts\python.exe scripts/download_training_data.py   # BRFSS 2015
 .\.venv\Scripts\python.exe scripts/train_diabetes_model.py      # artifacts/
+.\.venv\Scripts\python.exe scripts/download_symptom_data.py
+.\.venv\Scripts\python.exe scripts/train_symptom_model.py --standard-threshold
 .\.venv\Scripts\python.exe scripts/train_support_policy.py      # policy Q-learning
 docker compose up -d neo4j                                       # @@bat buoc@@
 @@Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD@@  # nap KB
@@ -728,10 +760,11 @@ cd web; npm ci; npm run dev                                      # http://localh
 \end{lstlisting}
 Biến môi trường chính: \code{NEO4J_PASSWORD} (\khacpdf{bắt buộc; ứng dụng không khởi động khi không kết nối được Neo4j}), \code{OPENAI_API_KEY} (tùy chọn), \code{REQUIRE_API_TOKEN} và \code{API_TOKEN} (xác thực Bearer).
 
-\section{Demo: giao diện web}
-Link demo: \url{https://diabetes-agent-seven.vercel.app/}
 
-Giao diện web (Next.js) dẫn người dùng qua các câu hỏi ngắn rồi trình bày kết quả. Mỗi nhóm thành phần phía API được thể hiện bằng một ``nhân vật'' để người xem biết \emph{ai làm gì}: \textbf{Bé Tiếp} (tiếp đón, hỏi hồ sơ), \textbf{Ông Mô} (mô hình dự đoán, giải thích), \textbf{Bà Nhớ} (bộ nhớ hồ sơ tương tự), \textbf{Cô Chứng} (truy xuất bằng chứng), \textbf{Chú Luật} (luật an toàn) và \textbf{Bạn Gợi} (khuyến nghị, \emph{what-if}, policy). \capnhat{Màn nhập hồ sơ có khung hỏi đáp ở bên phải. Trang kết quả gồm phần tóm tắt (mức nguy cơ, hướng xử trí, câu hỏi bổ sung theo nhóm, việc nên làm) và bảy tab: Vì sao, Bằng chứng, Tri thức, An toàn, Nếu thay đổi, Hỏi đáp, Kỹ thuật. Tab Kỹ thuật} hiển thị \code{trace} của lượt xử lý dưới dạng dòng thời gian các bước; khi các thành phần bất đồng, cuộc trao đổi giữa các nhân vật xen vào ngay sau bước sinh ra nó. Ảnh chụp ngày 23/11/2026 trên mã hiện tại (API chạy cục bộ, KB từ Neo4j, không LLM). Hình~\ref{fig:ui1} là màn nhập hồ sơ, Hình~\ref{fig:ui2a}--\ref{fig:uitrace} là trang kết quả của hồ sơ mẫu (nữ 45 tuổi, 170 cm, 82,4 kg, huyết áp tâm thu 130 mmHg, các mục tùy chọn giữ giá trị mặc định của giao diện). \capnhat{Hình~\ref{fig:uikb} và~\ref{fig:uichat} là trang xem tri thức và một câu trả lời của phần hỏi đáp.}
+\section{Demo: giao diện web}
+Giao diện Next.js hướng dẫn người dùng qua số đo cơ thể, hai nhóm triệu chứng, tiền sử, thói quen và cảm nhận sức khỏe. Người dùng chọn đánh giá có triệu chứng hoặc chỉ dùng hồ sơ lối sống. Các mục chưa rõ được giữ nguyên; nhánh triệu chứng chỉ gửi được khi có đủ 14 câu trả lời Có/Không và giới tính. Lịch sử giữ cả nhánh và câu trả lời để cập nhật lần sau.
+
+Các vai trò được thể hiện bằng nhân vật: Bé Tiếp tiếp nhận hồ sơ; Ông Mô dự đoán và giải thích; Bà Nhớ đọc lịch sử; Cô Chứng truy xuất bằng chứng; Chú Luật kiểm tra an toàn; Bạn Gợi trình bày khuyến nghị, policy và mô phỏng. Trang kết quả có mức nguy cơ, hướng xử trí, nguồn trích dẫn, vết xử lý và các tab chi tiết. Mô phỏng chỉ thay những đặc trưng mà mô hình của nhánh thực sự sử dụng; không suy ra việc đổi triệu chứng là can thiệp điều trị. Các ảnh minh họa được chụp từ ứng dụng cục bộ, không gọi LLM.
 
 \begin{figure}[H]
 \centering
@@ -775,7 +808,7 @@ Giao diện web (Next.js) dẫn người dùng qua các câu hỏi ngắn rồi 
 \end{figure}
 
 \section{Ví dụ ba lượt đánh giá}
-Ba hồ sơ dưới đây được chạy thật qua \code{POST /v1/predict} (\capnhat{ngày 23/11/2026, không LLM, KB đọc từ Neo4j}). Cột cuối cho thấy hành vi của hệ thống, không phải đánh giá lâm sàng.
+Ba hồ sơ dưới đây được chạy thật qua \code{POST /v1/predict} (\capnhat{trong phép đo, không LLM, KB đọc từ Neo4j}). Cột cuối cho thấy hành vi của hệ thống, không phải đánh giá lâm sàng.
 
 \begin{table}[H]
 \centering
@@ -800,8 +833,11 @@ Tổng thời gian & \capnhat{372,5} ms & \capnhat{179,0} ms & \capnhat{190,5} m
 
 Hồ sơ C minh họa nguyên tắc quan trọng nhất: mô hình chỉ thấy các yếu tố lối sống và cho xác suất 3,9\% (Thấp), nhưng huyết áp 185 mmHg kích hoạt luật khẩn cấp \capnhat{\code{BP-180}}, luật xung đột \code{CF-PRED-LOW-MEASURED-HIGH} nâng \code{effective_risk} lên Cao. \capnhat{Policy chọn \code{recommend_routine} theo trạng thái nó quan sát (nguy cơ Thấp, bằng chứng đủ), nhưng luật ghi đè thành \code{escalate_to_clinician} (\code{overridden_by_rules = true}).} Lượt chạy này \capnhat{sinh bốn thông điệp} trong \code{trace.dialogue}: \code{SafetyGuard} $\rightarrow$ \code{RiskModel}, \code{challenge} (``mô hình dự đoán nguy cơ thấp nhưng số đo nằm trong khoảng nguy hiểm; ưu tiên số đo thực tế hơn dự đoán''); \code{RiskModel} $\rightarrow$ \code{SafetyGuard}, \code{accept} (chấp nhận nâng nguy cơ hiệu lực lên Cao)\capnhat{; \code{SafetyGuard} $\rightarrow$ \code{QPolicy}, \code{challenge} (luật yêu cầu mức chuyển tuyến cao hơn bước policy đã chọn); \code{QPolicy} $\rightarrow$ \code{SafetyGuard}, \code{accept}}. Hồ sơ A và B không có bất đồng nên \code{dialogue} rỗng. \capnhat{Hồ sơ B không có mục chưa khai nào làm xác suất đổi từ 2 điểm phần trăm trở lên nên không có câu hỏi bổ sung.} Với hồ sơ A, ba đoạn bằng chứng \capnhat{gồm hai bài của Vinmec (yếu tố nguy cơ trong hướng dẫn theo dõi tiến triển ĐTĐ típ 2; điều trị ĐTĐ típ 2) và quy trình của Bộ Y tế, cả ba} được đồ thị gắn với yếu tố nguy cơ của bệnh nhân (\code{graph+semantic})\capnhat{; hai kịch bản \emph{what-if} là đưa huyết áp tâm thu xuống dưới 140 mmHg và giảm 5\% cân nặng}. Thời gian chủ yếu nằm ở giải thích độ nhạy (\capnhat{66--76} ms), mô phỏng \emph{what-if} (\capnhat{74--75} ms)\capnhat{ và truy xuất (15--100 ms)}; các bước còn lại dưới \capnhat{35} ms\capnhat{, trừ lần tìm hồ sơ tương tự của hồ sơ A (80 ms)}.
 
+
 \section{Kiểm thử}
-Bộ kiểm thử gồm \textbf{\capnhat{179} kiểm thử} \capnhat{trong 17 tệp}, đều đạt trong lần chạy cuối (\capnhat{23/11/2026, có Neo4j; 7 cảnh báo deprecation của FastAPI, SHAP và SciPy}), độ phủ \textbf{\capnhat{90}\%} (\code{pytest \capnhat{tests} --cov=.}).
+Bộ kiểm thử gồm \capnhat{220 kiểm thử trong 20 tệp}, đều đạt với Neo4j thật và LLM tắt; có 7 cảnh báo deprecation. Nhánh triệu chứng được kiểm tra ánh xạ đủ đặc trưng, chặn thiếu dữ liệu và tuổi ngoài phạm vi, không tự đổi ``Chưa rõ'' thành ``Không'', giữ câu trả lời khi lưu/đọc hồ sơ, và giải thích được cột số nguyên có trung vị phân số. Lệnh chạy là \code{python -m pytest tests -q -p no:cacheprovider}.
+
+Luồng trình duyệt được kiểm tra ở 1440$\times$1000 và 390$\times$844: API trả 200, không có thành phần degraded, lỗi JavaScript hoặc tràn ngang; hồ sơ đọc lại giữ đúng nhánh và câu trả lời. Typecheck, lint, 7 kiểm thử web và build production đều đạt. Độ phủ 90\% là số đo của bộ 179 kiểm thử; bộ 220 chưa đo lại coverage.
 
 \begin{table}[H]
 \centering
@@ -821,42 +857,57 @@ Bộ kiểm thử gồm \textbf{\capnhat{179} kiểm thử} \capnhat{trong 17 t�
 \code{test_rl.py} & Môi trường, Q-learning, luật ghi đè policy\\
 \code{test_dialogue.py} & Thông điệp giữa các thành phần: không bất đồng thì rỗng, \code{challenge} rồi \code{accept}/\code{propose}/\code{inform} đúng người nhận; đề xuất tìm mở rộng được thực hiện đúng một lần, đổi bằng chứng và khuyến nghị nhưng không hạ mức chuyển tuyến; tìm mở rộng lỗi thì giữ bằng chứng cũ và báo lỗi\\
 \code{test_step11.py}, \code{test_patient_guidance.py}, \code{test_what_if.py}, \code{test_step12.py} & Giải thích không gán nhầm đặc trưng tự điền, điểm chất lượng theo tỉ lệ mục tự điền, lịch sử đúng bệnh nhân và so sánh số đo, thang chỉ số, câu hỏi bổ sung, mô phỏng \emph{what-if}, kịch bản chấp nhận trên artifact thật\\
+\code{test_screening.py}, \code{test_symptoms.py}, \code{test_patient_memory.py} & Ràng buộc precision/recall, mã hóa triệu chứng, tách dữ liệu không trùng, luồng lưu/đọc và so sánh cùng bệnh nhân\\
 \bottomrule
 \end{tabularx}
 \end{table}
 
+
 \section{Đánh giá}
-\textbf{Mô hình.} Xem Bảng~\ref{tab:models}: MLP hiệu chuẩn đạt ROC-AUC 0,826 và AP 0,414 trên 50.736 hồ sơ kiểm tra, ngang các mô hình boosting. Phân tầng có ý nghĩa: nhãn 1 chiếm 7,1\%, 32,1\% và 49,0\% lần lượt ở mức Thấp, Trung bình và Cao.
+\textbf{Dự đoán.} Bảng~\ref{tab:screening-optimization} công bố riêng từng bộ dữ liệu. Nhánh lối sống đạt recall 80,0\% nhưng precision chỉ 30,39\%; nhánh triệu chứng đạt precision 88,89\%, recall 91,43\% trên 51 hồ sơ holdout đã được dùng để xem xét ngưỡng. Điểm cao của nhánh triệu chứng không phải cải thiện trên BRFSS hoặc bằng chứng hiệu quả ngoài quần thể nghiên cứu.
 
-\textbf{Policy RL.} Xem Bảng~\ref{tab:rl}; chỉ có giá trị trong môi trường mô phỏng.
+\textbf{Truy xuất.} Bảng~\ref{tab:rageval} cho hit@3 = 0,929 và MRR = 0,786 trên 28 câu có nhãn; 24/40 câu độc lập có đoạn trả lời trực tiếp trong top 3 theo chấm mù. Hai cách chấm khác nhau, đều có quy mô nhỏ và chưa được chuyên gia y khoa duyệt.
 
-\capnhat{\textbf{Truy xuất.} Xem Bảng~\ref{tab:rageval}: hit@3 0,929 và MRR 0,786 trên 28 câu có nhãn, không trả lời nhầm câu ngoài phạm vi nào và không trả về đoạn chứa liều thuốc.}
+\textbf{Policy và tích hợp.} Policy RL được so sánh với chiến lược cố định trong môi trường mô phỏng (Bảng~\ref{tab:rl}). Kiểm thử và ví dụ API xác nhận việc truyền kết quả, ghi đè theo luật, giữ lịch sử và nội dung dự phòng trong các tình huống đã thử; không thay thế đánh giá lâm sàng. Chưa có thử nghiệm người dùng, thống kê độ trễ trên tải lớn hoặc đánh giá độ trung thành của LLM trên tập đủ lớn.
 
-\textbf{Tích hợp.} Lần chạy demo tích hợp ngày 23/11/2026 (\code{scripts/demo_step12.py --require-neo4j --with-web}) đạt \textbf{26/26} kịch bản trên Neo4j thật (\code{kb_source = KnowledgeGraph}\capnhat{; 178 nút, 181 quan hệ, 146 đoạn bằng chứng}): hồ sơ đủ và thiếu dữ liệu, cảnh báo, thiếu bằng chứng, lỗi từng thành phần (retriever, memory, explainer, recommender, safety, policy), lỗi đầu vào (422), lịch sử, và cả ba proxy web khi backend ngừng (HTTP 502). Phần luồng hỏi bổ sung được kiểm tra bằng trình duyệt (Playwright, bản build production của web, ngày 23/11/2026) ở hai kích thước (1440$\times$1000 và 390$\times$844)\capnhat{; cả hai đều đạt mọi kiểm tra: mục bổ sung hiện đủ hai nhóm câu hỏi; lần gửi đầu để các mục chưa khai là \code{null}, không tự điền giá trị; trả lời nhóm tiền sử (chọn ``Cholesterol cao'') thì hệ thống gửi lại câu trả lời, nhóm để ``Chưa rõ'' đi vào \code{skipped_fields}, và xác suất được tính lại (12,2\% lên 24,2\%); mục đã trả lời hoặc bỏ qua không bị hỏi lại; bấm ``Bỏ qua các mục này'' thì cả 9 mục vào \code{skipped_fields}; khi mạng lỗi, giao diện báo lỗi, giữ lựa chọn và gửi lại thành công; không tràn ngang và không có lỗi JavaScript (ngoài lỗi tải do kiểm tra cố ý cắt mạng). Lint, kiểm tra kiểu (\code{tsc --noEmit}) và build của web đều đạt.} Lần chạy demo dùng mẫu câu dự phòng (script tắt khóa LLM để kết quả tái lập được).
-
-\capnhat{\textbf{Chạy với LLM thật.} Ba hồ sơ ở Bảng~\ref{tab:cases} được chạy qua API OpenAI (\code{gpt-4o-mini}, ngày 23/11/2026). Cả ba lượt đều sinh giải thích và khuyến nghị bằng LLM, không dùng nội dung dự phòng, không khẳng định thông tin người dùng chưa khai; các trích dẫn \code{[1]}--\code{[3]} đều trỏ tới bằng chứng trong lượt tương ứng. Xác suất, luật kích hoạt, \code{effective_risk}, mức chuyển tuyến và bước policy giữ nguyên so với khi không gọi LLM. Thời gian xử lý là 7,7--15,0 giây/lượt, so với 0,18--0,37 giây khi không gọi LLM. Kết quả mới ghi nhận trên ba hồ sơ, chưa đủ để đánh giá thống kê.}
-
-
-
-\textbf{Điều chưa được đánh giá.} Chưa có đánh giá đầu--cuối trên ca bệnh thật (độ nhạy/đặc hiệu của cả hệ thống), \capnhat{bộ đánh giá truy xuất còn nhỏ và do tác giả tự soạn}, chưa có thử nghiệm người dùng, và các số đo độ trễ ở Bảng~\ref{tab:cases} chỉ là ba lần chạy, không phải thống kê.
+\subsection{Trả lời các câu hỏi nghiên cứu}
+Bảng~\ref{tab:research-answers} tổng hợp bằng chứng cho ba câu hỏi ở Mục~\ref{sec:research-questions}, đồng thời giới hạn phạm vi của từng kết luận.
+\begin{table}[H]
+\centering
+\caption{Kết quả và giới hạn theo câu hỏi nghiên cứu}\label{tab:research-answers}
+\begin{tabularx}{\textwidth}{@{}L{1.7cm}XX@{}}
+\toprule
+\textbf{Câu hỏi} & \textbf{Kết quả hiện có} & \textbf{Giới hạn kết luận}\\
+\midrule
+RQ1: Dự đoán & Lối sống: P = 30,39\%, R = 80,0\%. Triệu chứng: P = 88,89\%, R = 91,43\%; hai bộ được đánh giá riêng. & BRFSS có nhiều báo động nhầm; UCI nhỏ và giàu ca dương. Ngưỡng đã được xem xét hồi cứu, chưa xác nhận ngoài.\\
+\addlinespace
+RQ2: Bằng chứng & hit@3 = 0,929 trên 28 câu có nhãn; 24/40 câu độc lập có đoạn trả lời trực tiếp trong top 3 theo chấm mù. & Hai cách chấm khác nhau; tập nhỏ, chưa có chuyên gia duyệt. Chưa đủ bằng chứng để quy lợi ích riêng cho phần đồ thị hoặc bảo đảm chất lượng văn bản sinh.\\
+\addlinespace
+RQ3: Phối hợp & Luật ghi đè dự đoán và policy khi xung đột; trace ghi bước xử lý và thông điệp. 220 kiểm thử backend và luồng desktop/mobile đạt; luật luôn được ưu tiên. & Phối hợp chủ yếu tuần tự; phản hồi tất định; RL mô phỏng. Chưa chứng minh lợi ích lâm sàng hoặc ưu thế so với quy trình đơn giản hơn.\\
+\bottomrule
+\end{tabularx}
+\end{table}
 
 \section{Hạn chế và hướng phát triển}
 \begin{itemize}[nosep]
-\item \textbf{Mô hình}: dữ liệu BRFSS 2015 chỉ của Hoa Kỳ, nhãn tự khai và gộp tiền ĐTĐ với ĐTĐ; chưa hiệu chỉnh cho người Việt; MLP không hơn rõ rệt các mô hình boosting. \code{HighBP} suy ra từ một số đo huyết áp là xấp xỉ.
+\item \textbf{Mô hình}: BRFSS là dữ liệu tự khai của Hoa Kỳ, nhãn gộp tiền ĐTĐ với ĐTĐ và precision của nhánh lối sống thấp. UCI chỉ có 251 hồ sơ khác nhau từ một bệnh viện Bangladesh, giàu ca dương và thiếu xác nhận ngoài. Các ngưỡng chưa được thẩm định lâm sàng; \code{HighBP} suy từ một số đo là xấp xỉ.
 \item \textbf{KB/RAG}: \capnhat{146 đoạn bằng chứng từ 12 nguồn, trong đó 10 nguồn là bài viết của cùng một bệnh viện}, chưa thẩm định chuyên môn; \capnhat{bộ đánh giá truy xuất nhỏ (28 câu có nhãn, 40 câu độc lập), nhãn xấp xỉ theo từ khóa, ngưỡng chọn trên chính bộ câu có nhãn; bge-m3 cần khoảng 3,4 GB RAM khi nạp. Hướng sửa: mở rộng nguồn, chia đoạn nhỏ theo chủ đề, xây bộ câu hỏi lớn hơn có chuyên gia duyệt.}
 \item \textbf{Luật}: ngưỡng là của dự án, chưa được bác sĩ thẩm định.
-\item \capnhat{\textbf{LLM (khi bật)}: thời gian xử lý 7,7--15,0 giây/lượt; mới kiểm tra trên ba hồ sơ, chưa có đánh giá độ trung thành của văn bản LLM trên tập lớn.}
+\item \textbf{LLM (khi bật)}: chưa có đánh giá độ trung thành trên tập lớn; thời gian gọi và lỗi dịch vụ cần được đo riêng với từng cấu hình triển khai.
 \item \textbf{RL}: môi trường và phần thưởng tự đặt, chưa học từ phản hồi thật; không chứng minh hơn bảng kiểm cố định\capnhat{; trạng thái chỉ còn 18 và nhu cầu thật chỉ phụ thuộc mức nguy cơ, nên bài toán gần như tầm thường}.
-\item \textbf{Giao tiếp agent--agent còn tối thiểu}: các thành phần vẫn do Orchestrator gọi tuần tự. Phần phản biện (\code{challenge}/\code{accept}/\code{propose}/\code{inform}) dùng hàm phản hồi tất định; chỉ đề xuất tìm mở rộng bằng chứng của retriever được thực hiện thật, còn lại chỉ ghi lại bất đồng do luật xác định. Chưa có thương lượng nhiều vòng, chưa có agent nào tự khởi xướng hay thay đổi quyết định lâm sàng cuối, và đề xuất tìm mở rộng chưa kích hoạt trên hồ sơ thật vì bằng chứng của KB hiện tại luôn đủ. \capnhat{Lần chạy demo 26/26 ngày 23/11/2026 chạy trên mã đã có phần này.}
+\item \textbf{Giao tiếp agent--agent còn tối thiểu}: các thành phần vẫn do Orchestrator gọi tuần tự. Phần phản biện (\code{challenge}/\code{accept}/\code{propose}/\code{inform}) dùng hàm phản hồi tất định; chỉ đề xuất tìm mở rộng bằng chứng của retriever được thực hiện thật, còn lại chỉ ghi lại bất đồng do luật xác định. Chưa có thương lượng nhiều vòng, chưa có agent nào tự khởi xướng hay thay đổi quyết định lâm sàng cuối, và đề xuất tìm mở rộng chưa kích hoạt trên hồ sơ thật vì bằng chứng của KB hiện tại luôn đủ. 
 \item \textbf{Chưa có thử nghiệm với người dùng thật.} Mọi kết quả chỉ nhằm mục đích học tập, không thay thế tư vấn y khoa.
 \end{itemize}
 
 % ================= KẾT LUẬN =================
+
 \chapter*{KẾT LUẬN}
 \addcontentsline{toc}{chapter}{KẾT LUẬN}
-Dự án đã hiện thực hóa sơ đồ hệ đa agent cho bệnh tiểu đường thành một hệ thống chạy được đầu--cuối. Dữ liệu BRFSS 2015 (253.680 hồ sơ) đi qua Deep Learning để dự đoán và phân loại nguy cơ: MLP PyTorch hiệu chuẩn đạt ROC-AUC 0,826 trên tập kiểm tra tách riêng, ngang các mô hình boosting, với ngưỡng và ba mức nguy cơ chọn trên tập kiểm định. Tri thức từ \capnhat{quy trình của Bộ Y tế, WHO và các bài viết của Vinmec} được tổ chức thành đồ thị Neo4j (20 thực thể, 35 quan hệ, \capnhat{146 đoạn bằng chứng}) và truy xuất bằng RAG kết hợp liên kết đồ thị, để khuyến nghị luôn kèm nguồn\capnhat{; truy xuất đạt hit@3 0,929 và MRR 0,786 trên 28 câu hỏi có nhãn, và cũng phục vụ phần hỏi đáp tự do}. Bộ luật \capnhat{6 luật} bảo đảm số đo thực tế thắng dự đoán thống kê, và policy Q-learning chọn bước tiếp theo luôn nằm dưới quyền ưu tiên của luật. Khi các thành phần bất đồng, chúng trao đổi thông điệp có kiểu (phản biện, chấp nhận, đề xuất, thông báo) được ghi vào \code{trace}. Hệ thống được kiểm thử bằng \capnhat{179} kiểm thử tự động (độ phủ \capnhat{90\%}) và demo tích hợp 26/26 kịch bản trên Neo4j thật.
+Dự án hiện thực hóa hệ đa agent hỗ trợ sàng lọc nguy cơ tiểu đường với hai nhánh dữ liệu độc lập, cùng dùng KB Neo4j, bộ luật và trace để kiểm tra chéo kết quả. Nhánh lối sống dùng MLP--LightGBM, đạt AUC 0,82663 và recall 80,0\% trên BRFSS nhưng precision còn 30,39\%. Nhánh triệu chứng dùng RF hiệu chuẩn ở ngưỡng 0,5, đạt precision 88,89\%, recall 91,43\% và accuracy 86,27\% trên 51 hồ sơ UCI; đây là phép so sánh hồi cứu trên bộ dữ liệu nhỏ, không phải xác nhận ngoài.
 
-Bài học lớn nhất của dự án là trong bài toán y tế, giá trị của kiến trúc nhiều thành phần nằm ở chỗ mô hình thống kê, bằng chứng có nguồn và luật tường minh \emph{kiểm tra chéo} nhau, mọi kết quả truy vết được tới một bước cụ thể (\code{trace}), và phần học luôn đặt dưới sự giám sát của tri thức tường minh. Đồng thời, báo cáo nêu rõ các giới hạn: dữ liệu và nhãn của Hoa Kỳ, MLP không vượt trội, RL chỉ trên môi trường mô phỏng, \capnhat{bộ đánh giá truy xuất còn nhỏ} và chưa thẩm định chuyên môn. Hướng phát triển tiếp theo gồm: hiệu chỉnh mô hình trên dữ liệu người Việt, \capnhat{mở rộng nguồn tri thức và bộ đánh giá truy xuất}, nhờ chuyên gia y khoa thẩm định KB và ngưỡng luật, và mở rộng giao tiếp giữa các agent từ ghi nhận bất đồng sang thương lượng nhiều vòng.
+Tri thức có nguồn được tổ chức thành 20 thực thể, 35 quan hệ nghiệp vụ và 146 đoạn bằng chứng; truy xuất đạt hit@3 0,929 trên 28 câu có nhãn. Sáu luật an toàn được ưu tiên hơn mô hình và policy Q-learning; khi bất đồng, thông điệp và cách giải quyết được ghi trong trace. Hệ thống đạt 220 kiểm thử tự động và kiểm tra luồng desktop/mobile. Giá trị của kiến trúc nằm ở việc tách trách nhiệm, truy vết và cô lập lỗi, trong khi khả năng tự chủ của agent vẫn hữu hạn.
+
+Hướng phát triển cần tập trung vào dữ liệu và kiểm chứng: đánh giá ngoài trên quần thể phù hợp, thẩm định tri thức và ngưỡng bằng chuyên gia, mở rộng bộ câu hỏi truy xuất, và đo chất lượng văn bản LLM. Các chỉ số nội bộ và mức nguy cơ của nguyên mẫu không xác nhận hoặc loại trừ bệnh cho từng người.
 
 % ================= TÀI LIỆU THAM KHẢO =================
 \begin{thebibliography}{99}
@@ -868,6 +919,7 @@ Bài học lớn nhất của dự án là trong bài toán y tế, giá trị c
 \bibitem{niddk} National Institute of Diabetes and Digestive and Kidney Diseases, \emph{Diabetes information}, 2024. \url{https://www.niddk.nih.gov/health-information/diabetes}
 \bibitem{whelton2018} P. K. Whelton \emph{et al.}, ``2017 ACC/AHA guideline for the prevention, detection, evaluation, and management of high blood pressure in adults,'' \emph{Hypertension}, vol. 71, no. 6, pp. e13--e115, 2018.
 \bibitem{uci891} Centers for Disease Control and Prevention, \emph{CDC Diabetes Health Indicators} (BRFSS 2015), UCI Machine Learning Repository, id 891. \url{https://archive.ics.uci.edu/dataset/891/cdc+diabetes+health+indicators}
+\bibitem{uci529} \capnhat{\emph{Early Stage Diabetes Risk Prediction} [Dataset], UCI Machine Learning Repository, 2020, id 529, DOI: 10.24432/C5VG8H, CC BY 4.0. \url{https://archive.ics.uci.edu/dataset/529/early+stage+diabetes+risk+}}
 \bibitem{wooldridge2009} M. Wooldridge, \emph{An Introduction to MultiAgent Systems}, 2nd ed. Wiley, 2009.
 \bibitem{jennings1998} N. R. Jennings, K. Sycara, and M. Wooldridge, ``A roadmap of agent research and development,'' \emph{Autonomous Agents and Multi-Agent Systems}, vol. 1, pp. 7--38, 1998.
 \bibitem{russell2021} S. Russell and P. Norvig, \emph{Artificial Intelligence: A Modern Approach}, 4th ed. Pearson, 2021.

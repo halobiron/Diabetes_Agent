@@ -7,7 +7,7 @@ print("ROC-AUC", round(roc_auc_score(y_test, p_test), 5), "AP", round(average_pr
 fpr, tpr, _ = roc_curve(y_test, p_test)
 prec, rec, _ = precision_recall_curve(y_test, p_test)
 fig, axes = plt.subplots(1, 2, figsize=(8, 3.5))
-axes[0].plot(fpr, tpr, color="#4b3fa8", label=f"MLP hiệu chuẩn (AUC {roc_auc_score(y_test, p_test):.3f})")
+axes[0].plot(fpr, tpr, color="#4b3fa8", label=f"MLP–LightGBM (AUC {roc_auc_score(y_test, p_test):.3f})")
 axes[0].plot([0, 1], [0, 1], "--", color="gray"); axes[0].set_xlabel("FPR"); axes[0].set_ylabel("TPR")
 axes[0].set_title("Đường ROC"); axes[0].legend(fontsize=8, frameon=False, loc="lower right")
 axes[1].plot(rec, prec, color="#4b3fa8", label=f"AP {average_precision_score(y_test, p_test):.3f}")

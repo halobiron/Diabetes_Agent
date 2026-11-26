@@ -101,7 +101,7 @@ fig.tight_layout(); fig.savefig(OUT / "fig_model_compare.png"); plt.show()
 
 # Bảng LaTeX cho báo cáo (Bảng kết quả năm mô hình)
 names_vi = {"logistic_regression": "Hồi quy logistic", "random_forest": "Rừng ngẫu nhiên", "lightgbm": "LightGBM",
-            "hist_gradient_boosting": "HistGradientBoosting", "mlp": r"\\textbf{MLP (được chọn)}"}
+            "hist_gradient_boosting": "HistGradientBoosting", "mlp": "MLP"}
 rows = []
 for m in order:
     t = M[m]["test"]
@@ -126,7 +126,7 @@ print("ROC-AUC", round(roc_auc_score(y_test, p_test), 5), "AP", round(average_pr
 fpr, tpr, _ = roc_curve(y_test, p_test)
 prec, rec, _ = precision_recall_curve(y_test, p_test)
 fig, axes = plt.subplots(1, 2, figsize=(8, 3.5))
-axes[0].plot(fpr, tpr, color="#4b3fa8", label=f"MLP hiệu chuẩn (AUC {roc_auc_score(y_test, p_test):.3f})")
+axes[0].plot(fpr, tpr, color="#4b3fa8", label=f"MLP–LightGBM (AUC {roc_auc_score(y_test, p_test):.3f})")
 axes[0].plot([0, 1], [0, 1], "--", color="gray"); axes[0].set_xlabel("FPR"); axes[0].set_ylabel("TPR")
 axes[0].set_title("Đường ROC"); axes[0].legend(fontsize=8, frameon=False, loc="lower right")
 axes[1].plot(rec, prec, color="#4b3fa8", label=f"AP {average_precision_score(y_test, p_test):.3f}")
@@ -144,7 +144,7 @@ from sklearn.metrics import brier_score_loss
 frac, mean_p = calibration_curve(y_test, p_test, n_bins=10, strategy="quantile")
 fig, ax = plt.subplots(figsize=(4.4, 4))
 ax.plot([0, 1], [0, 1], "--", color="gray", label="Hiệu chuẩn lý tưởng")
-ax.plot(mean_p, frac, "o-", color="#4b3fa8", label=f"MLP (Brier {brier_score_loss(y_test, p_test):.4f})")
+ax.plot(mean_p, frac, "o-", color="#4b3fa8", label=f"MLP–LightGBM (Brier {brier_score_loss(y_test, p_test):.4f})")
 ax.set_xlabel("Xác suất dự đoán trung bình"); ax.set_ylabel("Tỉ lệ dương thực tế"); ax.legend(fontsize=8, frameon=False)
 fig.tight_layout(); fig.savefig(OUT / "fig_calibration.png"); plt.show()""",
     "calib",
@@ -185,7 +185,7 @@ code(
 pred = (p_test >= thr).astype(int)
 tn, fp, fn, tp = confusion_matrix(y_test, pred).ravel()
 print(dict(tn=tn, fp=fp, fn=fn, tp=tp), "precision", round(tp/(tp+fp), 4), "recall", round(tp/(tp+fn), 4))
-assert (tn, fp, fn, tp) == tuple(metrics["metrics"]["mlp"]["test"]["confusion_matrix"].values())
+assert (tn, fp, fn, tp) == tuple(metrics["metrics"][metrics["selected_model"]]["test"]["confusion_matrix"].values())
 
 fig, ax = plt.subplots(figsize=(3.8, 3.4))
 cm = np.array([[tn, fp], [fn, tp]])

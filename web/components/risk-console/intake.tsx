@@ -5,6 +5,7 @@ import { ArrowLeft, ArrowRight, Loader2, Pencil, Sparkles } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import type { PatientInput } from "@/types/healthcare";
+import { symptomInputError, SYMPTOM_QUESTIONS } from "@/lib/symptoms";
 
 import { Avatar, CAST, Say, type CastId, type Mood } from "./agents";
 import { ChipGroup, HABITS, HISTORY, type GroupItem } from "./grouped-choices";
@@ -12,6 +13,7 @@ import { SliderField, Toggle } from "./form-controls";
 import { Choice, Stepper } from "./inputs";
 import type { PatientFieldChange } from "./types";
 import { ProfileField, type ProfileLookupState } from "./profile-field";
+import { SymptomQuestions } from "./symptom-questions";
 
 type Props = {
   initialStep?: string | null;
@@ -88,6 +90,22 @@ const STEPS: Step[] = [
         </div>
       </div>
     ),
+  },
+  {
+    id: "symptoms",
+    cast: "mo",
+    label: "Triệu chứng thường gặp",
+    ask: "Mình là Ông Mô. Thông tin triệu chứng giúp mình đánh giá sát hồ sơ hơn. Bạn trả lời theo những gì mình biết nhé.",
+    summary: (f) => f.screening_mode === "symptoms" ? `${SYMPTOM_QUESTIONS.slice(0, 7).filter(([key]) => typeof f.symptoms?.[key] === "boolean").length}/7 mục đã trả lời` : "Đang dùng hồ sơ lối sống",
+    body: ({ form, set }) => <SymptomQuestions form={form} set={set} />,
+  },
+  {
+    id: "symptoms-other",
+    cast: "mo",
+    label: "Triệu chứng bổ sung",
+    ask: "Còn một nhóm thông tin nữa. Mục nào chưa rõ, bạn cứ giữ Chưa rõ; mình sẽ không đoán thay bạn.",
+    summary: (f) => f.screening_mode === "symptoms" ? `${SYMPTOM_QUESTIONS.slice(7).filter(([key]) => typeof f.symptoms?.[key] === "boolean").length}/7 mục đã trả lời` : "Đang dùng hồ sơ lối sống",
+    body: ({ form, set }) => <SymptomQuestions form={form} set={set} second />,
   },
   {
     id: "history",
@@ -220,6 +238,7 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
   }
 
   const onSummary = index === SUMMARY_INDEX;
+  const symptomError = symptomInputError(form);
   const step = onSummary ? null : STEPS[index];
 
   function answer(r?: Reaction | null) {
@@ -241,7 +260,7 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
           <span className="tabular-nums">{progress}%</span>
         </div>
         <div className="h-3 overflow-hidden rounded-full bg-panelMuted">
-          <div className="h-full rounded-full bg-info" style={{ width: `${progress}%`, transition: "width 0.5s cubic-bezier(0.16,1,0.3,1)" }} />
+          <div className="h-full rounded-full bg-info" style={{ transform: `scaleX(${progress / 100})`, transformOrigin: "left", transition: "transform 0.5s cubic-bezier(0.16,1,0.3,1)" }} />
         </div>
       </div>
 
@@ -303,6 +322,16 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
             ))}
           </ul>
 
+          {symptomError ? (
+            <div role="status" className="mt-5 space-y-3 rounded-xl border border-borderSoft bg-panel p-4 text-sm">
+              <p>{symptomError}</p>
+              <div className="flex flex-wrap gap-2">
+                <button type="button" className="btn-secondary" onClick={() => { setFromSummary(true); go(!form.sex || form.age < 16 || form.age > 90 ? 0 : 1); }}>Bổ sung thông tin</button>
+                <button type="button" className="btn-secondary" onClick={() => onFieldChange("screening_mode", "lifestyle")}>Dùng hồ sơ lối sống</button>
+              </div>
+            </div>
+          ) : null}
+
           {error ? (
             <div role="alert" className="mt-5 rounded-xl border border-danger/40 bg-danger/10 p-4 text-sm text-danger">{error.message}</div>
           ) : null}
@@ -313,7 +342,7 @@ export function Intake({ form, calculatedBmi, isPending, error, hasResult, onSub
             </button>
             <div className="flex flex-wrap items-center gap-3">
               {hasResult ? <button type="button" className="btn-secondary" onClick={onCancel}>Xem lại kết quả</button> : null}
-              <button type="button" className="btn-primary" onClick={onSubmit} disabled={isPending}>
+              <button type="button" className="btn-primary" onClick={onSubmit} disabled={isPending || Boolean(symptomError)}>
                 {isPending ? <Loader2 aria-hidden="true" className="h-4 w-4 animate-spin" /> : <Sparkles aria-hidden="true" className="h-4 w-4" />}
                 Phân tích hồ sơ
               </button>

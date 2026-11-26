@@ -1,6 +1,9 @@
 import type { PatientInput } from "@/types/healthcare";
+import { EMPTY_SYMPTOMS } from "@/lib/symptoms";
 
 export const DEFAULT_INPUT: PatientInput = {
+  screening_mode: "symptoms",
+  symptoms: { ...EMPTY_SYMPTOMS },
   age: 45,
   height_cm: 170,
   weight_kg: 82.4,

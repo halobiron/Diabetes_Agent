@@ -48,6 +48,26 @@ def build_agent():
     )
 
 
+def build_symptom_agent(base_agent):
+    """Separate immutable model instance; reuse the existing KB and patient store."""
+    from models.symptoms import SYMPTOM_ARTIFACT, SymptomRiskModel
+
+    model = SymptomRiskModel().load_artifact(
+        os.getenv("SYMPTOM_MODEL_ARTIFACT_PATH", str(SYMPTOM_ARTIFACT))
+    )
+    return Orchestrator(
+        model,
+        base_agent.explainer,
+        base_agent.recommender,
+        base_agent.memory,
+        feature_explainer=FeatureExplainer(model),
+        retrieval_agent=base_agent.retriever,
+        safety_guard=base_agent.safety_guard,
+        support_policy=base_agent.support_policy,
+        what_if=WhatIfSimulator(model),
+    )
+
+
 if __name__ == "__main__":
     patient = {
         "age": 45,

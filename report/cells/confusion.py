@@ -2,7 +2,7 @@ from sklearn.metrics import confusion_matrix
 pred = (p_test >= thr).astype(int)
 tn, fp, fn, tp = confusion_matrix(y_test, pred).ravel()
 print(dict(tn=tn, fp=fp, fn=fn, tp=tp), "precision", round(tp/(tp+fp), 4), "recall", round(tp/(tp+fn), 4))
-assert (tn, fp, fn, tp) == tuple(metrics["metrics"]["mlp"]["test"]["confusion_matrix"].values())
+assert (tn, fp, fn, tp) == tuple(metrics["metrics"][metrics["selected_model"]]["test"]["confusion_matrix"].values())
 
 fig, ax = plt.subplots(figsize=(3.8, 3.4))
 cm = np.array([[tn, fp], [fn, tp]])

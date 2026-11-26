@@ -39,4 +39,7 @@ def editable_inputs(patient):
         else "male" if sex in (1, "1", "male", "M", "m") else "female"
     )
     result["skipped_fields"] = list(patient.get("skipped_fields") or [])
+    if patient.get("symptoms") is not None:
+        result["symptoms"] = dict(patient["symptoms"])
+        result["screening_mode"] = patient.get("screening_mode", "lifestyle")
     return result

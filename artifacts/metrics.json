@@ -1,18 +1,18 @@
 {
   "schema_version": 2,
-  "trained_at": "2026-11-01T14:54:41.250096+00:00",
-  "model_version": "mlp-20261101145441",
+  "trained_at": "2026-11-26T15:44:35.708997+00:00",
+  "model_version": "screening-20261126154435",
   "dataset_slug": "alexteboul/diabetes-health-indicators-dataset",
-  "dataset_path": "C:\\Users\\tranh\\OneDrive\\Documents\\K\u00ec 1 - N\u0103m 4\\HTTM\\Agent\\healthcare-agent-system\\data\\diabetes_binary_health_indicators_BRFSS2015.csv",
+  "dataset_path": "data/train/diabetes_binary_health_indicators_BRFSS2015.csv",
   "target": "Diabetes_binary",
   "rows_total": 253680,
   "rows_train": 152208,
   "rows_validation": 50736,
   "rows_test": 50736,
-  "selected_threshold": 0.23906,
+  "selected_threshold": 0.14146671639492997,
   "risk_bands": {
-    "low_max": 0.23906,
-    "high_min": 0.40992,
+    "low_max": 0.14146671639492997,
+    "high_min": 0.397420176322333,
     "high_min_rule": "lowest validation probability with precision >= 0.5"
   },
   "feature_names": [
@@ -38,12 +38,12 @@
     "Education",
     "Income"
   ],
-  "selected_model": "mlp",
-  "selection_method": "5-fold_cv_tuning_then_validation_selection_then_holdout_test",
-  "calibration": "isotonic_cv3",
+  "selected_model": "blend_mlp0.75_lgbm_leaves31_l2_20_balanced0",
+  "selection_method": "maximum validation precision subject to recall target; AP then AUC tie-break",
+  "calibration": "baseline isotonic_cv3; new LightGBM isotonic on internal training calibration split",
   "tuned_models": [
-    "hist_gradient_boosting",
-    "mlp"
+    "lightgbm_six_configurations",
+    "mlp_blend_weights"
   ],
   "lightgbm_available": true,
   "metrics": {
@@ -298,7 +298,58 @@
           "true_positive": 4261
         }
       }
+    },
+    "blend_mlp0.75_lgbm_leaves31_l2_20_balanced0": {
+      "validation": {
+        "roc_auc": 0.82897,
+        "average_precision": 0.43096,
+        "brier_score": 0.0968,
+        "accuracy_at_0_5": 0.86651,
+        "precision_at_0_5": 0.58204,
+        "recall_at_0_5": 0.14854,
+        "f1_at_0_5": 0.23667,
+        "selected_threshold": 0.14146671639492997,
+        "accuracy": 0.71693,
+        "precision": 0.30403,
+        "recall": 0.80025,
+        "f1": 0.44064,
+        "confusion_matrix": {
+          "true_negative": 30717,
+          "false_positive": 12950,
+          "false_negative": 1412,
+          "true_positive": 5657
+        }
+      },
+      "test": {
+        "roc_auc": 0.82663,
+        "average_precision": 0.41893,
+        "brier_score": 0.09755,
+        "accuracy_at_0_5": 0.8654,
+        "precision_at_0_5": 0.5655,
+        "recall_at_0_5": 0.14656,
+        "f1_at_0_5": 0.23278,
+        "selected_threshold": 0.14146671639492997,
+        "accuracy": 0.71677,
+        "precision": 0.30385,
+        "recall": 0.79997,
+        "f1": 0.44042,
+        "confusion_matrix": {
+          "true_negative": 30711,
+          "false_positive": 12956,
+          "false_negative": 1414,
+          "true_positive": 5655
+        }
+      }
     }
   },
-  "sklearn_version": "1.6.1"
+  "sklearn_version": "1.6.1",
+  "minimum_validation_recall": 0.8,
+  "ensemble": {
+    "mlp_weight": 0.75,
+    "lightgbm_weight": 0.25,
+    "lightgbm_num_leaves": 31,
+    "lightgbm_l2": 20
+  },
+  "dataset_sha256": "9f71fda9d4ae5f4878c99b9233b6a16accfa9a17c194116a6b78100540934964",
+  "evaluation_scope": "historical BRFSS holdout reused for paired evaluation; no external validation"
 }

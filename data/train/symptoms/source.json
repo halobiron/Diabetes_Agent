@@ -1,0 +1,7 @@
+{
+  "source": "https://archive.ics.uci.edu/static/public/529/early%2Bstage%2Bdiabetes%2Brisk%2Bprediction%2Bdataset.zip",
+  "dataset_page": "https://archive.ics.uci.edu/dataset/529/early+stage+diabetes+risk+",
+  "license": "CC BY 4.0",
+  "doi": "10.24432/C5VG8H",
+  "sha256": "7889d9d0beb7dd1ccc58da99f72763f16afb259b5dbbaa086f8195366ff66137"
+}

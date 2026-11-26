@@ -37,5 +37,10 @@ METHOD_LABELS = {"shap": "SHAP", "sensitivity": "phân tích độ nhạy", "non
 EVIDENCE_LABELS = {"none": "không có", "limited": "hạn chế", "sufficient": "đầy đủ"}
 
 
+from models.symptoms import SYMPTOM_FIELDS
+
+FEATURE_LABELS.update(SYMPTOM_FIELDS)
+
+
 def feature_label(name):
     return FEATURE_LABELS.get(name, name)

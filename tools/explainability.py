@@ -106,7 +106,9 @@ class FeatureExplainer:
         training_medians = self.risk_model.training_frame.median(numeric_only=True).to_dict()
 
         for feature in self.risk_model.feature_names:
-            baseline_row = row.copy()
+            # Integer symptom columns can have a fractional training median.
+            # pandas 3 rejects assigning that reference into an int64 column.
+            baseline_row = row.astype(float)
             baseline_value = defaults.get(
                 feature, training_medians.get(feature, row.iloc[0][feature])
             )

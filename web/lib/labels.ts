@@ -1,4 +1,7 @@
+import { SYMPTOM_QUESTIONS } from "./symptoms";
+
 export const FEATURE_LABELS: Record<string, string> = {
+  ...Object.fromEntries(SYMPTOM_QUESTIONS),
   HighBP: "Tăng huyết áp",
   HighChol: "Cholesterol cao",
   CholCheck: "Đã kiểm tra cholesterol",
@@ -26,6 +29,7 @@ export const FEATURE_LABELS: Record<string, string> = {
 };
 
 export const BINARY_FEATURES = new Set([
+  ...SYMPTOM_QUESTIONS.map(([key]) => key),
   "HighBP",
   "HighChol",
   "CholCheck",

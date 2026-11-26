@@ -12,7 +12,14 @@ from tools.vietnamese import feature_label
 # Model feature -> key of the same input in the prepared patient dict.
 PATIENT_KEY = {**RiskModel.FEATURE_KEYS, "Sex": "sex"}
 # Bookkeeping keys that describe the request rather than the patient.
-INTERNAL_KEYS = ("defaulted_fields", "skipped_fields", "optional_field_count", "patient_id")
+INTERNAL_KEYS = (
+    "defaulted_fields",
+    "skipped_fields",
+    "optional_field_count",
+    "patient_id",
+    "unanswered_fields",
+    "screening_mode",
+)
 
 
 def supplied_inputs(patient):
@@ -27,7 +34,10 @@ def supplied_inputs(patient):
 
 def unknown_inputs(patient):
     """Vietnamese labels of the inputs the patient did not give."""
-    return [feature_label(feature) for feature in patient.get("defaulted_fields", [])]
+    missing = dict.fromkeys(
+        [*patient.get("defaulted_fields", []), *patient.get("unanswered_fields", [])]
+    )
+    return [feature_label(feature) for feature in missing]
 
 
 def supplied_features(feature_explanation):
@@ -42,6 +52,12 @@ def unknown_inputs_instruction(patient):
     unknown = unknown_inputs(patient)
     if not unknown:
         return "Người dùng đã trả lời đủ các mục tùy chọn."
+    if patient.get("screening_mode") == "symptoms":
+        return (
+            "Người dùng CHƯA trả lời các mục sau, không được suy diễn có hoặc không có: "
+            + ", ".join(unknown)
+            + ". Các mục này không được dùng để chấm mô hình triệu chứng."
+        )
     return (
         "Người dùng CHƯA trả lời các mục sau; mô hình chỉ tạm dùng giá trị mặc định để tính: "
         + ", ".join(unknown)

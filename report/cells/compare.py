@@ -17,7 +17,7 @@ fig.tight_layout(); fig.savefig(OUT / "fig_model_compare.png"); plt.show()
 
 # Bảng LaTeX cho báo cáo (Bảng kết quả năm mô hình)
 names_vi = {"logistic_regression": "Hồi quy logistic", "random_forest": "Rừng ngẫu nhiên", "lightgbm": "LightGBM",
-            "hist_gradient_boosting": "HistGradientBoosting", "mlp": r"\textbf{MLP (được chọn)}"}
+            "hist_gradient_boosting": "HistGradientBoosting", "mlp": "MLP"}
 rows = []
 for m in order:
     t = M[m]["test"]

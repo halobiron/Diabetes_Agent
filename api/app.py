@@ -3,19 +3,19 @@ import sys
 from concurrent.futures import Future, ThreadPoolExecutor
 from pathlib import Path
 from threading import Lock
-from typing import Optional
+from typing import Literal, Optional
 from uuid import uuid4
 
 from fastapi import Depends, FastAPI, Header, HTTPException, Query
 from fastapi import Path as PathParameter
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import BaseModel, ConfigDict, Field, StrictBool, field_validator, model_validator
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 from core.config import get_settings
-from main import build_agent
+from main import build_agent, build_symptom_agent
 from tools.audit_logger import AuditLogger
 from tools.what_if import ASKABLE_FIELDS
 
@@ -26,6 +26,8 @@ logger = logging.getLogger(__name__)
 _agent_executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="agent-init")
 _agent_future: Future | None = None
 _agent_lock = Lock()
+_symptom_agent = None
+_symptom_base = None
 
 
 def _start_agent_initialization():
@@ -63,7 +65,42 @@ def _get_agent():
         ) from exc
 
 
+def _get_symptom_agent():
+    global _symptom_agent, _symptom_base
+    base = _get_agent()
+    with _agent_lock:
+        if _symptom_agent is None or _symptom_base is not base:
+            try:
+                _symptom_agent = build_symptom_agent(base)
+                _symptom_base = base
+            except Exception as exc:
+                raise HTTPException(
+                    status_code=503, detail="Chưa nạp được mô hình triệu chứng."
+                ) from exc
+        return _symptom_agent
+
+
+class SymptomAnswers(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    polyuria: Optional[StrictBool] = None
+    polydipsia: Optional[StrictBool] = None
+    sudden_weight_loss: Optional[StrictBool] = None
+    weakness: Optional[StrictBool] = None
+    polyphagia: Optional[StrictBool] = None
+    genital_thrush: Optional[StrictBool] = None
+    visual_blurring: Optional[StrictBool] = None
+    itching: Optional[StrictBool] = None
+    irritability: Optional[StrictBool] = None
+    delayed_healing: Optional[StrictBool] = None
+    partial_paresis: Optional[StrictBool] = None
+    muscle_stiffness: Optional[StrictBool] = None
+    alopecia: Optional[StrictBool] = None
+    obesity: Optional[StrictBool] = None
+
+
 class PatientRequest(BaseModel):
+    screening_mode: Literal["lifestyle", "symptoms"] = "lifestyle"
+    symptoms: Optional[SymptomAnswers] = None
     patient_id: Optional[str] = Field(
         None, min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
     )
@@ -110,6 +147,15 @@ class PatientRequest(BaseModel):
     def require_body_measurements(self):
         if self.bmi is None and (self.height_cm is None or self.weight_kg is None):
             raise ValueError("Cần cung cấp BMI hoặc cả chiều cao và cân nặng.")
+        if self.screening_mode == "symptoms":
+            if self.symptoms is None or any(v is None for v in self.symptoms.model_dump().values()):
+                raise ValueError(
+                    "Cần trả lời Có/Không cho đủ 14 mục triệu chứng, hoặc chọn hồ sơ lối sống."
+                )
+            if self.sex is None:
+                raise ValueError("Cần cung cấp giới tính để dùng mô hình triệu chứng.")
+            if not 16 <= self.age <= 90:
+                raise ValueError("Mô hình triệu chứng chỉ được khảo sát với tuổi 16–90.")
         return self
 
 
@@ -137,7 +183,8 @@ def health():
 
 def _assess(patient):
     request_id = str(uuid4())
-    result = _get_agent().run(patient.model_dump(), request_id=request_id)
+    agent = _get_symptom_agent() if patient.screening_mode == "symptoms" else _get_agent()
+    result = agent.run(patient.model_dump(), request_id=request_id)
     audit_logger.log_decision(request_id, result["patient"], result)
     return request_id, result
 
@@ -182,7 +229,9 @@ def history(
 @app.get("/patients/{patient_id}")
 @app.get("/v1/patients/{patient_id}")
 def patient_profile(
-    patient_id: str = PathParameter(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"),
+    patient_id: str = PathParameter(
+        min_length=1, max_length=64, pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]*$"
+    ),
     _auth=Depends(_authorize),
 ):
     try:
@@ -191,7 +240,9 @@ def patient_profile(
         raise
     except Exception as exc:
         logger.exception("Failed to load patient profile")
-        raise HTTPException(status_code=503, detail="Chưa đọc được hồ sơ. Vui lòng thử lại.") from exc
+        raise HTTPException(
+            status_code=503, detail="Chưa đọc được hồ sơ. Vui lòng thử lại."
+        ) from exc
     if profile is None:
         raise HTTPException(status_code=404, detail="Mã này chưa có hồ sơ đã lưu.")
     return profile

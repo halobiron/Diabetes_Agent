@@ -1,3 +1,5 @@
+import type { SymptomInput } from "@/lib/symptoms";
+
 export const ASKABLE_FIELDS = [
   "high_chol",
   "smoker",
@@ -14,6 +16,8 @@ export type AskableField = (typeof ASKABLE_FIELDS)[number];
 export type RiskLevel = "Low" | "Medium" | "High";
 
 export type PatientInput = {
+  screening_mode?: "lifestyle" | "symptoms";
+  symptoms?: SymptomInput | null;
   patient_id?: string;
   age: number;
   height_cm: number | null;
@@ -233,6 +237,9 @@ export type ModelMetrics = {
 };
 
 export type ModelMetadata = {
+  task?: "symptoms";
+  source?: string;
+  scope?: string;
   risk_bands?: { low_max: number; high_min: number };
   selected_model?: string;
   rows_total?: number;
