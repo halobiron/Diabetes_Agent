@@ -209,7 +209,7 @@ Chi phí phối hợp & Không có & Cần Orchestrator và định dạng dữ 
 \end{tabularx}
 \end{table}
 
-\textbf{Mô hình tổ chức.} Dự án dùng kiểu \emph{supervisor}: Orchestrator gọi các thành phần theo thứ tự, truyền kết quả giữa chúng và tổng hợp đầu ra. Không có agent nào gọi trực tiếp agent khác. \capnhat{Từ phiên bản \code{agents-v2}, các thành phần được gom theo vai trò: \code{DiagnosisAgent} (\code{agents/diagnosis_agent.py}) chạy mô hình học sâu và giải thích đặc trưng; \code{AdvisorAgent} (\code{agents/advisor_agent.py}) truy xuất bằng chứng từ KB Neo4j, soạn khuyến nghị và giải thích bằng lời; Orchestrator gọi hai agent này, chạy bộ nhớ, bộ luật, thương lượng, policy và mô phỏng. Mỗi bước trong \code{trace} ghi tên agent sở hữu (\code{diagnosis}, \code{advisor} hoặc \code{orchestrator}).}
+\textbf{Mô hình tổ chức.} Dự án dùng kiểu \emph{supervisor}: Orchestrator gọi các thành phần theo thứ tự, truyền kết quả giữa chúng và tổng hợp đầu ra. \capnhat{Orchestrator gọi trực tiếp \code{DiagnosisAgent}, \code{AdvisorAgent} và \code{MemoryAgent}; \code{AdvisorAgent} gọi các thành phần chuyên trách \code{RetrievalAgent}, \code{RecommendationAgent} và \code{ExplanationAgent}. Mã nguồn có sáu lớp mang tên Agent; cách gom vai trò này không thể hiện mức tự chủ cao hơn. Từ phiên bản \code{agents-v2}, các thành phần được gom theo vai trò: \code{DiagnosisAgent} (\code{agents/diagnosis_agent.py}) chạy mô hình học sâu và giải thích đặc trưng; \code{AdvisorAgent} (\code{agents/advisor_agent.py}) truy xuất bằng chứng từ KB Neo4j, soạn khuyến nghị và giải thích bằng lời; Orchestrator gọi hai agent này, chạy bộ nhớ, bộ luật, thương lượng, policy và mô phỏng. Mỗi bước trong \code{trace} ghi tên agent sở hữu (\code{diagnosis}, \code{advisor} hoặc \code{orchestrator}).}
 
 \section{Giao tiếp giữa các thành phần}
 FIPA-ACL \cite{fipa2002} chuẩn hóa thông điệp giữa các agent bằng \emph{performative}. Dự án \textbf{không} hiện thực đầy đủ FIPA-ACL và không có bus thông điệp bất đồng bộ. Giao tiếp gồm hai tầng:
@@ -336,6 +336,13 @@ Mỗi yêu cầu \code{POST /v1/predict} đi qua các bước sau (Hình~\ref{fi
 \end{tikzpicture}
 \caption{Luồng xử lý một yêu cầu đánh giá}\label{fig:flow}
 \end{figure}
+
+\begin{figure}[p]
+\centering
+\input{figures/agent_sequence.tex}
+\caption{Tương tác giữa các agent trong một lượt đánh giá. Mũi tên liền là lời gọi, nét đứt là kết quả trả về. Tên các lớp Agent được tách thành hai dòng để dễ đọc.}\label{fig:agent-sequence}
+\end{figure}
+\clearpage
 
 \section{Công nghệ và lưu trữ}
 \begin{table}[H]

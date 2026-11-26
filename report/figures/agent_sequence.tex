@@ -1,0 +1,43 @@
+% Sơ đồ vector nền trắng. Mũi tên liền: gọi; nét đứt: trả kết quả.
+\begin{tikzpicture}[
+  x=1cm,y=1cm,
+  participant/.style={draw=black!65,fill=white,text=black,rounded corners=2pt,
+    align=center,text width=2cm,minimum height=0.85cm,font=\scriptsize},
+  call/.style={-{Stealth[length=1.7mm]},draw=black!85},
+  reply/.style={call,dashed},
+  msg/.style={font=\scriptsize,align=center,fill=white,inner sep=2pt,text=black},
+  phase/.style={draw=black!20,fill=black!3,text=black,rounded corners=2pt,
+    text width=14.4cm,align=center,font=\scriptsize,inner sep=5pt}
+]
+\path[fill=white] (-1.15,0.6) rectangle (14.35,-18.1);
+\node[participant] at (0,0) {Orchestrator\\Bộ điều phối};
+\draw[draw=black!35,densely dashed] (0,-0.5) -- (0,-16.8);
+\foreach \x/\name in {2.2/Diagnosis,4.4/Memory,6.6/Advisor,8.8/Retrieval,11/Recommendation,13.2/Explanation} {
+  \node[participant] at (\x,0) {\name\\Agent};
+  \draw[draw=black!35,densely dashed] (\x,-0.5) -- (\x,-16.8);
+}
+\node[phase] at (6.6,-1.0) {Giao diện $\rightarrow$ FastAPI kiểm tra hồ sơ $\rightarrow$ Orchestrator};
+\draw[call] (0,-1.8) -- node[msg,above] {Đánh giá hồ sơ} (2.2,-1.8);
+\node[msg,text width=2.4cm] at (2.2,-2.5) {Gọi MLP và\\FeatureExplainer};
+\draw[reply] (2.2,-3.2) -- node[msg,above] {Kết quả dự đoán} (0,-3.2);
+\draw[call] (0,-3.9) -- node[msg,above] {Đọc lịch sử cùng mã hồ sơ} (4.4,-3.9);
+\draw[reply] (4.4,-4.6) -- node[msg,above] {Lịch sử và thay đổi từ ChromaDB} (0,-4.6);
+\draw[call] (0,-5.3) -- node[msg,above] {Hồ sơ, nguy cơ và ảnh hưởng đặc trưng} (6.6,-5.3);
+\draw[call] (6.6,-6.0) -- node[msg,above] {Tìm bằng chứng} (8.8,-6.0);
+\node[msg,text width=2.3cm] at (8.8,-6.6) {Neo4j + tìm kiếm\\ngữ nghĩa};
+\draw[reply] (8.8,-7.3) -- node[msg,above] {Bằng chứng, nguồn} (6.6,-7.3);
+\draw[reply] (6.6,-8.0) -- node[msg,above] {Kết quả truy xuất} (0,-8.0);
+\node[phase] at (6.6,-8.7) {Orchestrator đánh giá trạng thái bằng chứng và gọi SafetyGuard kiểm tra an toàn};
+\draw[call] (0,-9.5) -- node[msg,above] {Yêu cầu tạo khuyến nghị} (6.6,-9.5);
+\draw[call] (6.6,-10.2) -- node[msg,above] {Bằng chứng, hồ sơ, lịch sử, an toàn} (11,-10.2);
+\draw[reply] (11,-10.9) -- node[msg,above] {Khuyến nghị} (6.6,-10.9);
+\draw[reply] (6.6,-11.6) -- node[msg,above] {Khuyến nghị} (0,-11.6);
+\node[phase] at (6.6,-12.35) {Orchestrator xử lý bất đồng và chạy QPolicy. Nếu cần, gọi lại truy xuất, luật và khuyến nghị.\\Quy tắc an toàn được ưu tiên. Tiếp theo chạy mô phỏng what-if khi đủ điều kiện.};
+\draw[call] (0,-13.3) -- node[msg,above] {Yêu cầu giải thích kết quả cuối} (6.6,-13.3);
+\draw[call] (6.6,-14.0) -- node[msg,above] {Dự đoán, đặc trưng, lịch sử, an toàn, trạng thái bằng chứng} (13.2,-14.0);
+\draw[reply] (13.2,-14.7) -- node[msg,above] {Lời giải thích} (6.6,-14.7);
+\draw[reply] (6.6,-15.4) -- node[msg,above] {Lời giải thích} (0,-15.4);
+\draw[call] (0,-16.1) -- node[msg,above] {Lưu lần đánh giá mới} (4.4,-16.1);
+\draw[reply] (4.4,-16.8) -- node[msg,above] {Trạng thái lưu} (0,-16.8);
+\node[phase] at (6.6,-17.5) {Orchestrator tổng hợp kết quả, ghi audit và trả về FastAPI $\rightarrow$ giao diện};
+\end{tikzpicture}
