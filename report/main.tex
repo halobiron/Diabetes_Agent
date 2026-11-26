@@ -764,7 +764,7 @@ Biến môi trường chính: \code{NEO4J_PASSWORD} (\khacpdf{bắt buộc; ứn
 \section{Demo: giao diện web}
 Giao diện Next.js hướng dẫn người dùng qua số đo cơ thể, hai nhóm triệu chứng, tiền sử, thói quen và cảm nhận sức khỏe. Người dùng chọn đánh giá có triệu chứng hoặc chỉ dùng hồ sơ lối sống. Các mục chưa rõ được giữ nguyên; nhánh triệu chứng chỉ gửi được khi có đủ 14 câu trả lời Có/Không và giới tính. Lịch sử giữ cả nhánh và câu trả lời để cập nhật lần sau.
 
-Các vai trò được thể hiện bằng nhân vật: Bé Tiếp tiếp nhận hồ sơ; Ông Mô dự đoán và giải thích; Bà Nhớ đọc lịch sử; Cô Chứng truy xuất bằng chứng; Chú Luật kiểm tra an toàn; Bạn Gợi trình bày khuyến nghị, policy và mô phỏng. Trang kết quả có mức nguy cơ, hướng xử trí, nguồn trích dẫn, vết xử lý và các tab chi tiết. Mô phỏng chỉ thay những đặc trưng mà mô hình của nhánh thực sự sử dụng; không suy ra việc đổi triệu chứng là can thiệp điều trị. Các ảnh minh họa được chụp từ ứng dụng cục bộ, không gọi LLM.
+Các vai trò được thể hiện bằng nhân vật: Bé Tiếp tiếp nhận hồ sơ; Ông Mô dự đoán và giải thích; Bà Nhớ đọc lịch sử; Cô Chứng truy xuất bằng chứng; Chú Luật kiểm tra an toàn; Bạn Gợi trình bày khuyến nghị, policy và mô phỏng. Trang kết quả có mức nguy cơ, hướng xử trí, nguồn trích dẫn, vết xử lý và các tab chi tiết. Mô phỏng chỉ thay những đặc trưng mà mô hình của nhánh thực sự sử dụng; không suy ra việc đổi triệu chứng là can thiệp điều trị. Các ảnh kết quả (Hình~\ref{fig:ui2a}--\ref{fig:uitrace}) được chụp ngày 27/11/2026 từ ứng dụng cục bộ với artifact \code{screening-20261126154435}, hồ sơ nữ 45 tuổi, 170 cm, 82,4 kg, huyết áp 130 mmHg, không gọi LLM; thời gian 599 ms trong Hình~\ref{fig:uitrace} đo trên máy chủ phát triển.
 
 \begin{figure}[H]
 \centering
@@ -783,7 +783,7 @@ Các vai trò được thể hiện bằng nhân vật: Bé Tiếp tiếp nhận
 \end{figure}
 \begin{figure}[H]
 \centering
-\includegraphics[width=0.62\textwidth]{images/ui_2c.png}
+\includegraphics[width=0.55\textwidth]{images/ui_2c.png}
 \caption{Cô Chứng trích dẫn bằng chứng; Chú Luật kiểm tra an toàn}\label{fig:ui2c}
 \end{figure}
 \begin{figure}[H]
