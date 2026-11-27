@@ -21,8 +21,8 @@ probability calibration with three-fold CV within training. User-approved thresh
 
 The 0.5 point was adopted after retrospective holdout review. These are reused
 holdout comparisons, not new independent test results. The initial failed recall
-gate is preserved in `symptom_training/metrics.json`; active metrics are in
-`symptom_metrics.json` and `symptom_training/standard_point/metrics.json`.
+gate is summarized in the table above; active metrics are in
+`symptom_metrics.json`. Intermediate experiment outputs were deleted during cleanup.
 
 95% Wilson intervals: precision [0.7469, 0.9559], recall [0.7762, 0.9704].
 Always-positive baseline on this holdout: precision 0.6863, recall 1, specificity 0.
@@ -36,11 +36,14 @@ The high scores do not guarantee individual or future performance. Neither a Low
 score nor negative model flag rules out diabetes.
 
 Additional nested internal CV of the selection procedure (not this single final
-RF model) is recorded separately in `symptom_nested_cv/evaluation.json`.
+RF model) is recorded separately in `symptom_cv_metrics.json`.
 
-Reproduce: `python scripts/train_symptom_model.py --standard-threshold`.
+The symptom training and nested-CV scripts were removed during cleanup.
+The active model and retained metrics remain available; rerunning training requires
+restoring the scripts from version control.
 
 Verification: 220 backend tests passed, 7 warnings; web typecheck, lint, 7 tests
 and production build passed. Browser flows passed at desktop/mobile widths,
 with no degraded components or JavaScript errors and successful profile restore.
-Details: `symptom_training/verification.json`. Coverage was not remeasured.
+The intermediate verification log was deleted during cleanup. These are historical
+verification results, not a new run. Coverage was not remeasured.

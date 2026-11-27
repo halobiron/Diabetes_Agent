@@ -749,7 +749,7 @@ safety = log.guard("safety_guard",
 .\.venv\Scripts\python.exe scripts/download_training_data.py   # BRFSS 2015
 .\.venv\Scripts\python.exe scripts/train_diabetes_model.py      # artifacts/
 .\.venv\Scripts\python.exe scripts/download_symptom_data.py
-.\.venv\Scripts\python.exe scripts/train_symptom_model.py --standard-threshold
+# Symptom model: use the retained artifacts/symptom_model.joblib
 .\.venv\Scripts\python.exe scripts/train_support_policy.py      # policy Q-learning
 docker compose up -d neo4j                                       # @@bat buoc@@
 @@Get-Content -Encoding utf8 artifacts/kb_diabet.cypher | docker compose exec -T neo4j cypher-shell -u neo4j -p $env:NEO4J_PASSWORD@@  # nap KB

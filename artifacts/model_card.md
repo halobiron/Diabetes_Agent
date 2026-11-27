@@ -36,9 +36,9 @@ healthcare AI prototype. It is not a diagnostic medical device.
 The experimental target is recall >= 0.80 on validation, maximizing precision
 subject to this constraint. This is not a clinically approved target.
 The historical test split is reused for a paired comparison, not a new external
-validation set. Search candidates, frozen selection, dataset hash and paired
-results are in `artifacts/screening_optimization/comparison.json`.
-The baseline artifact is preserved in `artifacts/screening_optimization/baseline/`.
+validation set. Active model metrics are in `artifacts/metrics.json`.
+Historical experiment outputs and the separate baseline artifact were deleted
+during cleanup; exact replay requires supplying the original MLP baseline again.
 Higher recall comes with more false positives and lower precision/accuracy/F1
 at the screening threshold. Ranking gains are small; do not describe them as a
 large model improvement. Historical integration tests and screenshots predate

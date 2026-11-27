@@ -94,18 +94,10 @@ const STEPS: Step[] = [
   {
     id: "symptoms",
     cast: "mo",
-    label: "Triệu chứng thường gặp",
-    ask: "Mình là Ông Mô. Thông tin triệu chứng giúp mình đánh giá sát hồ sơ hơn. Bạn trả lời theo những gì mình biết nhé.",
-    summary: (f) => f.screening_mode === "symptoms" ? `${SYMPTOM_QUESTIONS.slice(0, 7).filter(([key]) => typeof f.symptoms?.[key] === "boolean").length}/7 mục đã trả lời` : "Đang dùng hồ sơ lối sống",
+    label: "Triệu chứng",
+    ask: "Mình là Ông Mô. Chọn triệu chứng bạn đang gặp (nếu có), hoặc chuyển sang Chỉ lối sống.",
+    summary: (f) => f.screening_mode === "symptoms" ? `${SYMPTOM_QUESTIONS.filter(([key]) => typeof f.symptoms?.[key] === "boolean").length}/${SYMPTOM_QUESTIONS.length} mục đã trả lời` : "Chỉ dùng hồ sơ lối sống",
     body: ({ form, set }) => <SymptomQuestions form={form} set={set} />,
-  },
-  {
-    id: "symptoms-other",
-    cast: "mo",
-    label: "Triệu chứng bổ sung",
-    ask: "Còn một nhóm thông tin nữa. Mục nào chưa rõ, bạn cứ giữ Chưa rõ; mình sẽ không đoán thay bạn.",
-    summary: (f) => f.screening_mode === "symptoms" ? `${SYMPTOM_QUESTIONS.slice(7).filter(([key]) => typeof f.symptoms?.[key] === "boolean").length}/7 mục đã trả lời` : "Đang dùng hồ sơ lối sống",
-    body: ({ form, set }) => <SymptomQuestions form={form} set={set} second />,
   },
   {
     id: "history",

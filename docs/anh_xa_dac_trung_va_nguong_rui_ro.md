@@ -52,12 +52,12 @@ Phần lớn giảm bỏ sót đến từ đổi điểm vận hành, kèm tăng
 cặp trên test đã được xem trong báo cáo cũ, chưa phải external validation mới.
 Xác suất/ngưỡng trong artifact giữ đủ độ chính xác, chỉ làm tròn khi trình bày.
 
-Tái lập: `.\.venv\Scripts\python.exe scripts/optimize_screening.py` xuất kết quả vào
-`artifacts/screening_optimization/`; thêm `--promote` để thay artifact mặc định
-sau khi qua điều kiện cải thiện trên validation. Bản cũ được giữ trong thư mục
-`baseline/`, kết quả và quyết định trước khi chấm test ở `comparison.json` và
-`frozen_selection.json`. Lệnh huấn luyện đầy đủ cũng dùng chính sách recall này
-qua `--minimum-recall` (mặc định 0,8).
+Các thư mục thí nghiệm đã được xóa khi dọn dự án. Mô hình đang dùng và các chỉ số
+được giữ tại `artifacts/risk_model.joblib` và `artifacts/metrics.json`.
+Các script tối ưu và tìm kiếm thí nghiệm cũng đã được xóa. Muốn chạy lại cần
+khôi phục script từ Git và cung cấp bản MLP baseline riêng; ensemble đang dùng
+không thay thế được baseline MLP. Lệnh huấn luyện BRFSS còn lại dùng chính sách
+recall qua `--minimum-recall` (mặc định 0,8); không bảo đảm tái tạo đúng trọng số lịch sử.
 
 ## 5. Điều kiện chấp nhận bổ sung: precision ít nhất 50%
 
@@ -65,10 +65,11 @@ Yêu cầu hiện tại là đồng thời recall >=80% và precision >=50% trê
 Rà soát toàn bộ đường precision–recall của 25 cấu hình đã lưu cho thấy **0/25 đạt**.
 Giữ recall >=80% thì precision tốt nhất 30,4025%; giữ precision >=50% thì recall
 tốt nhất 31,7867%. Đây là số đo validation, không phải số đo trên test mới.
-Kết quả theo từng ứng viên ở `artifacts/screening_optimization/precision_recall_feasibility.json`.
+Đây là kết quả rà soát lịch sử; file trung gian theo từng ứng viên đã được xóa
+khi dọn dự án.
 
-Hai lệnh huấn luyện/tối ưu mặc định thêm `--minimum-precision 0.5` bên cạnh
-`--minimum-recall 0.8`. Nếu không có ứng viên đạt cả hai, chúng dừng trước chấm test
+Lệnh huấn luyện BRFSS mặc định dùng `--minimum-precision 0.5` bên cạnh
+`--minimum-recall 0.8`. Nếu không có ứng viên đạt cả hai, lệnh dừng trước chấm test
 và trước thay artifact; không tự hạ recall. Artifact hiện đang dùng của lần tối ưu
 trước vẫn chưa đáp ứng yêu cầu precision mới. Lần rà soát này không đổi artifact
 hoặc đổi ngưỡng để đánh đổi recall lấy precision.
@@ -99,17 +100,16 @@ Tỉ lệ nhãn dương của holdout là 35/51 (68,6%): baseline đoán tất c
 Không diễn giải điểm cao trên bộ nhỏ, giàu ca dương này thành hiệu quả sàng lọc
 trên người Việt hoặc thành cải thiện AUC của BRFSS.
 
-Đánh giá bổ sung ở `artifacts/symptom_nested_cv/evaluation.json` dùng 5 outer fold,
+Đánh giá bổ sung ở `artifacts/symptom_cv_metrics.json` dùng 5 outer fold,
 chọn mô hình/ngưỡng bằng 3 inner fold trong từng phần train. Toàn quy trình đạt
 precision 88,24%, recall 95,38%, accuracy 88,05% trên 251 dự đoán outer-fold;
 không phải phép đo riêng của artifact RF ngưỡng 0,5. Đây vẫn là đánh giá nội bộ,
 chưa có xác nhận ngoài/quần thể Việt Nam. Lần RF ngưỡng cao không đạt recall
-được giữ tại `artifacts/symptom_training/metrics.json`.
+được tóm tắt trong bảng trên; file thí nghiệm trung gian đã được xóa.
 
-Tái lập artifact đang dùng:
-`python scripts/train_symptom_model.py --standard-threshold`.
-Tái lập kiểm tra lồng nhau: `python scripts/validate_symptom_model.py` (xuất vào
-thư mục riêng, không thay mô hình đang dùng).
+Script huấn luyện triệu chứng và kiểm tra lồng nhau đã được xóa khi dọn dự án.
+Artifact triệu chứng và các metrics tổng hợp vẫn được giữ; muốn huấn luyện hoặc
+đánh giá lại cần khôi phục script từ Git.
 
 API `/v1/predict` nhận `screening_mode="symptoms"` và object `symptoms` đủ 14
 boolean. Thiếu/chưa rõ bất kỳ mục nào, thiếu giới tính hoặc tuổi ngoài 16–90
